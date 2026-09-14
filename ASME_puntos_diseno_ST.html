@@ -1,0 +1,721 @@
+<title>Punto de diseño S-T — ASME II-D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --page:        #eef1f0;
+    --card:        #ffffff;
+    --card-2:      #f6f8f7;
+    --ink:         #14191d;
+    --ink-2:       #4c5560;
+    --ink-mute:    #838d96;
+    --accent:      #2a78d6;
+    --accent-wash: rgba(42,120,214,0.10);
+    --hairline:    #dfe4e2;
+    --border:      rgba(20,25,29,0.10);
+    --grid:        #e3e7e5;
+    --curve2:      #eb6834;
+    --curve3:      #1baf7a;
+    --point:       #e34948;
+    --warn:        #b5590b;
+    --warn-bg:     #fbeee1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:        #0f1215;
+      --card:        #171b1f;
+      --card-2:      #1c2126;
+      --ink:         #f2f4f5;
+      --ink-2:       #b9c0c6;
+      --ink-mute:    #838d96;
+      --accent:      #3987e5;
+      --accent-wash: rgba(57,135,229,0.16);
+      --hairline:    #2a3036;
+      --border:      rgba(255,255,255,0.10);
+      --grid:        #262c31;
+      --curve2:      #d95926;
+      --curve3:      #199e70;
+      --point:       #e66767;
+      --warn:        #f0a959;
+      --warn-bg:     rgba(240,169,89,0.12);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:        #0f1215;
+    --card:        #171b1f;
+    --card-2:      #1c2126;
+    --ink:         #f2f4f5;
+    --ink-2:       #b9c0c6;
+    --ink-mute:    #838d96;
+    --accent:      #3987e5;
+    --accent-wash: rgba(57,135,229,0.16);
+    --hairline:    #2a3036;
+    --border:      rgba(255,255,255,0.10);
+    --grid:        #262c31;
+    --curve2:      #d95926;
+    --curve3:      #199e70;
+    --point:       #e66767;
+    --warn:        #f0a959;
+    --warn-bg:     rgba(240,169,89,0.12);
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    background:var(--page);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-block:36px;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding-inline:20px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11.5px;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+  }
+  h1{
+    font-size: clamp(24px, 4vw, 32px);
+    line-height:1.08;
+    font-weight:700;
+    margin:6px 0 4px;
+    text-wrap:balance;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--ink-2);
+    font-size:14px;
+    line-height:1.5;
+    max-width:70ch;
+  }
+
+  /* tabs */
+  .tabbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    background:var(--card-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:4px;
+  }
+  .tab-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--ink-2);
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:7px;
+    cursor:pointer;
+    flex:1 1 auto;
+    min-width:140px;
+  }
+  .tab-btn:hover{ color:var(--ink); }
+  .tab-btn.active{
+    background:var(--card);
+    color:var(--accent);
+    box-shadow:0 1px 2px var(--border);
+  }
+  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 22px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-width:0;
+  }
+  .card[hidden]{ display:none; }
+
+  .card-eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-mute);
+  }
+  .card-title{
+    font-size:21px;
+    font-weight:700;
+    letter-spacing:-0.005em;
+  }
+  .idline{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 8px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    color:var(--ink-2);
+    margin-top:4px;
+  }
+  .idline span{
+    background:var(--card-2);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:2px 7px;
+  }
+
+  .body-row{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .side{
+    flex:1 1 260px;
+    min-width:240px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .chart-col{
+    flex:2 1 420px;
+    min-width:300px;
+  }
+
+  .inputs{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--card-2);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:14px;
+  }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field label{
+    font-size:10.5px;
+    color:var(--ink-mute);
+    font-family:"IBM Plex Mono", monospace;
+    letter-spacing:.02em;
+  }
+  .field .in-row{ display:flex; align-items:center; gap:6px; }
+  .field input[type=number]{
+    width:100%;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:7px 9px;
+  }
+  .field input[type=number]:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .field .unit{ font-size:12px; color:var(--ink-mute); flex-shrink:0; }
+  .input-hint{
+    font-size:10.5px;
+    color:var(--ink-mute);
+    line-height:1.4;
+  }
+
+  .result{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    background:var(--accent-wash);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  .result .r-label{ font-size:11px; color:var(--ink-2); font-family:"IBM Plex Mono", monospace; }
+  .result .r-value{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:700;
+    font-size:24px;
+    color:var(--point);
+  }
+  .result .r-value small{ font-size:12px; font-weight:500; color:var(--ink-2); }
+
+  svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .axis-label{ fill:var(--ink-mute); font-size:11px; font-family:"IBM Plex Mono", monospace; }
+  .tick-label{ fill:var(--ink-mute); font-size:10.5px; font-family:"IBM Plex Mono", monospace; }
+  .gridline{ stroke:var(--grid); stroke-width:1; shape-rendering:crispEdges; }
+  .baseline{ stroke:var(--hairline); stroke-width:1; }
+
+  .curve-line{ fill:none; stroke-linejoin:round; stroke-linecap:round; }
+  .c-s , .c-s1{ stroke:var(--accent); }
+  .c-s2{ stroke:var(--curve2); }
+  .c-s3{ stroke:var(--curve3); }
+
+  .hover-capture{ fill:transparent; }
+  .hover-line{ stroke:var(--ink-mute); stroke-width:1; opacity:0; }
+  .hover-dot{ fill:var(--card); stroke-width:2.25; opacity:0; }
+  .hover-box{ opacity:0; }
+  .hover-box rect{ fill:var(--ink); }
+  .hover-box text{ fill:var(--card); font-family:"IBM Plex Mono", monospace; }
+  .hover-box .hb-t{ font-size:11px; font-weight:600; }
+  .hover-box .hb-s{ font-size:11.5px; font-weight:600; }
+
+  .design-point{
+    fill:var(--point);
+    stroke:var(--card);
+    stroke-width:2.5;
+  }
+  .design-line{ stroke:var(--point); stroke-width:1; stroke-dasharray:2 3; opacity:.6; }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    color:var(--ink-2);
+  }
+  .legend .lg{ display:flex; align-items:center; gap:5px; }
+  .legend .sw{ width:14px; height:3px; border-radius:2px; display:inline-block; }
+  .legend .sw.s1{ background:var(--accent); }
+  .legend .sw.s2{ background:var(--curve2); }
+  .legend .sw.s3{ background:var(--curve3); }
+  .legend .sw.dot{ width:8px; height:8px; border-radius:50%; background:var(--point); }
+
+  .status{
+    font-size:12px;
+    font-family:"IBM Plex Mono", monospace;
+    padding:7px 10px;
+    border-radius:6px;
+    background:var(--card-2);
+    color:var(--ink-2);
+    border:1px solid var(--border);
+    line-height:1.5;
+  }
+  .status.warn{
+    background:var(--warn-bg);
+    color:var(--warn);
+    border-color:transparent;
+  }
+
+  .foot-note{
+    font-size:11px;
+    color:var(--ink-mute);
+    line-height:1.5;
+    border-top:1px solid var(--hairline);
+    padding-top:10px;
+  }
+
+  footer{
+    font-size:12px;
+    color:var(--ink-mute);
+    line-height:1.6;
+    padding-top:4px;
+  }
+</style>
+
+<div class="wrap">
+
+  <div>
+    <div class="eyebrow">ASME BPVC Sección II&#8209;D · Tabla 1A / Tabla 3</div>
+    <h1>Punto de diseño sobre la curva S&#8209;T</h1>
+    <div class="sub">Elige el material en la pestaña, introduce presión y temperatura de diseño (y el diámetro, para el perno B7) y el punto se sitúa sobre la curva de tensión máxima admisible. Unidades SI (°C / MPa).</div>
+  </div>
+
+  <div class="tabbar" id="tabbar" role="tablist" aria-label="Material"></div>
+  <div id="panels"></div>
+
+  <footer>
+    Fuente: ASME Boiler &amp; Pressure Vessel Code, Sección II, Parte D — Properties (Customary), edición 2015 (ejemplar del usuario). SA&#8209;516/70: Tabla 1A línea 37. SA&#8209;105: Tabla 1A línea 23. SA&#8209;106 Gr. B: Tabla 1A línea 15. SA&#8209;193 B7: Tabla 3, líneas 31/30/27. Interpolación lineal entre puntos tabulados, igual que en el uso habitual de estas tablas; sin extrapolación por encima del último valor tabulado. Verificar siempre contra la edición y adenda vigentes antes de usar en diseño final.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  function toC(f){ return (f - 32) * 5 / 9; }
+  function toMPa(ksi){ return ksi * 6.89476; }
+  function el(tag, attrs){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  // ---------------------------------------------------------------
+  // Material data (°F / ksi source values -> converted in-browser)
+  // P (presión de diseño) es un dato de registro: no interviene en la
+  // interpolación de S, que depende únicamente de la temperatura T,
+  // igual que en la Tabla 1A / Tabla 3 de origen.
+  // ---------------------------------------------------------------
+  var MATERIALS = [
+    {
+      id: 'sa516', kind: 'single',
+      title: 'SA-516 Grado 70', ref: 'Tabla 1A, línea 37',
+      chips: ['Acero al carbono · Plancha', 'UNS K02700', 'P-No 1/2'],
+      defaultP: 1.60, defaultT: 150,
+      data: [
+        {f:100,s:17.9},{f:150,s:17.9},{f:200,s:17.9},{f:250,s:17.9},{f:300,s:17.9},
+        {f:400,s:17.9},{f:500,s:17.9},{f:600,s:17.9},{f:650,s:17.9},{f:700,s:16.9},
+        {f:750,s:13.9},{f:800,s:11.4},{f:850,s:8.7},{f:900,s:5.9},{f:950,s:4.0},{f:1000,s:2.5}
+      ]
+    },
+    {
+      id: 'sa105', kind: 'single',
+      title: 'SA-105 (Normalizado)', ref: 'Tabla 1A, línea 23',
+      chips: ['Acero al carbono · Forjado', 'UNS K03504', 'P-No 1/2'],
+      defaultP: 1.00, defaultT: 120,
+      data: [
+        {f:100,s:17.1},{f:150,s:17.1},{f:200,s:17.1},{f:250,s:17.1},{f:300,s:17.1},
+        {f:400,s:17.1},{f:500,s:17.1},{f:600,s:17.1},{f:650,s:17.1}
+      ]
+    },
+    {
+      id: 'sa106b', kind: 'single',
+      title: 'SA-106 Grado B', ref: 'Tabla 1A, línea 15',
+      chips: ['Acero al carbono · Tubo s/costura', 'UNS K03006', 'P-No 1/1'],
+      defaultP: 1.20, defaultT: 200,
+      data: [
+        {f:100,s:15.7},{f:150,s:15.7},{f:200,s:15.7},{f:300,s:15.7},
+        {f:400,s:15.7},{f:500,s:15.7},{f:600,s:15.7},{f:650,s:15.7},{f:700,s:15.6},
+        {f:750,s:13.0},{f:800,s:10.8},{f:850,s:8.7},{f:900,s:5.9}
+      ]
+    },
+    {
+      id: 'sa193b7', kind: 'b7',
+      title: 'SA-193 Grado B7', ref: 'Tabla 3, líneas 31 / 30 / 27',
+      chips: ['Acero aleado Cr-Mo · Perno/Espárrago', 'UNS G41400'],
+      defaultP: 4.00, defaultT: 200, defaultD: 25.4,
+      data: [
+        {f:100,s1:25.0,s2:23.0,s3:18.8},{f:150,s1:25.0,s2:23.0,s3:18.8},{f:200,s1:25.0,s2:23.0,s3:18.8},
+        {f:300,s1:25.0,s2:23.0,s3:18.8},{f:400,s1:25.0,s2:23.0,s3:18.8},{f:500,s1:25.0,s2:23.0,s3:18.8},
+        {f:550,s1:25.0,s2:23.0,s3:18.8},{f:600,s1:25.0,s2:23.0,s3:18.8},{f:650,s1:25.0,s2:23.0,s3:18.8},
+        {f:700,s1:25.0,s2:23.0,s3:18.8},{f:750,s1:23.6,s2:22.2,s3:18.8},{f:800,s1:21.0,s2:20.0,s3:18.0},
+        {f:850,s1:16.3,s2:16.3,s3:16.3},{f:900,s1:12.5,s2:12.5,s3:12.5},{f:950,s1:8.5,s2:8.5,s3:8.5},
+        {f:1000,s1:4.5,s2:4.5,s3:4.5}
+      ],
+      classes: [
+        {key:'s1', label:'≤ 2.1/2" (63,5 mm) — línea 31', dmax:2.5},
+        {key:'s2', label:'2.1/2"–4" (63,5–101,6 mm) — línea 30', dmax:4},
+        {key:'s3', label:'4"–7" (101,6–177,8 mm) — línea 27', dmax:7}
+      ]
+    }
+  ];
+
+  // precompute °C / MPa rows
+  MATERIALS.forEach(function(m){
+    m.rows = m.data.map(function(d){
+      var r = {f:d.f, c:toC(d.f)};
+      if (m.kind === 'single'){ r.s = toMPa(d.s); }
+      else { r.s1 = toMPa(d.s1); r.s2 = toMPa(d.s2); r.s3 = toMPa(d.s3); }
+      return r;
+    });
+    m.tmin = m.rows[0].c;
+    m.tmax = m.rows[m.rows.length-1].c;
+    m.activeKey = m.kind === 'single' ? 's' : 's1';
+    m.dOutOfRange = false;
+  });
+
+  function interpAt(rows, key, tC){
+    var tmin = rows[0].c, tmax = rows[rows.length-1].c;
+    var tc = Math.min(Math.max(tC, tmin), tmax);
+    var idx = rows.length - 2;
+    for (var i=0;i<rows.length-1;i++){
+      if (tc >= rows[i].c && tc <= rows[i+1].c){ idx = i; break; }
+    }
+    var r0 = rows[idx], r1 = rows[idx+1];
+    var span = r1.c - r0.c;
+    var frac = span === 0 ? 0 : (tc - r0.c) / span;
+    var s = r0[key] + frac * (r1[key] - r0[key]);
+    return { s: s, tc: tc, below: tC < tmin, above: tC > tmax, tmin: tmin, tmax: tmax };
+  }
+
+  // ---------------------------------------------------------------
+  // Tabs + panel builder
+  // ---------------------------------------------------------------
+  var tabbar = document.getElementById('tabbar');
+  var panels = document.getElementById('panels');
+
+  MATERIALS.forEach(function(m, i){
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.id = 'tabbtn-' + m.id;
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    btn.setAttribute('aria-controls', 'panel-' + m.id);
+    btn.textContent = m.title;
+    btn.addEventListener('click', function(){ selectTab(m.id); });
+    tabbar.appendChild(btn);
+
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'panel-' + m.id;
+    card.setAttribute('role', 'tabpanel');
+    if (i !== 0) card.hidden = true;
+
+    var chipsHtml = m.chips.map(function(c){ return '<span>'+c+'</span>'; }).join('');
+
+    var inputsHtml = '' +
+      '<div class="field">' +
+        '<label for="p-'+m.id+'">Presión de diseño P</label>' +
+        '<div class="in-row">' +
+          '<input type="number" id="p-'+m.id+'" value="'+m.defaultP.toFixed(2)+'" step="0.1">' +
+          '<span class="unit">MPa</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label for="t-'+m.id+'">Temperatura de diseño T</label>' +
+        '<div class="in-row">' +
+          '<input type="number" id="t-'+m.id+'" value="'+m.defaultT+'" step="5">' +
+          '<span class="unit">°C</span>' +
+        '</div>' +
+      '</div>';
+    if (m.kind === 'b7'){
+      inputsHtml += '' +
+        '<div class="field">' +
+          '<label for="d-'+m.id+'">Diámetro del perno D</label>' +
+          '<div class="in-row">' +
+            '<input type="number" id="d-'+m.id+'" value="'+m.defaultD+'" step="1">' +
+            '<span class="unit">mm</span>' +
+          '</div>' +
+        '</div>';
+    }
+    inputsHtml += '<div class="input-hint">P es un dato de diseño que se registra junto al punto; la curva S&#8209;T depende únicamente de la temperatura.</div>';
+
+    var legendHtml = m.kind === 'b7' ? '<div class="legend" id="legend-'+m.id+'"></div>' : '';
+
+    card.innerHTML =
+      '<div>' +
+        '<div class="card-eyebrow">'+m.ref+'</div>' +
+        '<div class="card-title">'+m.title+'</div>' +
+        '<div class="idline">'+chipsHtml+'</div>' +
+      '</div>' +
+      '<div class="body-row">' +
+        '<div class="side">' +
+          '<div class="inputs">'+inputsHtml+'</div>' +
+          '<div class="result"><span class="r-label">S admisible</span><span class="r-value" id="r-'+m.id+'">–</span></div>' +
+          legendHtml +
+          '<div class="status" id="status-'+m.id+'"></div>' +
+        '</div>' +
+        '<div class="chart-col">' +
+          '<svg id="chart-'+m.id+'" viewBox="0 0 640 320" role="img" aria-label="Curva S-T '+m.title+'"></svg>' +
+        '</div>' +
+      '</div>';
+
+    panels.appendChild(card);
+    buildChart(m);
+  });
+
+  function selectTab(id){
+    MATERIALS.forEach(function(m){
+      var isActive = m.id === id;
+      document.getElementById('panel-' + m.id).hidden = !isActive;
+      var btn = document.getElementById('tabbtn-' + m.id);
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  }
+
+  function buildChart(m){
+    var svg = document.getElementById('chart-'+m.id);
+    var W = 640, H = 320;
+    var Mg = { l: 52, r: 18, t: 16, b: 38 };
+    var plotW = W - Mg.l - Mg.r;
+    var plotH = H - Mg.t - Mg.b;
+
+    var xMax = Math.ceil(m.tmax * 1.06 / 10) * 10;
+    var maxS = 0;
+    m.rows.forEach(function(r){
+      if (m.kind === 'single'){ maxS = Math.max(maxS, r.s); }
+      else { maxS = Math.max(maxS, r.s1, r.s2, r.s3); }
+    });
+    var yMax = Math.ceil(maxS * 1.2 / 20) * 20;
+    var xMin = 0, yMin = 0;
+
+    function sx(v){ return Mg.l + (v - xMin) / (xMax - xMin) * plotW; }
+    function sy(v){ return Mg.t + plotH - (v - yMin) / (yMax - yMin) * plotH; }
+
+    var yTicks = [];
+    for (var yt = 0; yt <= yMax + 1; yt += (yMax/4)){ yTicks.push(Math.round(yt)); }
+    var xTicks = [];
+    var xStep = xMax <= 300 ? 50 : 100;
+    for (var xt = 0; xt <= xMax; xt += xStep){ xTicks.push(xt); }
+
+    var series;
+    if (m.kind === 'single'){
+      series = [ { key:'s', cls:'c-s' } ];
+    } else {
+      series = [
+        { key:'s1', cls:'c-s1', label: m.classes[0].label },
+        { key:'s2', cls:'c-s2', label: m.classes[1].label },
+        { key:'s3', cls:'c-s3', label: m.classes[2].label }
+      ];
+      var legend = document.getElementById('legend-'+m.id);
+      legend.innerHTML = series.map(function(s){
+        return '<span class="lg"><span class="sw '+s.key+'"></span>'+s.label+'</span>';
+      }).join('') + '<span class="lg"><span class="sw dot"></span>Punto de diseño</span>';
+    }
+
+    function seriesPath(key){
+      var pts = m.rows.map(function(r){ return [sx(r.c), sy(r[key])]; });
+      return { d: 'M' + pts.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L'), pts: pts };
+    }
+
+    function render(){
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      yTicks.forEach(function(t){
+        var y = sy(t);
+        svg.appendChild(el('line', {class:'gridline', x1:Mg.l, x2:W-Mg.r, y1:y, y2:y}));
+        var lbl = el('text', {class:'tick-label', x:Mg.l-9, y:y+3.5, 'text-anchor':'end'});
+        lbl.textContent = t;
+        svg.appendChild(lbl);
+      });
+      xTicks.forEach(function(t){
+        var x = sx(t);
+        var lbl = el('text', {class:'tick-label', x:x, y:H-Mg.b+18, 'text-anchor':'middle'});
+        lbl.textContent = t;
+        svg.appendChild(lbl);
+      });
+      var xAxisLabel = el('text', {class:'axis-label', x:Mg.l+plotW/2, y:H-3, 'text-anchor':'middle'});
+      xAxisLabel.textContent = 'Temperatura de diseño (°C)';
+      svg.appendChild(xAxisLabel);
+      var yAxisLabel = el('text', {class:'axis-label', x:12, y:Mg.t+plotH/2, 'text-anchor':'middle',
+        transform:'rotate(-90 12 '+(Mg.t+plotH/2)+')'});
+      yAxisLabel.textContent = 'S (MPa)';
+      svg.appendChild(yAxisLabel);
+      svg.appendChild(el('line', {class:'baseline', x1:Mg.l, x2:W-Mg.r, y1:Mg.t+plotH, y2:Mg.t+plotH}));
+
+      var activeKey = m.activeKey;
+
+      series.forEach(function(s){
+        var path = seriesPath(s.key);
+        var isActive = m.kind === 'single' || s.key === activeKey;
+        var lineEl = el('path', {
+          d: path.d, class: 'curve-line ' + s.cls,
+          'stroke-width': isActive ? 2.75 : 1.9,
+          opacity: isActive ? 1 : 0.35
+        });
+        svg.appendChild(lineEl);
+      });
+      // (end-of-curve labels are skipped for the 3-curve B7 chart — the
+      // curves converge near 450-540 °C and stacked labels there would
+      // collide; the legend + hover tooltip carry series identity instead.)
+
+      // hover layer (nearest point on the active curve)
+      var activeCls = m.kind === 'single' ? 'c-s' : ('c-' + activeKey);
+      var hoverLine = el('line', {class:'hover-line', x1:0, x2:0, y1:Mg.t, y2:Mg.t+plotH});
+      var hoverDot = el('circle', {class:'hover-dot ' + activeCls, r:5, cx:0, cy:0});
+      var hoverBox = el('g', {class:'hover-box'});
+      var hoverRect = el('rect', {x:0, y:0, width:100, height:36, rx:5});
+      var hoverT = el('text', {class:'hb-t', x:8, y:15});
+      var hoverS = el('text', {class:'hb-s', x:8, y:29});
+      hoverBox.appendChild(hoverRect); hoverBox.appendChild(hoverT); hoverBox.appendChild(hoverS);
+      var capture = el('rect', {class:'hover-capture', x:Mg.l, y:Mg.t, width:plotW, height:plotH});
+      svg.appendChild(capture); svg.appendChild(hoverLine); svg.appendChild(hoverDot); svg.appendChild(hoverBox);
+
+      function onMove(evt){
+        var rect = svg.getBoundingClientRect();
+        var scaleX = W / rect.width;
+        var mx = (evt.clientX - rect.left) * scaleX;
+        var vx = xMin + (mx - Mg.l) / plotW * (xMax - xMin);
+        var nearest = m.rows[0], best = Infinity;
+        m.rows.forEach(function(r){
+          var diff = Math.abs(r.c - vx);
+          if (diff < best){ best = diff; nearest = r; }
+        });
+        var sVal = nearest[activeKey];
+        var px = sx(nearest.c), py = sy(sVal);
+        hoverLine.setAttribute('x1', px); hoverLine.setAttribute('x2', px);
+        hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py);
+        hoverLine.style.opacity = 1; hoverDot.style.opacity = 1; hoverBox.style.opacity = 1;
+        var boxX = Math.min(px + 9, W - Mg.r - 104);
+        var boxY = Math.max(py - 44, Mg.t + 2);
+        hoverBox.setAttribute('transform', 'translate('+boxX+','+boxY+')');
+        hoverT.textContent = nearest.c.toFixed(0) + ' °C';
+        hoverS.textContent = sVal.toFixed(1) + ' MPa';
+      }
+      function onLeave(){ hoverLine.style.opacity = 0; hoverDot.style.opacity = 0; hoverBox.style.opacity = 0; }
+      capture.addEventListener('mousemove', onMove);
+      capture.addEventListener('mouseleave', onLeave);
+      capture.addEventListener('touchmove', function(e){ onMove(e.touches[0]); }, {passive:true});
+      capture.addEventListener('touchend', onLeave);
+
+      // design point (driven by inputs)
+      var res = interpAt(m.rows, activeKey, m.currentT);
+      if (!m.dOutOfRange){
+        var dpx = sx(res.tc), dpy = sy(res.s);
+        svg.appendChild(el('line', {class:'design-line', x1:dpx, x2:dpx, y1:Mg.t+plotH, y2:dpy}));
+        svg.appendChild(el('line', {class:'design-line', x1:Mg.l, x2:dpx, y1:dpy, y2:dpy}));
+        svg.appendChild(el('circle', {class:'design-point', cx:dpx, cy:dpy, r:6.5}));
+      }
+
+      // readouts
+      var resultEl = document.getElementById('r-'+m.id);
+      resultEl.innerHTML = m.dOutOfRange ? '&ndash;' : (res.s.toFixed(1) + ' <small>MPa</small>');
+      var statusEl = document.getElementById('status-'+m.id);
+      var msgs = [];
+      var warn = false;
+      msgs.push('P = ' + m.currentP.toFixed(2) + ' MPa (referencia).');
+      if (res.below){
+        warn = true;
+        msgs.push('⚠ T por debajo del rango tabulado (mín. '+res.tmin.toFixed(0)+' °C) — se muestra el valor en el extremo inferior.');
+      } else if (res.above){
+        warn = true;
+        msgs.push('⚠ T por encima del rango tabulado — sin S tabulada por encima de '+res.tmax.toFixed(0)+' °C. No extrapolar.');
+      } else {
+        msgs.push('T dentro del rango tabulado (' + res.tmin.toFixed(0) + '–' + res.tmax.toFixed(0) + ' °C).');
+      }
+      if (m.kind === 'b7'){
+        if (m.dOutOfRange){
+          warn = true;
+          msgs.push('⚠ Diámetro fuera de rango tabulado (> 7 in / 177,8 mm) — sin curva definida.');
+        } else {
+          msgs.push('Clase activa: ' + m.classes[['s1','s2','s3'].indexOf(activeKey)].label + '.');
+        }
+      }
+      statusEl.className = warn ? 'status warn' : 'status';
+      statusEl.textContent = msgs.join('  ');
+    }
+
+    m.render = render;
+
+    var pInput = document.getElementById('p-'+m.id);
+    m.currentP = parseFloat(pInput.value);
+    pInput.addEventListener('input', function(){
+      m.currentP = parseFloat(pInput.value) || 0;
+      render();
+    });
+
+    var tInput = document.getElementById('t-'+m.id);
+    m.currentT = parseFloat(tInput.value);
+    tInput.addEventListener('input', function(){
+      m.currentT = parseFloat(tInput.value) || 0;
+      render();
+    });
+
+    if (m.kind === 'b7'){
+      var dInput = document.getElementById('d-'+m.id);
+      function updateClass(){
+        var dMm = parseFloat(dInput.value) || 0;
+        var dIn = dMm / 25.4;
+        var found = m.classes.find(function(c){ return dIn <= c.dmax; });
+        m.dOutOfRange = !found;
+        m.activeKey = found ? found.key : 's3';
+      }
+      updateClass();
+      dInput.addEventListener('input', function(){ updateClass(); render(); });
+    }
+
+    render();
+  }
+})();
+</script>
