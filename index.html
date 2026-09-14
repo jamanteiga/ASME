@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyecto</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --ink: #14191d;
+    --ink-mute: #5c6570;
+    --accent: #2a78d6;
+    --border: #e1e0d9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12141a;
+      --surface: #1a1d24;
+      --ink: #f2f2f0;
+      --ink-mute: #a3a9b3;
+      --accent: #3987e5;
+      --border: #2c2f38;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header .brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  nav a {
+    color: var(--ink-mute);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    font-size: 0.95rem;
+  }
+  nav a:hover { color: var(--accent); }
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+  .hero {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 0 0 0.75rem;
+  }
+  .hero p {
+    color: var(--ink-mute);
+    max-width: 40em;
+    margin: 0 auto 1.5rem;
+  }
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+  }
+  .card p {
+    color: var(--ink-mute);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--ink-mute);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Nombre del proyecto</div>
+  <nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" id="inicio">
+    <h1>Título principal</h1>
+    <p>Descripción breve del proyecto o servicio. Sustituye este texto por el contenido real.</p>
+    <a class="btn" href="#servicios">Ver más</a>
+  </section>
+
+  <section class="cards" id="servicios">
+    <div class="card">
+      <h3>Sección 1</h3>
+      <p>Texto de ejemplo para la primera tarjeta de contenido.</p>
+    </div>
+    <div class="card">
+      <h3>Sección 2</h3>
+      <p>Texto de ejemplo para la segunda tarjeta de contenido.</p>
+    </div>
+    <div class="card">
+      <h3>Sección 3</h3>
+      <p>Texto de ejemplo para la tercera tarjeta de contenido.</p>
+    </div>
+  </section>
+</main>
+
+<footer id="contacto">
+  © 2026 — Página generada como plantilla genérica.
+</footer>
+
+</body>
+</html>
