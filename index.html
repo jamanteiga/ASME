@@ -81,6 +81,11 @@
     font-size: 1.1rem;
     font-family: "IBM Plex Mono", monospace;
   }
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   nav button {
     background: transparent;
     border: 1px solid var(--border);
@@ -91,12 +96,20 @@
     padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
-    margin-left: 8px;
   }
   nav button:hover, nav button.active {
     background: var(--accent-wash);
     color: var(--accent);
     border-color: var(--accent);
+  }
+  nav button.btn-cerrar {
+    color: var(--point);
+    border-color: rgba(227, 73, 72, 0.3);
+  }
+  nav button.btn-cerrar:hover {
+    background: rgba(227, 73, 72, 0.12);
+    border-color: var(--point);
+    color: var(--point);
   }
 
   .eyebrow{
@@ -423,6 +436,7 @@
     <nav>
       <button id="btn-catalog" class="active" onclick="switchView('catalog')">Catálogo General</button>
       <button id="btn-calc" onclick="switchView('calc')">Calculadora Gráfica S-T</button>
+      <button class="btn-cerrar" onclick="window.close()">Cerrar</button>
     </nav>
   </header>
 
