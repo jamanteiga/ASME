@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proyecto</title>
+<title>Proyecto - Materiales ASME Sección II</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -58,7 +58,7 @@
   }
   .hero {
     text-align: center;
-    padding: 3rem 1rem;
+    padding: 3rem 1.0rem;
   }
   .hero h1 {
     font-size: clamp(1.8rem, 4vw, 2.6rem);
@@ -80,7 +80,7 @@
   }
   .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.25rem;
     margin-top: 2.5rem;
   }
@@ -92,12 +92,17 @@
   }
   .card h3 {
     margin: 0 0 0.5rem;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
+    color: var(--accent);
   }
-  .card p {
+  .card ul {
+    margin: 0.5rem 0 0 1.2rem;
+    padding: 0;
     color: var(--ink-mute);
     font-size: 0.92rem;
-    margin: 0;
+  }
+  .card li {
+    margin-bottom: 0.4rem;
   }
   footer {
     text-align: center;
@@ -111,39 +116,51 @@
 <body>
 
 <header>
-  <div class="brand">Nombre del proyecto</div>
+  <div class="brand">ASME BPVC Sección II-D</div>
   <nav>
     <a href="#inicio">Inicio</a>
-    <a href="#servicios">Servicios</a>
+    <a href="#materiales">Materiales</a>
     <a href="#contacto">Contacto</a>
   </nav>
 </header>
 
 <main>
   <section class="hero" id="inicio">
-    <h1>Título principal</h1>
-    <p>Descripción breve del proyecto o servicio. Sustituye este texto por el contenido real.</p>
-    <a class="btn" href="#servicios">Ver más</a>
+    <h1>Materiales por Categoría</h1>
+    <p>Listado de materiales de la Sección II clasificados por tipo de componente (Chapa, Tubo y Forja / Perno).</p>
+    <a class="btn" href="#materiales">Ver materiales</a>
   </section>
 
-  <section class="cards" id="servicios">
+  <section class="cards" id="materiales">
     <div class="card">
-      <h3>Sección 1</h3>
-      <p>Texto de ejemplo para la primera tarjeta de contenido.</p>
+      <h3>Plancha / Chapa</h3>
+      <p>Materiales en formato de placa o chapa para recipientes a presión:</p>
+      <ul>
+        <li><strong>SA-516 Grado 70</strong> (Tabla 1A, línea 37) - Acero al carbono, UNS K02700, P-No 1/2.</li>
+      </ul>
     </div>
+    
     <div class="card">
-      <h3>Sección 2</h3>
-      <p>Texto de ejemplo para la segunda tarjeta de contenido.</p>
+      <h3>Tubo</h3>
+      <p>Materiales tubulares para conducción y servicios a alta temperatura:</p>
+      <ul>
+        <li><strong>SA-106 Grado B</strong> (Tabla 1A, línea 15) - Acero al carbono sin costura, UNS K03006, P-No 1/1.</li>
+      </ul>
     </div>
+    
     <div class="card">
-      <h3>Sección 3</h3>
-      <p>Texto de ejemplo para la tercera tarjeta de contenido.</p>
+      <h3>Forja y Perno</h3>
+      <p>Componentes forjados y elementos de fijación:</p>
+      <ul>
+        <li><strong>SA-105 (Normalizado)</strong> (Tabla 1A, línea 23) - Acero al carbono forjado, UNS K03504, P-No 1/2.</li>
+        <li><strong>SA-193 Grado B7</strong> (Tabla 3, líneas 31/30/27) - Acero aleado Cr-Mo para pernos y espárragos, UNS G41400.</li>
+      </ul>
     </div>
   </section>
 </main>
 
 <footer id="contacto">
-  © 2026 — Página generada como plantilla genérica.
+  © 2026 — ASME Boiler &amp; Pressure Vessel Code, Sección II, Parte D.
 </footer>
 
 </body>
