@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASME BPVC Sección II-D — Catálogo y Calculadora de Puntos S-T</title>
+<title>ASME BPVC Sección II-D — Catálogo General Extendido y Calculadora S-T</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -58,7 +58,7 @@
     margin:0;
   }
   .wrap{
-    max-width:1080px;
+    max-width:1160px;
     margin:0 auto;
     padding-inline:20px;
     display:flex;
@@ -129,7 +129,7 @@
 
   .grid-materiales {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.25rem;
   }
   .cat-card {
@@ -205,6 +205,8 @@
     border:1px solid var(--border);
     border-radius:10px;
     padding:4px;
+    max-height: 140px;
+    overflow-y: auto;
   }
   .tab-btn{
     appearance:none;
@@ -212,13 +214,13 @@
     background:transparent;
     color:var(--ink-2);
     font-family:"IBM Plex Sans", sans-serif;
-    font-size:12.5px;
+    font-size:12px;
     font-weight:600;
-    padding:7px 10px;
+    padding:6px 10px;
     border-radius:7px;
     cursor:pointer;
     flex:1 1 auto;
-    min-width:110px;
+    min-width:130px;
     text-align: center;
   }
   .tab-btn:hover{ color:var(--ink); }
@@ -417,7 +419,7 @@
 
 <div class="wrap">
   <header>
-    <div class="brand">ASME BPVC Sección II-D</div>
+    <div class="brand">ASME BPVC Sección II-D — Catálogo Extendido</div>
     <nav>
       <button id="btn-catalog" class="active" onclick="switchView('catalog')">Catálogo General</button>
       <button id="btn-calc" onclick="switchView('calc')">Calculadora Gráfica S-T</button>
@@ -427,9 +429,9 @@
   <!-- VISTA 1: CATÁLOGO GENERAL POR CATEGORÍAS -->
   <div id="view-catalog" class="catalog-view">
     <div>
-      <div class="eyebrow">Sección II Parte D · Tablas 1A y 3</div>
-      <h1>Materiales para Recipientes a Presión y Tuberías</h1>
-      <div class="sub">Haz clic en cualquier material interactivo para abrir automáticamente su curva de tensión admisible (S-T) y evaluar puntos de diseño en unidades SI.</div>
+      <div class="eyebrow">Sección II Parte D · Tablas 1A, 1B y 3</div>
+      <h1>Catálogo Completo de Materiales ASME</h1>
+      <div class="sub">Haz clic en cualquier material interactivo para evaluar de inmediato su comportamiento en la calculadora de curvas S-T.</div>
     </div>
 
     <div class="grid-materiales">
@@ -437,16 +439,26 @@
       <!-- CHAPA -->
       <div class="cat-card">
         <h3>Plancha / Chapa <span class="badge">Plates</span></h3>
-        <div class="subcat-desc">Envolventes y tapas de equipos.</div>
+        <div class="subcat-desc">Envolventes y componentes estructurales.</div>
         
         <div class="material-item interactive" onclick="openMaterial('sa516')">
-          <div class="mat-title">SA-516 Grado 70 <span>P-No 1/2</span></div>
+          <div class="mat-title">SA-516 Grado 70 <span>P-No 1</span></div>
           <div class="mat-details">Tabla 1A · Acero al carbono (UNS K02700).</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa516_60')">
-          <div class="mat-title">SA-516 Grado 60 <span>P-No 1/1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono menor resistencia (UNS K02100).</div>
+          <div class="mat-title">SA-516 Grado 60 <span>P-No 1</span></div>
+          <div class="mat-details">Tabla 1A · Acero al carbono baja resistencia.</div>
+          <div class="action-hint">Ver curva S-T →</div>
+        </div>
+        <div class="material-item interactive" onclick="openMaterial('sa240_304')">
+          <div class="mat-title">SA-240 Gr. 304 / 304L <span>P-No 8</span></div>
+          <div class="mat-details">Tabla 1A · Inoxidable austenítico en placa.</div>
+          <div class="action-hint">Ver curva S-T →</div>
+        </div>
+        <div class="material-item interactive" onclick="openMaterial('sa240_316')">
+          <div class="mat-title">SA-240 Gr. 316 / 316L <span>P-No 8</span></div>
+          <div class="mat-details">Tabla 1A · Inoxidable con Molibdeno en placa.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
       </div>
@@ -454,21 +466,21 @@
       <!-- TUBO -->
       <div class="cat-card">
         <h3>Tubo <span class="badge">Pipes / Tubes</span></h3>
-        <div class="subcat-desc">Líneas de proceso y conducción.</div>
+        <div class="subcat-desc">Conducción de fluidos y calderas.</div>
         
         <div class="material-item interactive" onclick="openMaterial('sa106b')">
-          <div class="mat-title">SA-106 Grado B <span>P-No 1/1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono s/costura alta temp.</div>
+          <div class="mat-title">SA-106 Grado B <span>P-No 1</span></div>
+          <div class="mat-details">Tabla 1A · Acero al carbono s/costura.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa333_6')">
           <div class="mat-title">SA-333 Grado 6 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Servicio criogénico / baja temperatura.</div>
+          <div class="mat-details">Tabla 1A · Tubo criogénico al carbono.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa213_t11')">
-          <div class="mat-title">SA-213 T11 / T22 <span>P-No 4 / 5A</span></div>
-          <div class="mat-details">Tabla 1A · Aleados Cr-Mo para calderas.</div>
+          <div class="mat-title">SA-213 T11 / T22 <span>P-No 4/5A</span></div>
+          <div class="mat-details">Tabla 1A · Tubos aleados Cr-Mo para calderas.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
       </div>
@@ -476,11 +488,11 @@
       <!-- FORJA -->
       <div class="cat-card">
         <h3>Forja <span class="badge">Forgings</span></h3>
-        <div class="subcat-desc">Bloques y componentes macizos.</div>
+        <div class="subcat-desc">Componentes macizos y bloques.</div>
         
         <div class="material-item interactive" onclick="openMaterial('sa105')">
-          <div class="mat-title">SA-105 (Normalizado) <span>P-No 1/2</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono forjado (UNS K03504).</div>
+          <div class="mat-title">SA-105 (Normalizado) <span>P-No 1</span></div>
+          <div class="mat-details">Tabla 1A · Acero al carbono forjado.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa350_lf2')">
@@ -493,21 +505,21 @@
       <!-- BRIDAS -->
       <div class="cat-card">
         <h3>Bridas <span class="badge">Flanges</span></h3>
-        <div class="subcat-desc">Uniones desmontables.</div>
+        <div class="subcat-desc">Uniones desmontables y accesorios.</div>
         
         <div class="material-item interactive" onclick="openMaterial('sa182_f304')">
           <div class="mat-title">SA-182 Gr. F304 / F304L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Acero inoxidable austenítico.</div>
+          <div class="mat-details">Tabla 1A · Bridas de acero inoxidable.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa182_f316')">
           <div class="mat-title">SA-182 Gr. F316 / F316L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Inoxidable con Molibdeno.</div>
+          <div class="mat-details">Tabla 1A · Bridas inoxidables con Mo.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa182_f11')">
-          <div class="mat-title">SA-182 Gr. F11 / F22 <span>P-No 4 / 5A</span></div>
-          <div class="mat-details">Tabla 1A · Forjas aleadas Cr-Mo.</div>
+          <div class="mat-title">SA-182 Gr. F11 / F22 <span>P-No 4/5A</span></div>
+          <div class="mat-details">Tabla 1A · Bridas de acero aleado Cr-Mo.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
       </div>
@@ -519,7 +531,7 @@
         
         <div class="material-item interactive" onclick="openMaterial('sa234_wpb')">
           <div class="mat-title">SA-234 Grado WPB <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Accesorios de acero al carbono.</div>
+          <div class="mat-details">Tabla 1A · Accesorios al carbono.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa420_wpl6')">
@@ -532,16 +544,16 @@
       <!-- PERNOS -->
       <div class="cat-card">
         <h3>Pernos y Espárragos <span class="badge">Bolting</span></h3>
-        <div class="subcat-desc">Elementos de fijación estructural.</div>
+        <div class="subcat-desc">Elementos de fijación (Tabla 3).</div>
         
         <div class="material-item interactive" onclick="openMaterial('sa193b7')">
           <div class="mat-title">SA-193 Grado B7 <span>Tabla 3</span></div>
-          <div class="mat-details">Líneas 31 / 30 / 27 · Acero aleado Cr-Mo (UNS G41400).</div>
+          <div class="mat-details">Multiclase por diámetros · Cr-Mo alta resistencia.</div>
           <div class="action-hint">Ver curva S-T multiclase →</div>
         </div>
         <div class="material-item interactive" onclick="openMaterial('sa193_b8')">
           <div class="mat-title">SA-193 Grado B8 / B8M <span>Tabla 3</span></div>
-          <div class="mat-details">Espárragos de acero inoxidable austenítico.</div>
+          <div class="mat-details">Espárragos inoxidables austeníticos.</div>
           <div class="action-hint">Ver curva S-T →</div>
         </div>
       </div>
@@ -562,7 +574,7 @@
   </div>
 
   <footer>
-    Fuente: ASME BPVC Sección II, Parte D (Edición 2015). Interpolación lineal entre puntos tabulados. Verificar siempre contra la edición y adenda vigentes.
+    Fuente: ASME BPVC Sección II, Parte D. Interpolación lineal entre puntos tabulados. Verificar siempre contra la edición y adenda vigentes.
   </footer>
 </div>
 
@@ -602,6 +614,7 @@
       return e;
     }
 
+    // BASE DE DATOS EXTENDIDA DE MATERIALES ASME SECCIÓN II-D
     var MATERIALS = [
       {
         id: 'sa516', kind: 'single',
@@ -626,6 +639,26 @@
         ]
       },
       {
+        id: 'sa240_304', kind: 'single',
+        title: 'SA-240 Gr. 304 / 304L', ref: 'Tabla 1A',
+        chips: ['Inoxidable austenítico', 'P-No 8'],
+        defaultP: 1.50, defaultT: 150,
+        data: [
+          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:18.9},{f:400,s:17.5},
+          {f:500,s:16.4},{f:600,s:15.6},{f:700,s:15.0},{f:800,s:14.6}
+        ]
+      },
+      {
+        id: 'sa240_316', kind: 'single',
+        title: 'SA-240 Gr. 316 / 316L', ref: 'Tabla 1A',
+        chips: ['Inoxidable con Mo', 'P-No 8'],
+        defaultP: 1.50, defaultT: 150,
+        data: [
+          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:19.4},{f:400,s:18.4},
+          {f:500,s:17.5},{f:600,s:16.8},{f:700,s:16.3},{f:800,s:15.9}
+        ]
+      },
+      {
         id: 'sa106b', kind: 'single',
         title: 'SA-106 Grado B', ref: 'Tabla 1A, línea 15',
         chips: ['Acero al carbono · Tubo s/costura', 'UNS K03006', 'P-No 1/1'],
@@ -639,7 +672,7 @@
       {
         id: 'sa333_6', kind: 'single',
         title: 'SA-333 Grado 6', ref: 'Tabla 1A',
-        chips: ['Acero al carbono · Tubo criogénico', 'P-No 1'],
+        chips: ['Tubo criogénico', 'P-No 1'],
         defaultP: 1.00, defaultT: 100,
         data: [
           {f:-20,s:15.0},{f:100,s:15.0},{f:200,s:15.0},{f:300,s:15.0},
@@ -649,7 +682,7 @@
       {
         id: 'sa213_t11', kind: 'single',
         title: 'SA-213 T11 / T22', ref: 'Tabla 1A',
-        chips: ['Acero aleado Cr-Mo · Tubo calderas', 'P-No 4 / 5A'],
+        chips: ['Aleados Cr-Mo · Calderas', 'P-No 4/5A'],
         defaultP: 2.50, defaultT: 350,
         data: [
           {f:100,s:17.5},{f:200,s:17.5},{f:300,s:17.5},{f:400,s:17.5},
@@ -660,7 +693,7 @@
       {
         id: 'sa105', kind: 'single',
         title: 'SA-105 (Normalizado)', ref: 'Tabla 1A, línea 23',
-        chips: ['Acero al carbono · Forjado', 'UNS K03504', 'P-No 1/2'],
+        chips: ['Acero al carbono forjado', 'UNS K03504', 'P-No 1/2'],
         defaultP: 1.00, defaultT: 120,
         data: [
           {f:100,s:17.1},{f:150,s:17.1},{f:200,s:17.1},{f:250,s:17.1},{f:300,s:17.1},
@@ -670,7 +703,7 @@
       {
         id: 'sa350_lf2', kind: 'single',
         title: 'SA-350 LF2 Cl. 1', ref: 'Tabla 1A',
-        chips: ['Acero al carbono forjado · Baja temp.', 'P-No 1'],
+        chips: ['Forja baja temperatura', 'P-No 1'],
         defaultP: 1.20, defaultT: 100,
         data: [
           {f:-20,s:17.5},{f:100,s:17.5},{f:200,s:17.5},{f:300,s:17.5},
@@ -680,7 +713,7 @@
       {
         id: 'sa182_f304', kind: 'single',
         title: 'SA-182 Gr. F304 / F304L', ref: 'Tabla 1A',
-        chips: ['Acero inoxidable austenítico', 'P-No 8'],
+        chips: ['Bridas inox austenítico', 'P-No 8'],
         defaultP: 1.50, defaultT: 150,
         data: [
           {f:100,s:20.0},{f:200,s:20.0},{f:300,s:18.9},{f:400,s:17.5},
@@ -690,7 +723,7 @@
       {
         id: 'sa182_f316', kind: 'single',
         title: 'SA-182 Gr. F316 / F316L', ref: 'Tabla 1A',
-        chips: ['Inoxidable con Mo', 'P-No 8'],
+        chips: ['Bridas inox con Mo', 'P-No 8'],
         defaultP: 1.50, defaultT: 150,
         data: [
           {f:100,s:20.0},{f:200,s:20.0},{f:300,s:19.4},{f:400,s:18.4},
@@ -710,7 +743,7 @@
       {
         id: 'sa234_wpb', kind: 'single',
         title: 'SA-234 Grado WPB', ref: 'Tabla 1A',
-        chips: ['Accesorios de acero al carbono', 'P-No 1'],
+        chips: ['Accesorios acero al carbono', 'P-No 1'],
         defaultP: 1.20, defaultT: 150,
         data: [
           {f:100,s:15.7},{f:200,s:15.7},{f:300,s:15.7},{f:400,s:15.7},
