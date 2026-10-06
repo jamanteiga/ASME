@@ -23,6 +23,7 @@
     --grid:        #e3e7e5;
     --curve2:      #eb6834;
     --curve3:      #1baf7a;
+    --curve4:      #8a5cd6;
     --point:       #e34948;
     --warn:        #b5590b;
     --warn-bg:     #fbeee1;
@@ -43,6 +44,7 @@
       --grid:        #262c31;
       --curve2:      #d95926;
       --curve3:      #199e70;
+      --curve4:      #a07be0;
       --point:       #e66767;
       --warn:        #f0a959;
       --warn-bg:     rgba(240,169,89,0.12);
@@ -71,6 +73,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -84,6 +88,7 @@
   nav {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
   }
   nav button {
@@ -111,6 +116,19 @@
     border-color: var(--point);
     color: var(--point);
   }
+  .units {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .units button {
+    border: none;
+    border-radius: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+  }
+  .units button + button { border-left: 1px solid var(--border); }
 
   .eyebrow{
     font-family:"IBM Plex Mono", monospace;
@@ -131,19 +149,30 @@
     color:var(--ink-2);
     font-size:13.5px;
     line-height:1.5;
-    max-width:75ch;
+    max-width:80ch;
   }
 
-  /* Vistas */
-  .catalog-view { display: flex; flex-direction: column; gap: 16px; }
-  .calc-view { display: flex; flex-direction: column; gap: 16px; }
-  .calc-view[hidden] { display: none; }
-  .catalog-view[hidden] { display: none; }
+  .catalog-view, .calc-view { display: flex; flex-direction: column; gap: 16px; }
+  .calc-view[hidden], .catalog-view[hidden] { display: none; }
+
+  .search {
+    width: 100%;
+    max-width: 420px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .search:focus, select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .grid-materiales {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.25rem;
+    align-items: start;
   }
   .cat-card {
     background: var(--card);
@@ -154,6 +183,13 @@
     flex-direction: column;
     gap: 10px;
   }
+  .cat-card.wide { grid-column: 1 / -1; }
+  .cat-card.wide .items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+  .cat-card .items { display: flex; flex-direction: column; gap: 10px; }
   .cat-card h3 {
     margin: 0;
     font-size: 1.1rem;
@@ -161,10 +197,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
-  .cat-card .subcat-desc {
-    font-size: 0.84rem;
+  .cat-card .subcat-desc { font-size: 0.84rem; color: var(--ink-mute); }
+  .subhead {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
     color: var(--ink-mute);
+    margin-top: 6px;
+    grid-column: 1 / -1;
   }
   .material-item {
     background: var(--card-2);
@@ -175,13 +218,14 @@
     flex-direction: column;
     gap: 4px;
     transition: border-color 0.15s;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    width: 100%;
   }
-  .material-item.interactive {
-    cursor: pointer;
-  }
-  .material-item.interactive:hover {
-    border-color: var(--accent);
-  }
+  .material-item.interactive { cursor: pointer; }
+  .material-item.interactive:hover, .material-item.interactive:focus-visible { border-color: var(--accent); }
+  .material-item[hidden] { display: none; }
   .mat-title {
     font-weight: 700;
     font-size: 0.9rem;
@@ -189,17 +233,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
-  .mat-details {
-    font-size: 0.81rem;
-    color: var(--ink-mute);
-  }
-  .action-hint {
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 600;
-    margin-top: 2px;
-  }
+  .mat-title span { font-weight: 500; font-size: 0.74rem; color: var(--ink-mute); white-space: nowrap; }
+  .mat-details { font-size: 0.81rem; color: var(--ink-mute); }
+  .action-hint { font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-top: 2px; }
   .badge {
     font-size: 0.7rem;
     padding: 1px 6px;
@@ -208,39 +246,30 @@
     color: var(--accent);
     font-family: "IBM Plex Mono", monospace;
     font-weight: 600;
+    white-space: nowrap;
   }
+  .empty { font-size: 0.85rem; color: var(--ink-mute); }
 
-  .tabbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:4px;
-    background:var(--card-2);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:4px;
-    max-height: 140px;
-    overflow-y: auto;
+  .pickers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
   }
-  .tab-btn{
-    appearance:none;
-    border:none;
-    background:transparent;
-    color:var(--ink-2);
-    font-family:"IBM Plex Sans", sans-serif;
-    font-size:12px;
-    font-weight:600;
-    padding:6px 10px;
-    border-radius:7px;
-    cursor:pointer;
-    flex:1 1 auto;
-    min-width:130px;
-    text-align: center;
-  }
-  .tab-btn:hover{ color:var(--ink); }
-  .tab-btn.active{
-    background:var(--card);
-    color:var(--accent);
-    box-shadow:0 1px 2px var(--border);
+  .pickers .field { flex: 1 1 220px; }
+  select {
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 8px;
   }
 
   .card{
@@ -252,8 +281,6 @@
     flex-direction:column;
     gap:14px;
   }
-  .card[hidden]{ display:none; }
-
   .card-top-row {
     display: flex;
     justify-content: space-between;
@@ -272,10 +299,7 @@
     cursor: pointer;
     flex-shrink: 0;
   }
-  .back-btn:hover {
-    background: var(--accent-wash);
-    border-color: var(--accent);
-  }
+  .back-btn:hover { background: var(--accent-wash); border-color: var(--accent); }
 
   .card-eyebrow{
     font-family:"IBM Plex Mono", monospace;
@@ -284,10 +308,7 @@
     text-transform:uppercase;
     color:var(--ink-mute);
   }
-  .card-title{
-    font-size:20px;
-    font-weight:700;
-  }
+  .card-title{ font-size:20px; font-weight:700; }
   .idline{
     display:flex;
     flex-wrap:wrap;
@@ -304,23 +325,9 @@
     padding:2px 7px;
   }
 
-  .body-row{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-    align-items:flex-start;
-  }
-  .side{
-    flex:1 1 260px;
-    min-width:240px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .chart-col{
-    flex:2 1 400px;
-    min-width:280px;
-  }
+  .body-row{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .side{ flex:1 1 280px; min-width:240px; display:flex; flex-direction:column; gap:12px; }
+  .chart-col{ flex:2 1 400px; min-width:280px; }
 
   .inputs{
     display:flex;
@@ -332,11 +339,7 @@
     padding:12px;
   }
   .field{ display:flex; flex-direction:column; gap:4px; }
-  .field label{
-    font-size:10.5px;
-    color:var(--ink-mute);
-    font-family:"IBM Plex Mono", monospace;
-  }
+  .field label{ font-size:10.5px; color:var(--ink-mute); font-family:"IBM Plex Mono", monospace; }
   .field .in-row{ display:flex; align-items:center; gap:6px; }
   .field input[type=number]{
     width:100%;
@@ -349,7 +352,7 @@
     border-radius:6px;
     padding:6px 8px;
   }
-  .field .unit{ font-size:11.5px; color:var(--ink-mute); flex-shrink:0; }
+  .field .unit{ font-size:11.5px; color:var(--ink-mute); flex-shrink:0; min-width:28px; }
   .input-hint{ font-size:10px; color:var(--ink-mute); line-height:1.3; }
 
   .result{
@@ -361,29 +364,28 @@
     padding:10px 12px;
   }
   .result .r-label{ font-size:11px; color:var(--ink-2); font-family:"IBM Plex Mono", monospace; }
-  .result .r-value{
-    font-family:"IBM Plex Mono", monospace;
-    font-weight:700;
-    font-size:22px;
-    color:var(--point);
-  }
+  .result .r-value{ font-family:"IBM Plex Mono", monospace; font-weight:700; font-size:22px; color:var(--point); }
   .result .r-value small{ font-size:11px; font-weight:500; color:var(--ink-2); }
+  .r-alt{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--ink-mute); text-align:right; margin-top:-6px; }
 
   svg{ display:block; width:100%; height:auto; overflow:visible; }
   .axis-label{ fill:var(--ink-mute); font-size:10.5px; font-family:"IBM Plex Mono", monospace; }
   .tick-label{ fill:var(--ink-mute); font-size:10px; font-family:"IBM Plex Mono", monospace; }
   .gridline{ stroke:var(--grid); stroke-width:1; shape-rendering:crispEdges; }
   .baseline{ stroke:var(--hairline); stroke-width:1; }
+  .creep-line{ stroke:var(--ink-mute); stroke-width:1; stroke-dasharray:1 4; }
+  .creep-label{ fill:var(--ink-mute); font-size:9.5px; font-family:"IBM Plex Mono", monospace; }
 
   .curve-line{ fill:none; stroke-linejoin:round; stroke-linecap:round; }
-  .c-s , .c-s1{ stroke:var(--accent); }
+  .c-s1{ stroke:var(--accent); }
   .c-s2{ stroke:var(--curve2); }
   .c-s3{ stroke:var(--curve3); }
+  .c-s4{ stroke:var(--curve4); }
 
   .hover-capture{ fill:transparent; }
   .hover-line{ stroke:var(--ink-mute); stroke-width:1; opacity:0; }
   .hover-dot{ fill:var(--card); stroke-width:2.25; opacity:0; }
-  .hover-box{ opacity:0; }
+  .hover-box{ opacity:0; pointer-events:none; }
   .hover-box rect{ fill:var(--ink); }
   .hover-box text{ fill:var(--card); font-family:"IBM Plex Mono", monospace; }
   .hover-box .hb-t{ font-size:10.5px; font-weight:600; }
@@ -394,18 +396,19 @@
 
   .legend{
     display:flex;
-    flex-wrap:wrap;
-    gap:10px;
+    flex-direction:column;
+    gap:5px;
     font-family:"IBM Plex Mono", monospace;
     font-size:10.5px;
     color:var(--ink-2);
   }
-  .legend .lg{ display:flex; align-items:center; gap:4px; }
-  .legend .sw{ width:12px; height:3px; border-radius:2px; display:inline-block; }
+  .legend .lg{ display:flex; align-items:center; gap:6px; cursor:pointer; background:none; border:none; padding:0; font:inherit; color:inherit; text-align:left; }
+  .legend .lg.on{ color:var(--ink); font-weight:600; }
+  .legend .sw{ width:12px; height:3px; border-radius:2px; display:inline-block; flex-shrink:0; }
   .legend .sw.s1{ background:var(--accent); }
   .legend .sw.s2{ background:var(--curve2); }
   .legend .sw.s3{ background:var(--curve3); }
-  .legend .sw.dot{ width:7px; height:7px; border-radius:50%; background:var(--point); }
+  .legend .sw.s4{ background:var(--curve4); }
 
   .status{
     font-size:11.5px;
@@ -415,14 +418,23 @@
     background:var(--card-2);
     color:var(--ink-2);
     border:1px solid var(--border);
-    line-height:1.4;
+    line-height:1.45;
   }
   .status.warn{ background:var(--warn-bg); color:var(--warn); border-color:transparent; }
+  .notes{
+    font-size:11.5px;
+    color:var(--ink-2);
+    line-height:1.5;
+    border-top:1px solid var(--hairline);
+    padding-top:10px;
+  }
+  .notes b{ font-family:"IBM Plex Mono", monospace; font-weight:600; color:var(--ink); }
+  .notes ul{ margin:4px 0 0; padding-left:18px; }
 
   footer{
     font-size:11.5px;
     color:var(--ink-mute);
-    text-align:center;
+    line-height:1.6;
     padding-top:10px;
     border-top:1px solid var(--border);
   }
@@ -436,673 +448,498 @@
     <nav>
       <button id="btn-catalog" class="active" onclick="switchView('catalog')">Catálogo General</button>
       <button id="btn-calc" onclick="switchView('calc')">Calculadora Gráfica S-T</button>
+      <span class="units" role="group" aria-label="Sistema de unidades">
+        <button id="u-si" class="active" onclick="setUnits('si')">SI · °C / MPa</button>
+        <button id="u-us" onclick="setUnits('us')">US · °F / ksi</button>
+      </span>
       <button class="btn-cerrar" onclick="window.close()">Cerrar</button>
     </nav>
   </header>
 
-  <!-- VISTA 1: CATÁLOGO GENERAL POR CATEGORÍAS -->
+  <!-- VISTA 1: CATÁLOGO -->
   <div id="view-catalog" class="catalog-view">
     <div>
-      <div class="eyebrow">Sección II Parte D · Tablas 1A, 1B y 3</div>
+      <div class="eyebrow">Sección II Parte D · Tablas 1A, 1B y 3 · VIII-1 Tabla UCD-23</div>
       <h1>Catálogo Completo de Materiales ASME</h1>
-      <div class="sub">Haz clic en cualquier material interactivo para evaluar de inmediato su comportamiento en la calculadora de curvas S-T.</div>
+      <div class="sub">Materiales férreos y no férreos con su tensión máxima admisible S para Sección VIII División 1. Haz clic en un material para evaluarlo en la calculadora de curvas S-T.</div>
     </div>
-
-    <div class="grid-materiales">
-      
-      <!-- CHAPA -->
-      <div class="cat-card">
-        <h3>Plancha / Chapa <span class="badge">Plates</span></h3>
-        <div class="subcat-desc">Envolventes y componentes estructurales.</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa516')">
-          <div class="mat-title">SA-516 Grado 70 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono (UNS K02700).</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa516_60')">
-          <div class="mat-title">SA-516 Grado 60 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono baja resistencia.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa240_304')">
-          <div class="mat-title">SA-240 Gr. 304 / 304L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Inoxidable austenítico en placa.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa240_316')">
-          <div class="mat-title">SA-240 Gr. 316 / 316L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Inoxidable con Molibdeno en placa.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-      <!-- TUBO -->
-      <div class="cat-card">
-        <h3>Tubo <span class="badge">Pipes / Tubes</span></h3>
-        <div class="subcat-desc">Conducción de fluidos y calderas.</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa106b')">
-          <div class="mat-title">SA-106 Grado B <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono s/costura.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa333_6')">
-          <div class="mat-title">SA-333 Grado 6 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Tubo criogénico al carbono.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa213_t11')">
-          <div class="mat-title">SA-213 T11 / T22 <span>P-No 4/5A</span></div>
-          <div class="mat-details">Tabla 1A · Tubos aleados Cr-Mo para calderas.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-      <!-- FORJA -->
-      <div class="cat-card">
-        <h3>Forja <span class="badge">Forgings</span></h3>
-        <div class="subcat-desc">Componentes macizos y bloques.</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa105')">
-          <div class="mat-title">SA-105 (Normalizado) <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Acero al carbono forjado.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa350_lf2')">
-          <div class="mat-title">SA-350 LF2 Cl. 1 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Forja tenaz a baja temperatura.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-      <!-- BRIDAS -->
-      <div class="cat-card">
-        <h3>Bridas <span class="badge">Flanges</span></h3>
-        <div class="subcat-desc">Uniones desmontables y accesorios.</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa182_f304')">
-          <div class="mat-title">SA-182 Gr. F304 / F304L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Bridas de acero inoxidable.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa182_f316')">
-          <div class="mat-title">SA-182 Gr. F316 / F316L <span>P-No 8</span></div>
-          <div class="mat-details">Tabla 1A · Bridas inoxidables con Mo.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa182_f11')">
-          <div class="mat-title">SA-182 Gr. F11 / F22 <span>P-No 4/5A</span></div>
-          <div class="mat-details">Tabla 1A · Bridas de acero aleado Cr-Mo.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-      <!-- FITTINGS -->
-      <div class="cat-card">
-        <h3>Accesorios / Fittings <span class="badge">Fittings</span></h3>
-        <div class="subcat-desc">Codos, tes y reducciones.</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa234_wpb')">
-          <div class="mat-title">SA-234 Grado WPB <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Accesorios al carbono.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa420_wpl6')">
-          <div class="mat-title">SA-420 Grado WPL6 <span>P-No 1</span></div>
-          <div class="mat-details">Tabla 1A · Accesorios baja temperatura.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-      <!-- PERNOS -->
-      <div class="cat-card">
-        <h3>Pernos y Espárragos <span class="badge">Bolting</span></h3>
-        <div class="subcat-desc">Elementos de fijación (Tabla 3).</div>
-        
-        <div class="material-item interactive" onclick="openMaterial('sa193b7')">
-          <div class="mat-title">SA-193 Grado B7 <span>Tabla 3</span></div>
-          <div class="mat-details">Multiclase por diámetros · Cr-Mo alta resistencia.</div>
-          <div class="action-hint">Ver curva S-T multiclase →</div>
-        </div>
-        <div class="material-item interactive" onclick="openMaterial('sa193_b8')">
-          <div class="mat-title">SA-193 Grado B8 / B8M <span>Tabla 3</span></div>
-          <div class="mat-details">Espárragos inoxidables austeníticos.</div>
-          <div class="action-hint">Ver curva S-T →</div>
-        </div>
-      </div>
-
-    </div>
+    <input class="search" id="search" type="search" placeholder="Buscar: SA-312, 316L, C70600, titanio…" aria-label="Buscar material">
+    <div class="grid-materiales" id="catalog-grid"></div>
   </div>
 
-  <!-- VISTA 2: CALCULADORA GRÁFICA S-T -->
+  <!-- VISTA 2: CALCULADORA -->
   <div id="view-calc" class="calc-view" hidden>
     <div>
-      <div class="eyebrow">ASME BPVC Sección II-D · Tablas 1A / 3</div>
+      <div class="eyebrow">ASME BPVC Sección II-D · Tablas 1A / 1B / 3</div>
       <h1>Punto de diseño sobre la curva S&#8209;T</h1>
-      <div class="sub">Evalúa las condiciones de servicio en unidades SI (°C / MPa).</div>
+      <div class="sub" id="calc-sub"></div>
     </div>
 
-    <div class="tabbar" id="tabbar" role="tablist" aria-label="Material"></div>
-    <div id="panels"></div>
+    <div class="pickers">
+      <div class="field">
+        <label for="sel-cat">Categoría</label>
+        <select id="sel-cat"></select>
+      </div>
+      <div class="field">
+        <label for="sel-mat">Material</label>
+        <select id="sel-mat"></select>
+      </div>
+    </div>
+    <div class="card" id="panel"></div>
   </div>
 
   <footer>
-    Fuente: ASME BPVC Sección II, Parte D. Interpolación lineal entre puntos tabulados. Verificar siempre contra la edición y adenda vigentes.
+    Fuente: ASME BPVC Sección II, Parte D (Metric), edición 2015 — Tablas 1A, 1B y 3, columna de aplicabilidad VIII-1. SA-395: ASME VIII-1 (2017), Tabla UCD-23.
+    Los valores en MPa/°C son los tabulados; la interpolación entre temperaturas es lineal y se redondea según la Nota General (b) de las tablas.
+    Los valores en ksi/°F marcados «conv.» son conversión de la tabla métrica y pueden diferir en el último dígito de la II-D Customary.
+    La columna −30 a 40 °C no fija la MDMT (ver UCS-66 / UHA-51 / UNF-65). Verificar siempre contra la edición y adenda vigentes.
   </footer>
 </div>
 
 <script>
-  function switchView(view) {
-    var catalogView = document.getElementById('view-catalog');
-    var calcView = document.getElementById('view-calc');
-    var btnCat = document.getElementById('btn-catalog');
-    var btnCalc = document.getElementById('btn-calc');
+(function(){
+  'use strict';
+  var MATERIALS = [{"id":"sa516","cat":"plancha","t":"SA-516 Grado 70","d":"Acero al carbono (UNS K02700).","c":["Acero al carbono · Plancha","UNS K02700","P-No 1 Gr 2"],"tab":"Tabla 1A","v":[{"l":"Plancha","ref":"Tabla 1A · pág. 18 · línea 37","n":"G10, S1, T2","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,138.0],[300,136.0],[325,132.0],[350,128.0],[375,123.0],[400,101.0],[425,83.8],[450,67.1],[475,51.0],[500,33.6],[525,21.3],[550,12.9]],"tc":400}]},{"id":"sa516_60","cat":"plancha","t":"SA-516 Grado 60","d":"Acero al carbono (UNS K02100).","c":["Acero al carbono · Plancha","UNS K02100","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Plancha","ref":"Tabla 1A · pág. 14 · línea 2","n":"G10, S1, T2","tm":538,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,115.0],[325,112.0],[350,108.0],[375,104.0],[400,88.9],[425,75.3],[450,62.7],[475,45.5],[500,31.6],[525,21.9],[550,12.7]],"tc":400}]},{"id":"sa285c","cat":"plancha","t":"SA-285 Grado C","d":"Acero al carbono, resistencia baja-media.","c":["Acero al carbono · Plancha","UNS K02801","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Plancha","ref":"Tabla 1A · pág. 10 · línea 3","n":"G10, S1, T2","tm":482,"p":[[-30,108.0],[40,108.0],[65,108.0],[100,108.0],[125,108.0],[150,108.0],[200,108.0],[250,108.0],[300,107.0],[325,104.0],[350,101.0],[375,97.8],[400,89.1],[425,75.4],[450,62.6],[475,45.5],[500,31.6]],"tc":400}]},{"id":"sa387_11","cat":"plancha","t":"SA-387 Gr. 11","d":"1¼Cr-½Mo-Si, Clases 1 y 2.","c":["1¼Cr-½Mo-Si · Plancha","UNS K11789","P-No 4"],"tab":"Tabla 1A","v":[{"l":"Clase 2","ref":"Tabla 1A · pág. 38 · línea 15","n":"S4, T3","tm":649,"p":[[-30,148.0],[40,148.0],[65,148.0],[100,148.0],[125,148.0],[150,148.0],[200,148.0],[250,148.0],[300,148.0],[325,148.0],[350,148.0],[375,148.0],[400,148.0],[425,148.0],[450,143.0],[475,107.0],[500,72.9],[525,52.3],[550,36.3],[575,25.2],[600,17.6],[625,12.4],[650,8.08]],"tc":455},{"l":"Clase 1","ref":"Tabla 1A · pág. 38 · línea 9","n":"S4, T4","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,118.0],[325,118.0],[350,118.0],[375,118.0],[400,118.0],[425,116.0],[450,114.0],[475,101.0],[500,74.7],[525,51.7],[550,36.5],[575,25.2],[600,17.6],[625,12.4],[650,8.08]],"tc":480}]},{"id":"sa387_22","cat":"plancha","t":"SA-387 Gr. 22","d":"2¼Cr-1Mo, Clases 1 y 2.","c":["2¼Cr-1Mo · Plancha","UNS K21590","P-No 5A"],"tab":"Tabla 1A","v":[{"l":"Clase 2","ref":"Tabla 1A · pág. 38 · línea 42","n":"S4, T4, W7, W9","tm":649,"p":[[-30,148.0],[40,148.0],[65,148.0],[100,147.0],[125,146.0],[150,144.0],[200,142.0],[250,141.0],[300,141.0],[325,140.0],[350,139.0],[375,138.0],[400,136.0],[425,133.0],[450,130.0],[475,116.0],[500,89.4],[525,64.3],[550,44.9],[575,30.1],[600,19.7],[625,12.9],[650,8.06]],"tc":480},{"l":"Clase 1","ref":"Tabla 1A · pág. 38 · línea 29","n":"S4, T4, W7, W9","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,114.0],[300,114.0],[325,114.0],[350,114.0],[375,114.0],[400,114.0],[425,114.0],[450,114.0],[475,100.0],[500,80.9],[525,64.0],[550,47.7],[575,34.5],[600,23.5],[625,15.5],[650,9.39]],"tc":480}]},{"id":"sa240_304","cat":"plancha","t":"SA-240 Tipo 304","d":"Inoxidable austenítico 18Cr-8Ni.","c":["18Cr-8Ni · Plancha","UNS S30400","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 43","n":"G5, G12, H1, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,137.0],[125,134.0],[150,130.0],[200,126.0],[250,122.0],[300,116.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.3],[525,98.0],[550,93.3],[575,79.6],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":565},{"l":"S básica","ref":"Tabla 1A · pág. 86 · línea 42","n":"G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,89.9],[300,85.9],[325,84.1],[350,82.2],[375,80.5],[400,79.2],[425,77.3],[450,76.0],[475,74.8],[500,73.6],[525,72.4],[550,70.8],[575,68.9],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":595}]},{"id":"sa240_304L","cat":"plancha","t":"SA-240 Tipo 304L","d":"Inoxidable austenítico bajo carbono.","c":["18Cr-8Ni · Plancha","UNS S30403","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 82 · línea 38","n":"G5, G21, T4","tm":649,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,110.0],[250,103.0],[300,97.7],[325,95.7],[350,94.1],[375,92.6],[400,91.3],[425,90.0],[450,88.7],[475,86.6],[500,72.5],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":480},{"l":"S básica","ref":"Tabla 1A · pág. 82 · línea 39","n":"G21, T5","tm":649,"p":[[-30,115.0],[40,115.0],[65,105.0],[100,97.0],[125,92.3],[150,88.1],[200,81.2],[250,76.0],[300,72.3],[325,70.9],[350,69.7],[375,68.6],[400,67.6],[425,66.7],[450,65.7],[475,64.6],[500,63.4],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":510}]},{"id":"sa240_316","cat":"plancha","t":"SA-240 Tipo 316","d":"Inoxidable 16Cr-12Ni-2Mo.","c":["16Cr-12Ni-2Mo · Plancha","UNS S31600","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 74 · línea 9","n":"G5, G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,134.0],[250,126.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,108.0],[500,107.0],[525,106.0],[550,105.0],[575,99.8],[600,80.3],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":595},{"l":"S básica","ref":"Tabla 1A · pág. 74 · línea 10","n":"G12, T9","tm":816,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,118.0],[125,112.0],[150,107.0],[200,99.2],[250,92.8],[300,88.1],[325,86.1],[350,84.1],[375,82.9],[400,82.0],[425,81.4],[450,80.6],[475,79.8],[500,79.2],[525,78.7],[550,77.8],[575,77.1],[600,75.0],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":620}]},{"id":"sa240_316L","cat":"plancha","t":"SA-240 Tipo 316L","d":"Inoxidable con Mo, bajo carbono.","c":["16Cr-12Ni-2Mo · Plancha","UNS S31603","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 16","n":"G5, G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,109.0],[250,103.0],[300,98.0],[325,95.7],[350,94.1],[375,92.8],[400,90.9],[425,89.0],[450,87.8],[475,86.6]]},{"l":"S básica","ref":"Tabla 1A · pág. 70 · línea 17","n":"G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,106.0],[100,96.3],[125,91.3],[150,87.4],[200,81.2],[250,76.0],[300,72.5],[325,71.2],[350,70.0],[375,68.8],[400,67.5],[425,66.3],[450,65.0],[475,63.8]]}]},{"id":"sa240_2205","cat":"plancha","t":"SA-240 S31803 (dúplex)","d":"Dúplex 22Cr-5Ni-3Mo-N.","c":["22Cr-5Ni-3Mo-N · Plancha","UNS S31803","P-No 10H"],"tab":"Tabla 1A","v":[{"l":"Plancha","ref":"Tabla 1A · pág. 126 · línea 21","n":"G19","tm":316,"p":[[-30,177.0],[40,177.0],[65,177.0],[100,177.0],[125,174.0],[150,171.0],[200,165.0],[250,161.0],[300,160.0],[325,159.0]]}]},{"id":"sa106b","cat":"tubo","t":"SA-106 Grado B","d":"Acero al carbono sin costura.","c":["Acero al carbono · Tubo s/costura","UNS K03006","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 14 · línea 15","n":"G10, S1, T1","tm":538,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,118.0],[325,118.0],[350,117.0],[375,105.0],[400,88.9],[425,75.3],[450,62.7],[475,45.5],[500,31.6],[525,21.9],[550,12.7]],"tc":370}]},{"id":"sa333_6","cat":"tubo","t":"SA-333 Grado 6","d":"Tubo al carbono para baja temperatura.","c":["Acero al carbono · Tubo","UNS K03006","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Sin costura y soldado","ref":"Tabla 1A · pág. 14 · línea 18","n":"G10, T1, W12, W13, W14","tm":538,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,118.0],[325,118.0],[350,117.0],[375,105.0],[400,88.9],[425,75.3],[450,62.7],[475,45.5],[500,31.6],[525,21.9],[550,12.7]],"tc":370}]},{"id":"sa213_t11","cat":"tubo","t":"SA-213 T11","d":"Tubo 1¼Cr-½Mo-Si para calderas e intercambiadores.","c":["1¼Cr-½Mo-Si · Tubo s/costura","UNS K11597","P-No 4"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 38 · línea 2","n":"S4, T5","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,116.0],[250,112.0],[300,109.0],[325,108.0],[350,106.0],[375,104.0],[400,102.0],[425,99.5],[450,96.9],[475,94.7],[500,76.7],[525,51.0],[550,36.7],[575,25.1],[600,17.6],[625,12.4],[650,8.08]],"tc":510}]},{"id":"sa213_t22","cat":"tubo","t":"SA-213 T22","d":"Tubo 2¼Cr-1Mo para calderas e intercambiadores.","c":["2¼Cr-1Mo · Tubo s/costura","UNS K21590","P-No 5A"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 38 · línea 22","n":"S4, T4, W7, W9","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,114.0],[300,114.0],[325,114.0],[350,114.0],[375,114.0],[400,114.0],[425,114.0],[450,114.0],[475,100.0],[500,80.9],[525,64.0],[550,47.7],[575,34.5],[600,23.5],[625,15.5],[650,9.39]],"tc":480}]},{"id":"sa335_p11","cat":"tubo","t":"SA-335 P11","d":"Tubería 1¼Cr-½Mo-Si sin costura.","c":["1¼Cr-½Mo-Si · Tubería s/costura","UNS K11597","P-No 4"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 38 · línea 6","n":"S4, T5","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,116.0],[250,112.0],[300,109.0],[325,108.0],[350,106.0],[375,104.0],[400,102.0],[425,99.5],[450,96.9],[475,94.7],[500,76.7],[525,51.0],[550,36.7],[575,25.1],[600,17.6],[625,12.4],[650,8.08]],"tc":510}]},{"id":"sa335_p22","cat":"tubo","t":"SA-335 P22","d":"Tubería 2¼Cr-1Mo sin costura.","c":["2¼Cr-1Mo · Tubería s/costura","UNS K21590","P-No 5A"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 38 · línea 26","n":"S4, T4, W7, W9","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,114.0],[300,114.0],[325,114.0],[350,114.0],[375,114.0],[400,114.0],[425,114.0],[450,114.0],[475,100.0],[500,80.9],[525,64.0],[550,47.7],[575,34.5],[600,23.5],[625,15.5],[650,9.39]],"tc":480}]},{"id":"sa335_p5","cat":"tubo","t":"SA-335 P5","d":"Tubería 5Cr-½Mo sin costura.","c":["5Cr-½Mo · Tubería s/costura","UNS K41545","P-No 5B"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 42 · línea 33","n":"T4","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,113.0],[300,112.0],[325,111.0],[350,109.0],[375,107.0],[400,104.0],[425,100.0],[450,96.1],[475,81.4],[500,61.7],[525,46.4],[550,34.7],[575,25.8],[600,18.0],[625,11.5],[650,6.68]],"tc":480}]},{"id":"sa335_p9","cat":"tubo","t":"SA-335 P9","d":"Tubería 9Cr-1Mo sin costura.","c":["9Cr-1Mo · Tubería s/costura","UNS K90941","P-No 5B"],"tab":"Tabla 1A","v":[{"l":"Sin costura","ref":"Tabla 1A · pág. 46 · línea 7","n":"T5","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,113.0],[300,112.0],[325,111.0],[350,109.0],[375,107.0],[400,104.0],[425,100.0],[450,95.8],[475,91.8],[500,80.3],[525,61.0],[550,42.9],[575,30.0],[600,20.6],[625,14.4],[650,10.2]],"tc":510}]},{"id":"sa335_p91","cat":"tubo","t":"SA-335 P91","d":"Tubería 9Cr-1Mo-V sin costura.","c":["9Cr-1Mo-V · Tubería s/costura","UNS K90901","P-No 15E"],"tab":"Tabla 1A","v":[{"l":"t ≤ 75 mm","ref":"Tabla 1A · pág. 46 · línea 19","n":"T7","tm":649,"p":[[-30,168.0],[40,168.0],[65,168.0],[100,168.0],[125,168.0],[150,168.0],[200,167.0],[250,166.0],[300,164.0],[325,163.0],[350,161.0],[375,157.0],[400,153.0],[425,147.0],[450,141.0],[475,134.0],[500,126.0],[525,117.0],[550,107.0],[575,88.5],[600,65.0],[625,45.5],[650,28.9]],"tc":565},{"l":"t > 75 mm","ref":"Tabla 1A · pág. 46 · línea 20","n":"T7","tm":649,"p":[[-30,168.0],[40,168.0],[65,168.0],[100,168.0],[125,168.0],[150,168.0],[200,167.0],[250,166.0],[300,164.0],[325,163.0],[350,161.0],[375,157.0],[400,153.0],[425,147.0],[450,141.0],[475,134.0],[500,126.0],[525,118.0],[550,103.0],[575,80.6],[600,61.6],[625,45.7],[650,28.9]],"tc":565}]},{"id":"sa312_304","cat":"tubo","t":"SA-312 TP304","d":"Tubería inoxidable 18Cr-8Ni.","c":["18Cr-8Ni · Tubería","UNS S30400","P-No 8"],"tab":"Tabla 1A","v":[{"l":"S/costura y soldada · alta S (nota G5)","ref":"Tabla 1A · pág. 90 · línea 9","n":"G5, G12, T7, W12, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,137.0],[125,134.0],[150,130.0],[200,126.0],[250,122.0],[300,116.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.3],[525,98.0],[550,93.3],[575,79.6],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":565},{"l":"S/costura y soldada · S básica","ref":"Tabla 1A · pág. 90 · línea 10","n":"G12, T8, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,89.9],[300,85.9],[325,84.1],[350,82.2],[375,80.5],[400,79.2],[425,77.3],[450,76.0],[475,74.8],[500,73.6],[525,72.4],[550,70.8],[575,68.9],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":595},{"l":"Soldada (0,85 incl.) · alta S (nota G5)","ref":"Tabla 1A · pág. 90 · línea 11","n":"G3, G5, G12, G24, T7","tm":816,"p":[[-30,117.0],[40,117.0],[65,117.0],[100,117.0],[125,114.0],[150,111.0],[200,107.0],[250,103.0],[300,98.5],[325,96.5],[350,94.7],[375,92.8],[400,90.9],[425,89.1],[450,87.1],[475,85.9],[500,84.0],[525,83.2],[550,79.0],[575,67.3],[600,55.4],[625,44.1],[650,35.5],[675,28.0],[700,22.2],[725,18.2],[750,15.0],[775,12.3],[800,9.83],[825,7.33]],"tc":565},{"l":"Soldada (0,85 incl.) · S básica","ref":"Tabla 1A · pág. 90 · línea 12","n":"G3, G12, G24, T8","tm":816,"p":[[-30,117.0],[40,117.0],[65,107.0],[100,96.2],[125,91.2],[150,87.4],[200,81.1],[250,76.6],[300,72.7],[325,71.2],[350,70.0],[375,68.8],[400,67.5],[425,66.3],[450,65.0],[475,63.8],[500,62.6],[525,61.3],[550,60.1],[575,58.6],[600,55.4],[625,44.1],[650,35.5],[675,28.0],[700,22.2],[725,18.2],[750,15.0],[775,12.3],[800,9.83],[825,7.33]],"tc":595}]},{"id":"sa312_304L","cat":"tubo","t":"SA-312 TP304L","d":"Tubería inoxidable 18Cr-8Ni bajo carbono.","c":["18Cr-8Ni · Tubería","UNS S30403","P-No 8"],"tab":"Tabla 1A","v":[{"l":"S/costura y soldada · alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 1","n":"G5, G21, T4, W12, W14","tm":649,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,110.0],[250,103.0],[300,97.7],[325,95.7],[350,94.1],[375,92.6],[400,91.3],[425,90.0],[450,88.7],[475,86.6],[500,72.5],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":480},{"l":"Sin costura · S básica","ref":"Tabla 1A · pág. 86 · línea 2","n":"G21, T5","tm":649,"p":[[-30,115.0],[40,115.0],[65,105.0],[100,97.0],[125,92.3],[150,88.1],[200,81.2],[250,76.0],[300,72.3],[325,70.9],[350,69.7],[375,68.6],[400,67.6],[425,66.7],[450,65.7],[475,64.6],[500,63.4],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":510},{"l":"Soldada (0,85 incl.) · alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 3","n":"G5, G21, G24, T4","tm":649,"p":[[-30,97.8],[40,97.8],[65,97.8],[100,97.8],[125,97.8],[150,97.8],[200,93.2],[250,87.2],[300,83.0],[325,81.4],[350,80.0],[375,78.7],[400,77.6],[425,76.5],[450,75.4],[475,73.6],[500,61.6],[525,51.2],[550,42.1],[575,34.3],[600,28.0],[625,22.7],[650,18.7]],"tc":480},{"l":"Soldada (0,85 incl.) · S básica","ref":"Tabla 1A · pág. 86 · línea 4","n":"G21, G24, T5","tm":649,"p":[[-30,97.8],[40,97.8],[65,88.9],[100,82.5],[125,78.4],[150,74.9],[200,69.0],[250,64.6],[300,61.5],[325,60.3],[350,59.2],[375,58.3],[400,57.5],[425,56.7],[450,55.8],[475,54.9],[500,53.9],[525,51.2],[550,42.1],[575,34.3],[600,28.0],[625,22.7],[650,18.7]],"tc":510}]},{"id":"sa312_316","cat":"tubo","t":"SA-312 TP316","d":"Tubería inoxidable 16Cr-12Ni-2Mo.","c":["16Cr-12Ni-2Mo · Tubería","UNS S31600","P-No 8"],"tab":"Tabla 1A","v":[{"l":"S/costura y soldada · alta S (nota G5)","ref":"Tabla 1A · pág. 74 · línea 15","n":"G5, G12, T8, W12, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,134.0],[250,126.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,108.0],[500,107.0],[525,106.0],[550,105.0],[575,99.8],[600,80.3],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":595},{"l":"S/costura y soldada · S básica","ref":"Tabla 1A · pág. 74 · línea 16","n":"G12, T9, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,118.0],[125,112.0],[150,107.0],[200,99.2],[250,92.8],[300,88.1],[325,86.1],[350,84.1],[375,82.9],[400,82.0],[425,81.4],[450,80.6],[475,79.8],[500,79.2],[525,78.7],[550,77.8],[575,77.1],[600,75.0],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":620},{"l":"Soldada (0,85 incl.) · alta S (nota G5)","ref":"Tabla 1A · pág. 74 · línea 17","n":"G3, G5, G12, G24, T7","tm":816,"p":[[-30,117.0],[40,117.0],[65,117.0],[100,117.0],[125,117.0],[150,117.0],[200,114.0],[250,107.0],[300,101.0],[325,99.0],[350,96.8],[375,95.7],[400,94.4],[425,93.1],[450,92.5],[475,91.4],[500,90.5],[525,89.9],[550,89.3],[575,85.3],[600,68.1],[625,55.6],[650,42.9],[675,33.0],[700,25.3],[725,19.4],[750,14.7],[775,11.3],[800,8.9],[825,6.77]],"tc":565},{"l":"Soldada (0,85 incl.) · S básica","ref":"Tabla 1A · pág. 74 · línea 18","n":"G3, G12, G24, T9","tm":816,"p":[[-30,117.0],[40,117.0],[65,109.0],[100,99.8],[125,94.9],[150,90.8],[200,84.0],[250,78.8],[300,74.7],[325,73.3],[350,72.1],[375,70.8],[400,69.6],[425,69.0],[450,68.4],[475,67.7],[500,67.1],[525,66.5],[550,65.9],[575,65.3],[600,64.0],[625,55.6],[650,42.9],[675,33.0],[700,25.3],[725,19.4],[750,14.7],[775,11.3],[800,8.9],[825,6.77]],"tc":620}]},{"id":"sa312_316L","cat":"tubo","t":"SA-312 TP316L","d":"Tubería inoxidable con Mo, bajo carbono.","c":["16Cr-12Ni-2Mo · Tubería","UNS S31603","P-No 8"],"tab":"Tabla 1A","v":[{"l":"S/costura y soldada · alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 21","n":"G5, G21, W12, W14","tm":454,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,109.0],[250,103.0],[300,98.0],[325,95.7],[350,94.1],[375,92.8],[400,90.9],[425,89.0],[450,87.8],[475,86.6]]},{"l":"Sin costura · S básica","ref":"Tabla 1A · pág. 70 · línea 22","n":"G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,106.0],[100,96.3],[125,91.3],[150,87.4],[200,81.2],[250,76.0],[300,72.5],[325,71.2],[350,70.0],[375,68.8],[400,67.5],[425,66.3],[450,65.0],[475,63.8]]},{"l":"Soldada (0,85 incl.) · alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 23","n":"G5, G21, G24","tm":454,"p":[[-30,97.9],[40,97.9],[65,97.9],[100,97.9],[125,97.9],[150,97.9],[200,93.0],[250,87.2],[300,82.9],[325,81.6],[350,80.2],[375,78.4],[400,77.2],[425,75.9],[450,74.7],[475,73.4]]},{"l":"Soldada (0,85 incl.) · S básica","ref":"Tabla 1A · pág. 70 · línea 24","n":"G21, G24","tm":454,"p":[[-30,97.9],[40,97.9],[65,90.3],[100,82.1],[125,77.8],[150,74.3],[200,68.7],[250,64.8],[300,61.4],[325,60.4],[350,59.7],[375,58.4],[400,57.2],[425,55.9],[450,55.2],[475,54.7]]}]},{"id":"sa312_321","cat":"tubo","t":"SA-312 TP321","d":"Tubería inoxidable estabilizada con Ti (espesor ≤ 10 mm).","c":["18Cr-10Ni-Ti · Tubería","UNS S32100","P-No 8"],"tab":"Tabla 1A","v":[{"l":"Sin costura · alta S (nota G5)","ref":"Tabla 1A · pág. 110 · línea 14","n":"G5, G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,135.0],[150,132.0],[200,129.0],[250,129.0],[300,127.0],[325,125.0],[350,123.0],[375,120.0],[400,119.0],[425,117.0],[450,115.0],[475,114.0],[500,113.0],[525,112.0],[550,94.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565},{"l":"Sin costura · S básica","ref":"Tabla 1A · pág. 110 · línea 15","n":"G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,130.0],[100,123.0],[125,118.0],[150,114.0],[200,106.0],[250,99.7],[300,94.5],[325,92.3],[350,90.7],[375,89.4],[400,87.5],[425,86.9],[450,85.7],[475,85.0],[500,83.9],[525,83.0],[550,77.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565},{"l":"Soldada · alta S (nota G5)","ref":"Tabla 1A · pág. 110 · línea 16","n":"G5, G12, T7, W12, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,135.0],[150,132.0],[200,129.0],[250,129.0],[300,127.0],[325,125.0],[350,123.0],[375,120.0],[400,119.0],[425,117.0],[450,115.0],[475,114.0],[500,113.0],[525,112.0],[550,94.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565},{"l":"Soldada · S básica","ref":"Tabla 1A · pág. 110 · línea 17","n":"T7, W13, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,130.0],[100,123.0],[125,118.0],[150,114.0],[200,106.0],[250,99.7],[300,94.5],[325,92.3],[350,90.7],[375,89.4],[400,87.5],[425,86.9],[450,85.7],[475,85.0],[500,83.9],[525,83.0],[550,77.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565}]},{"id":"sa105","cat":"forja","t":"SA-105","d":"Acero al carbono forjado.","c":["Acero al carbono · Forja","UNS K03504","P-No 1 Gr 2"],"tab":"Tabla 1A","v":[{"l":"Forja","ref":"Tabla 1A · pág. 18 · línea 23","n":"G10, S1, T2","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,136.0],[300,129.0],[325,125.0],[350,122.0],[375,117.0],[400,101.0],[425,83.9],[450,67.0],[475,51.1],[500,33.6],[525,21.3],[550,12.9]],"tc":400}]},{"id":"sa350_lf2","cat":"forja","t":"SA-350 LF2","d":"Forja al carbono para baja temperatura (Cl. 1 y 2).","c":["Acero al carbono · Forja","UNS K03011","P-No 1 Gr 2"],"tab":"Tabla 1A","v":[{"l":"Clase 1","ref":"Tabla 1A · pág. 18 · línea 28","n":"G10, T2","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,136.0],[300,129.0],[325,125.0],[350,122.0],[375,117.0],[400,101.0],[425,83.9],[450,67.0],[475,51.1],[500,33.6],[525,21.3],[550,12.9]],"tc":400},{"l":"Clase 2","ref":"Tabla 1A · pág. 18 · línea 29","n":"G10, T2","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,136.0],[300,129.0],[325,125.0],[350,122.0],[375,117.0],[400,101.0],[425,83.9],[450,67.0],[475,51.1],[500,33.6],[525,21.3],[550,12.9]],"tc":400}]},{"id":"sa182_f11","cat":"forja","t":"SA-182 F11","d":"Forja 1¼Cr-½Mo-Si, Clases 1 y 2.","c":["1¼Cr-½Mo-Si · Forja","P-No 4"],"tab":"Tabla 1A","v":[{"l":"Clase 2 (K11572)","ref":"Tabla 1A · pág. 38 · línea 12","n":"S4, T4","tm":649,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,136.0],[425,133.0],[450,130.0],[475,105.0],[500,73.3],[525,52.1],[550,36.4],[575,25.2],[600,17.6],[625,12.4],[650,8.08]],"tc":480},{"l":"Clase 1 (K11597)","ref":"Tabla 1A · pág. 38 · línea 1","n":"S4, T5","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,116.0],[250,112.0],[300,109.0],[325,108.0],[350,106.0],[375,104.0],[400,102.0],[425,99.5],[450,96.9],[475,94.7],[500,76.7],[525,51.0],[550,36.7],[575,25.1],[600,17.6],[625,12.4],[650,8.08]],"tc":510}]},{"id":"sa182_f22","cat":"forja","t":"SA-182 F22","d":"Forja 2¼Cr-1Mo, Clases 1 y 3.","c":["2¼Cr-1Mo · Forja","UNS K21590","P-No 5A"],"tab":"Tabla 1A","v":[{"l":"Clase 3","ref":"Tabla 1A · pág. 38 · línea 40","n":"S4, T4, W7, W9","tm":649,"p":[[-30,148.0],[40,148.0],[65,148.0],[100,147.0],[125,146.0],[150,144.0],[200,142.0],[250,141.0],[300,141.0],[325,140.0],[350,139.0],[375,138.0],[400,136.0],[425,133.0],[450,130.0],[475,116.0],[500,89.4],[525,64.3],[550,44.9],[575,30.1],[600,19.7],[625,12.9],[650,8.06]],"tc":480},{"l":"Clase 1","ref":"Tabla 1A · pág. 38 · línea 21","n":"S4, T4, W7, W9","tm":649,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,116.0],[150,114.0],[200,114.0],[250,114.0],[300,114.0],[325,114.0],[350,114.0],[375,114.0],[400,114.0],[425,114.0],[450,114.0],[475,100.0],[500,80.9],[525,64.0],[550,47.7],[575,34.5],[600,23.5],[625,15.5],[650,9.39]],"tc":480}]},{"id":"sa182_f5","cat":"forja","t":"SA-182 F5","d":"Forja 5Cr-½Mo.","c":["5Cr-½Mo · Forja","UNS K41545","P-No 5B"],"tab":"Tabla 1A","v":[{"l":"Forja","ref":"Tabla 1A · pág. 42 · línea 38","n":"T3","tm":649,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,136.0],[150,134.0],[200,132.0],[250,132.0],[300,131.0],[325,130.0],[350,128.0],[375,125.0],[400,121.0],[425,118.0],[450,102.0],[475,81.1],[500,61.8],[525,46.4],[550,34.7],[575,25.8],[600,18.0],[625,11.5],[650,6.68]],"tc":455}]},{"id":"sa182_f9","cat":"forja","t":"SA-182 F9","d":"Forja 9Cr-1Mo.","c":["9Cr-1Mo · Forja","UNS K90941","P-No 5B"],"tab":"Tabla 1A","v":[{"l":"Forja","ref":"Tabla 1A · pág. 46 · línea 9","n":"T4","tm":649,"p":[[-30,168.0],[40,168.0],[65,167.0],[100,166.0],[125,164.0],[150,162.0],[200,161.0],[250,161.0],[300,159.0],[325,157.0],[350,155.0],[375,152.0],[400,147.0],[425,142.0],[450,137.0],[475,121.0],[500,89.0],[525,60.7],[550,43.1],[575,30.0],[600,20.6],[625,14.4],[650,10.2]],"tc":480}]},{"id":"sa182_f91","cat":"forja","t":"SA-182 F91","d":"Forja 9Cr-1Mo-V.","c":["9Cr-1Mo-V · Forja","UNS K90901","P-No 15E"],"tab":"Tabla 1A","v":[{"l":"t ≤ 75 mm","ref":"Tabla 1A · pág. 46 · línea 13","n":"T7","tm":649,"p":[[-30,168.0],[40,168.0],[65,168.0],[100,168.0],[125,168.0],[150,168.0],[200,167.0],[250,166.0],[300,164.0],[325,163.0],[350,161.0],[375,157.0],[400,153.0],[425,147.0],[450,141.0],[475,134.0],[500,126.0],[525,117.0],[550,107.0],[575,88.5],[600,65.0],[625,45.5],[650,28.9]],"tc":565},{"l":"t > 75 mm","ref":"Tabla 1A · pág. 46 · línea 14","n":"T7","tm":649,"p":[[-30,168.0],[40,168.0],[65,168.0],[100,168.0],[125,168.0],[150,168.0],[200,167.0],[250,166.0],[300,164.0],[325,163.0],[350,161.0],[375,157.0],[400,153.0],[425,147.0],[450,141.0],[475,134.0],[500,126.0],[525,118.0],[550,103.0],[575,80.6],[600,61.6],[625,45.7],[650,28.9]],"tc":565}]},{"id":"sa182_f304","cat":"forja","t":"SA-182 F304","d":"Forja inoxidable 18Cr-8Ni.","c":["18Cr-8Ni · Forja","UNS S30400","P-No 8"],"tab":"Tabla 1A","v":[{"l":"≤ 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 33","n":"G5, G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,137.0],[125,134.0],[150,130.0],[200,126.0],[250,122.0],[300,116.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.3],[525,98.0],[550,93.3],[575,79.6],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":565},{"l":"≤ 125 mm · S básica","ref":"Tabla 1A · pág. 86 · línea 32","n":"G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,89.9],[300,85.9],[325,84.1],[350,82.2],[375,80.5],[400,79.2],[425,77.3],[450,76.0],[475,74.8],[500,73.6],[525,72.4],[550,70.8],[575,68.9],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":595},{"l":"> 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 15","n":"G5, G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,134.0],[100,130.0],[125,126.0],[150,122.0],[200,119.0],[250,118.0],[300,115.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.3],[525,98.0],[550,93.3],[575,79.6],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":565},{"l":"> 125 mm · S básica","ref":"Tabla 1A · pág. 86 · línea 16","n":"G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,89.9],[300,85.9],[325,84.1],[350,82.2],[375,80.5],[400,79.2],[425,77.3],[450,76.0],[475,74.8],[500,73.6],[525,72.4],[550,70.8],[575,68.9],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":595}]},{"id":"sa182_f304L","cat":"forja","t":"SA-182 F304L","d":"Forja inoxidable 18Cr-8Ni bajo carbono.","c":["18Cr-8Ni · Forja","UNS S30403","P-No 8"],"tab":"Tabla 1A","v":[{"l":"≤ 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 82 · línea 34","n":"G5, G21, T4","tm":649,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,110.0],[250,103.0],[300,97.7],[325,95.7],[350,94.1],[375,92.6],[400,91.3],[425,90.0],[450,88.7],[475,86.6],[500,72.5],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":480},{"l":"≤ 125 mm · S básica","ref":"Tabla 1A · pág. 82 · línea 35","n":"G21, T5","tm":649,"p":[[-30,115.0],[40,115.0],[65,105.0],[100,97.0],[125,92.3],[150,88.1],[200,81.2],[250,76.0],[300,72.3],[325,70.9],[350,69.7],[375,68.6],[400,67.6],[425,66.7],[450,65.7],[475,64.6],[500,63.4],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":510},{"l":"> 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 82 · línea 29","n":"G5, G21, T4","tm":649,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,110.0],[250,103.0],[300,97.7],[325,95.7],[350,94.1],[375,92.6],[400,91.3],[425,90.0],[450,88.7],[475,86.6],[500,72.5],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":480},{"l":"> 125 mm · S básica","ref":"Tabla 1A · pág. 82 · línea 30","n":"G21, T5","tm":649,"p":[[-30,115.0],[40,115.0],[65,105.0],[100,97.0],[125,92.3],[150,88.1],[200,81.2],[250,76.0],[300,72.3],[325,70.9],[350,69.7],[375,68.6],[400,67.6],[425,66.7],[450,65.7],[475,64.6],[500,63.4],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":510}]},{"id":"sa182_f316","cat":"forja","t":"SA-182 F316","d":"Forja inoxidable 16Cr-12Ni-2Mo.","c":["16Cr-12Ni-2Mo · Forja","UNS S31600","P-No 8"],"tab":"Tabla 1A","v":[{"l":"≤ 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 74 · línea 5","n":"G5, G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,134.0],[250,126.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,108.0],[500,107.0],[525,106.0],[550,105.0],[575,99.8],[600,80.3],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":595},{"l":"≤ 125 mm · S básica","ref":"Tabla 1A · pág. 74 · línea 6","n":"G12, T9","tm":816,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,118.0],[125,112.0],[150,107.0],[200,99.2],[250,92.8],[300,88.1],[325,86.1],[350,84.1],[375,82.9],[400,82.0],[425,81.4],[450,80.6],[475,79.8],[500,79.2],[525,78.7],[550,77.8],[575,77.1],[600,75.0],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":620},{"l":"> 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 41","n":"G5, G12, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,136.0],[150,134.0],[200,133.0],[250,126.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,108.0],[500,107.0],[525,106.0],[550,105.0],[575,99.8],[600,80.3],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":595},{"l":"> 125 mm · S básica","ref":"Tabla 1A · pág. 70 · línea 42","n":"G12, T9","tm":816,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,118.0],[125,112.0],[150,107.0],[200,99.2],[250,92.8],[300,88.1],[325,86.1],[350,84.1],[375,82.9],[400,82.0],[425,81.4],[450,80.6],[475,79.8],[500,79.2],[525,78.7],[550,77.8],[575,77.1],[600,75.0],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":620}]},{"id":"sa182_f316L","cat":"forja","t":"SA-182 F316L","d":"Forja inoxidable con Mo, bajo carbono.","c":["16Cr-12Ni-2Mo · Forja","UNS S31603","P-No 8"],"tab":"Tabla 1A","v":[{"l":"≤ 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 12","n":"G5, G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,109.0],[250,103.0],[300,98.0],[325,95.7],[350,94.1],[375,92.8],[400,90.9],[425,89.0],[450,87.8],[475,86.6]]},{"l":"≤ 125 mm · S básica","ref":"Tabla 1A · pág. 70 · línea 13","n":"G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,106.0],[100,96.3],[125,91.3],[150,87.4],[200,81.2],[250,76.0],[300,72.5],[325,71.2],[350,70.0],[375,68.8],[400,67.5],[425,66.3],[450,65.0],[475,63.8]]},{"l":"> 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 7","n":"G5, G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,109.0],[250,103.0],[300,98.0],[325,95.7],[350,94.1],[375,92.8],[400,90.9],[425,89.0],[450,87.8],[475,86.6]]},{"l":"> 125 mm · S básica","ref":"Tabla 1A · pág. 70 · línea 8","n":"G21","tm":454,"p":[[-30,115.0],[40,115.0],[65,106.0],[100,96.3],[125,91.3],[150,87.4],[200,81.2],[250,76.0],[300,72.5],[325,71.2],[350,70.0],[375,68.8],[400,67.5],[425,66.3],[450,65.0],[475,63.8]]}]},{"id":"sa182_f321","cat":"forja","t":"SA-182 F321","d":"Forja inoxidable estabilizada con Ti.","c":["18Cr-10Ni-Ti · Forja","UNS S32100","P-No 8"],"tab":"Tabla 1A","v":[{"l":"≤ 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 110 · línea 3","n":"G5, G12, T6","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,135.0],[150,132.0],[200,129.0],[250,129.0],[300,127.0],[325,125.0],[350,123.0],[375,121.0],[400,119.0],[425,117.0],[450,115.0],[475,114.0],[500,113.0],[525,111.0],[550,87.4],[575,57.5],[600,44.4],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":540},{"l":"≤ 125 mm · S básica","ref":"Tabla 1A · pág. 110 · línea 2","n":"G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,130.0],[100,123.0],[125,118.0],[150,114.0],[200,106.0],[250,99.7],[300,94.5],[325,92.3],[350,90.7],[375,89.4],[400,87.5],[425,86.9],[450,85.7],[475,85.0],[500,83.9],[525,83.0],[550,77.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565},{"l":"> 125 mm · alta S (nota G5)","ref":"Tabla 1A · pág. 106 · línea 38","n":"G5, G12, T6","tm":816,"p":[[-30,138.0],[40,138.0],[65,135.0],[100,130.0],[125,126.0],[150,123.0],[200,121.0],[250,121.0],[300,121.0],[325,121.0],[350,121.0],[375,121.0],[400,119.0],[425,117.0],[450,115.0],[475,114.0],[500,113.0],[525,111.0],[550,87.4],[575,57.5],[600,44.4],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":540},{"l":"> 125 mm · S básica","ref":"Tabla 1A · pág. 106 · línea 39","n":"G12, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,130.0],[100,123.0],[125,118.0],[150,114.0],[200,106.0],[250,99.7],[300,94.5],[325,92.3],[350,90.7],[375,89.4],[400,87.5],[425,86.9],[450,85.7],[475,85.0],[500,83.9],[525,83.0],[550,77.6],[575,59.2],[600,44.8],[625,32.9],[650,24.5],[675,18.3],[700,12.6],[725,8.41],[750,6.18],[775,4.37],[800,2.77],[825,1.62]],"tc":565}]},{"id":"sa182_f51","cat":"forja","t":"SA-182 F51 (dúplex)","d":"Forja dúplex 22Cr-5Ni-3Mo-N.","c":["22Cr-5Ni-3Mo-N · Forja","UNS S31803","P-No 10H"],"tab":"Tabla 1A","v":[{"l":"Forja","ref":"Tabla 1A · pág. 126 · línea 20","n":"G19","tm":316,"p":[[-30,177.0],[40,177.0],[65,177.0],[100,177.0],[125,174.0],[150,171.0],[200,165.0],[250,161.0],[300,160.0],[325,159.0]]}]},{"id":"sa234_wpb","cat":"fittings","t":"SA-234 WPB","d":"Accesorios al carbono.","c":["Acero al carbono · Accesorios","UNS K03006","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Sin costura y soldado","ref":"Tabla 1A · pág. 14 · línea 17","n":"G10, S1, T1","tm":538,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,118.0],[325,118.0],[350,117.0],[375,105.0],[400,88.9],[425,75.3],[450,62.7],[475,45.5],[500,31.6],[525,21.9],[550,12.7]],"tc":370}]},{"id":"sa420_wpl6","cat":"fittings","t":"SA-420 WPL6","d":"Accesorios para baja temperatura.","c":["Acero al carbono · Accesorios","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Sin costura y soldado","ref":"Tabla 1A · pág. 14 · línea 25","n":"G10, T1, W14","tm":454,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,118.0],[300,118.0],[325,118.0],[350,117.0],[375,105.0],[400,88.9],[425,75.3],[450,62.7],[475,45.5]],"tc":370}]},{"id":"sa403_304","cat":"fittings","t":"SA-403 WP304","d":"Accesorios inoxidables 18Cr-8Ni.","c":["18Cr-8Ni · Accesorios","UNS S30400","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 90 · línea 24","n":"G5, G12, T7, W12, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,137.0],[125,134.0],[150,130.0],[200,126.0],[250,122.0],[300,116.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.3],[525,98.0],[550,93.3],[575,79.6],[600,65.4],[625,51.4],[650,41.7],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":565}]},{"id":"sa403_304L","cat":"fittings","t":"SA-403 WP304L","d":"Accesorios inoxidables 304L.","c":["18Cr-8Ni · Accesorios","UNS S30403","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 6","n":"G5, T4, W12, W14","tm":649,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,110.0],[250,103.0],[300,97.7],[325,95.7],[350,94.1],[375,92.6],[400,91.3],[425,90.0],[450,88.7],[475,86.6],[500,72.5],[525,60.2],[550,49.5],[575,40.4],[600,32.9],[625,26.7],[650,22.0]],"tc":480}]},{"id":"sa403_316","cat":"fittings","t":"SA-403 WP316","d":"Accesorios inoxidables 316.","c":["16Cr-12Ni-2Mo · Accesorios","UNS S31600","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 74 · línea 22","n":"G5, G12, T8, W12, W14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,134.0],[250,126.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,108.0],[500,107.0],[525,106.0],[550,105.0],[575,99.8],[600,80.3],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":595}]},{"id":"sa403_316L","cat":"fittings","t":"SA-403 WP316L","d":"Accesorios inoxidables 316L.","c":["16Cr-12Ni-2Mo · Accesorios","UNS S31603","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 26","n":"G5, W12, W14","tm":454,"p":[[-30,115.0],[40,115.0],[65,115.0],[100,115.0],[125,115.0],[150,115.0],[200,109.0],[250,103.0],[300,98.0],[325,95.7],[350,94.1],[375,92.8],[400,90.9],[425,89.0],[450,87.8],[475,86.6]]}]},{"id":"sa216_wca","cat":"fundicion","t":"SA-216 WCA","d":"Acero al carbono moldeado.","c":["Acero al carbono · Fundición","UNS J02502","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Fundición","ref":"Tabla 1A · pág. 10 · línea 34","n":"G1, G10, G17, S1, T2","tm":538,"p":[[-30,118.0],[40,118.0],[65,118.0],[100,118.0],[125,118.0],[150,118.0],[200,118.0],[250,114.0],[300,107.0],[325,104.0],[350,101.0],[375,97.8],[400,89.1],[425,75.4],[450,62.6],[475,45.5],[500,31.6],[525,21.9],[550,12.7]],"tc":400}]},{"id":"sa216_wcb","cat":"fundicion","t":"SA-216 WCB","d":"Acero al carbono moldeado (el más habitual en válvulas).","c":["Acero al carbono · Fundición","UNS J03002","P-No 1 Gr 2"],"tab":"Tabla 1A","v":[{"l":"Fundición","ref":"Tabla 1A · pág. 18 · línea 25","n":"G1, G10, G17, S1, T2","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,136.0],[300,129.0],[325,125.0],[350,122.0],[375,117.0],[400,101.0],[425,83.9],[450,67.0],[475,51.1],[500,33.6],[525,21.3],[550,12.9]],"tc":400}]},{"id":"sa216_wcc","cat":"fundicion","t":"SA-216 WCC","d":"Acero al carbono moldeado.","c":["Acero al carbono · Fundición","UNS J02503","P-No 1 Gr 2"],"tab":"Tabla 1A","v":[{"l":"Fundición","ref":"Tabla 1A · pág. 22 · línea 6","n":"G1, G10, G17, S1, T1","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[200,138.0],[250,138.0],[300,138.0],[325,138.0],[350,135.0],[375,123.0],[400,101.0],[425,83.8],[450,67.0],[475,51.0],[500,33.6],[525,21.3],[550,12.9]],"tc":370}]},{"id":"sa352_lcb","cat":"fundicion","t":"SA-352 LCB","d":"Acero al carbono moldeado para baja temperatura.","c":["Acero al carbono · Fundición","UNS J03003","P-No 1 Gr 1"],"tab":"Tabla 1A","v":[{"l":"Fundición","ref":"Tabla 1A · pág. 14 · línea 41","n":"G1, G17","tm":343,"p":[[-30,128.0],[40,128.0],[65,128.0],[100,128.0],[125,128.0],[150,128.0],[200,128.0],[250,128.0],[300,125.0],[325,122.0],[350,118.0]]}]},{"id":"sa351_cf8","cat":"fundicion","t":"SA-351 CF8","d":"Inoxidable moldeado 18Cr-8Ni (≈304).","c":["18Cr-8Ni · Fundición","UNS J92600","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 23","n":"G1, G5, G12, G19, T6","tm":816,"p":[[-30,138.0],[40,138.0],[65,134.0],[100,130.0],[125,126.0],[150,122.0],[200,119.0],[250,118.0],[300,115.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0],[475,101.0],[500,99.5],[525,92.8],[550,75.6],[575,61.2],[600,49.0],[625,40.1],[650,32.8],[675,27.2],[700,23.4],[725,19.6],[750,16.7],[775,14.7],[800,12.9],[825,11.0]],"tc":540},{"l":"S básica","ref":"Tabla 1A · pág. 86 · línea 22","n":"G1, G12, G19, H1, T7","tm":816,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,90.0],[300,85.6],[325,83.9],[350,82.3],[375,80.5],[400,79.2],[425,77.7],[450,76.4],[475,74.9],[500,73.6],[525,72.6],[550,70.0],[575,61.2],[600,49.0],[625,40.1],[650,32.8],[675,27.2],[700,23.4],[725,19.6],[750,16.7],[775,14.7],[800,12.9],[825,11.0]],"tc":565}]},{"id":"sa351_cf8m","cat":"fundicion","t":"SA-351 CF8M","d":"Inoxidable moldeado 16Cr-12Ni-2Mo (≈316).","c":["16Cr-12Ni-2Mo · Fundición","UNS J92900","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 38","n":"G1, G5, G12, G16, G17, G19, H1, T6","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,136.0],[150,134.0],[200,133.0],[250,125.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,107.0],[500,107.0],[525,104.0],[550,94.7],[575,73.7],[600,57.9],[625,46.0],[650,36.9],[675,30.1],[700,24.3],[725,20.3],[750,17.0],[775,14.3],[800,12.1],[825,10.3]],"tc":540},{"l":"S básica","ref":"Tabla 1A · pág. 70 · línea 39","n":"G1, G12, G19, H1, T8","tm":816,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,117.0],[125,111.0],[150,107.0],[200,98.5],[250,92.7],[300,88.2],[325,86.1],[350,84.4],[375,83.2],[400,82.0],[425,81.1],[450,80.2],[475,79.5],[500,78.9],[525,78.2],[550,77.6],[575,73.7],[600,57.9],[625,46.0],[650,36.9],[675,30.1],[700,24.3],[725,20.3],[750,17.0],[775,14.3],[800,12.1],[825,10.3]],"tc":595}]},{"id":"sa351_cf3","cat":"fundicion","t":"SA-351 CF3","d":"Inoxidable moldeado bajo carbono (≈304L).","c":["18Cr-8Ni · Fundición","UNS J92500","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 86 · línea 19","n":"G1, G5, G16, G17, G19","tm":427,"p":[[-30,138.0],[40,138.0],[65,134.0],[100,130.0],[125,126.0],[150,122.0],[200,119.0],[250,118.0],[300,115.0],[325,114.0],[350,111.0],[375,109.0],[400,107.0],[425,105.0],[450,103.0]]},{"l":"S básica","ref":"Tabla 1A · pág. 86 · línea 20","n":"G1, G19","tm":427,"p":[[-30,138.0],[40,138.0],[65,126.0],[100,113.0],[125,107.0],[150,103.0],[200,95.7],[250,90.0],[300,85.6],[325,83.9],[350,82.3],[375,80.5],[400,79.2],[425,77.7],[450,76.4]]}]},{"id":"sa351_cf3m","cat":"fundicion","t":"SA-351 CF3M","d":"Inoxidable moldeado con Mo, bajo carbono (≈316L).","c":["16Cr-12Ni-2Mo · Fundición","UNS J92800","P-No 8"],"tab":"Tabla 1A","v":[{"l":"alta S (nota G5)","ref":"Tabla 1A · pág. 70 · línea 35","n":"G1, G5, G16, G17, G19","tm":454,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,136.0],[150,134.0],[200,133.0],[250,125.0],[300,119.0],[325,116.0],[350,114.0],[375,112.0],[400,111.0],[425,110.0],[450,108.0],[475,107.0]]},{"l":"S básica","ref":"Tabla 1A · pág. 70 · línea 36","n":"G1, G19","tm":454,"p":[[-30,138.0],[40,138.0],[65,128.0],[100,117.0],[125,111.0],[150,107.0],[200,98.5],[250,92.7],[300,88.2],[325,86.1],[350,84.4],[375,83.2],[400,82.0],[425,81.1],[450,80.2],[475,79.5]]}]},{"id":"sa395","cat":"fundicion","t":"SA-395 (fundición dúctil)","d":"Fundición nodular ferrítica. Parte UCD de VIII-1.","c":["Fundición dúctil","Parte UCD","T máx. 345 °C / 650 °F"],"tab":"Tabla UCD-23","src":"viii","v":[{"l":"60-40-18","ref":"VIII-1 (2017) · Tabla UCD-23","n":"","tm":345,"p":[[-29,82.7],[345,82.7]],"us":[[-20,12.0],[650,12.0]]},{"l":"65-45-15","ref":"VIII-1 (2017) · Tabla UCD-23","n":"","tm":345,"p":[[-29,89.6],[345,89.6]],"us":[[-20,13.0],[650,13.0]]}]},{"id":"sa193b7","cat":"pernos","t":"SA-193 B7","d":"Cr-Mo alta resistencia · curva según diámetro.","c":["1Cr-0,2Mo · Perno/Espárrago","UNS G41400"],"tab":"Tabla 3","v":[{"l":"≤ 64 mm (2½\")","ref":"Tabla 3 · pág. 344 · línea 31","n":"T5","tm":538,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0],[250,172.0],[275,172.0],[300,172.0],[325,172.0],[350,172.0],[375,172.0],[400,162.0],[425,146.0],[450,118.0],[475,92.7],[500,68.8],[525,43.6],[550,18.9]],"tc":450,"dmax":64},{"l":"64–100 mm (2½\"–4\")","ref":"Tabla 3 · pág. 344 · línea 30","n":"T5","tm":538,"p":[[-30,159.0],[40,159.0],[65,159.0],[100,159.0],[125,159.0],[150,159.0],[175,159.0],[200,159.0],[225,159.0],[250,159.0],[275,159.0],[300,159.0],[325,159.0],[350,159.0],[375,158.0],[400,153.0],[425,139.0],[450,117.0],[475,93.0],[500,68.6],[525,43.7],[550,18.9]],"tc":450,"dmax":100},{"l":"100–175 mm (4\"–7\")","ref":"Tabla 3 · pág. 344 · línea 27","n":"T5","tm":538,"p":[[-30,130.0],[40,130.0],[65,130.0],[100,130.0],[125,130.0],[150,130.0],[175,130.0],[200,130.0],[225,130.0],[250,130.0],[275,130.0],[300,130.0],[325,130.0],[350,130.0],[375,130.0],[400,130.0],[425,125.0],[450,115.0],[475,93.7],[500,68.4],[525,43.8],[550,18.9]],"tc":450,"dmax":175}],"byD":1},{"id":"sa193b7m","cat":"pernos","t":"SA-193 B7M","d":"Cr-Mo dureza controlada (servicio ácido).","c":["1Cr-0,2Mo · Perno/Espárrago","UNS G41400"],"tab":"Tabla 3","v":[{"l":"≤ 64 mm (2½\")","ref":"Tabla 3 · pág. 344 · línea 28","n":"T5","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,128.0],[450,115.0],[475,93.6],[500,68.4],[525,43.7],[550,18.9]],"tc":450,"dmax":64}],"byD":1},{"id":"sa193b16","cat":"pernos","t":"SA-193 B16","d":"Cr-Mo-V para alta temperatura · curva según diámetro.","c":["1Cr-½Mo-V · Perno/Espárrago","UNS K14072"],"tab":"Tabla 3","v":[{"l":"≤ 64 mm (2½\")","ref":"Tabla 3 · pág. 348 · línea 9","n":"T8","tm":593,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0],[250,172.0],[275,172.0],[300,172.0],[325,172.0],[350,172.0],[375,172.0],[400,172.0],[425,172.0],[450,164.0],[475,148.0],[500,122.0],[525,91.8],[550,60.8],[575,34.6],[600,13.7]],"tc":540,"dmax":64},{"l":"64–100 mm (2½\"–4\")","ref":"Tabla 3 · pág. 348 · línea 6","n":"T8","tm":593,"p":[[-30,152.0],[40,152.0],[65,152.0],[100,152.0],[125,152.0],[150,152.0],[175,152.0],[200,152.0],[225,152.0],[250,152.0],[275,152.0],[300,152.0],[325,152.0],[350,152.0],[375,152.0],[400,152.0],[425,152.0],[450,147.0],[475,133.0],[500,114.0],[525,90.4],[550,61.1],[575,34.5],[600,13.7]],"tc":540,"dmax":100},{"l":"100–175 mm (4\"–7\")","ref":"Tabla 3 · pág. 348 · línea 5","n":"T8","tm":593,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,138.0],[450,132.0],[475,119.0],[500,105.0],[525,87.7],[550,61.7],[575,34.3],[600,13.8]],"tc":540,"dmax":175}],"byD":1},{"id":"sa193_b8","cat":"pernos","t":"SA-193 B8 Cl. 1","d":"Inoxidable 304, solubilizado.","c":["18Cr-8Ni · Perno/Espárrago","UNS S30400","Clase 1"],"tab":"Tabla 3","v":[{"l":"Clase 1","ref":"Tabla 3 · pág. 352 · línea 20","n":"G5, G6, T10","tm":816,"p":[[-30,130.0],[40,130.0],[65,122.0],[100,114.0],[125,108.0],[150,103.0],[175,99.1],[200,95.7],[225,92.8],[250,90.1],[275,87.2],[300,84.5],[325,83.1],[350,82.5],[375,81.1],[400,79.2],[425,77.3],[450,76.0],[475,74.8],[500,73.6],[525,72.4],[550,70.8],[575,68.9],[600,65.4],[625,51.0],[650,41.0],[675,32.9],[700,26.5],[725,21.3],[750,17.2],[775,13.9],[800,11.1],[825,8.73]],"tc":595}]},{"id":"sa193_b8_2","cat":"pernos","t":"SA-193 B8 Cl. 2","d":"Inoxidable 304 endurecido por deformación · según diámetro.","c":["18Cr-8Ni · Perno/Espárrago","UNS S30400","Clase 2"],"tab":"Tabla 3","v":[{"l":"≤ 19 mm (¾\")","ref":"Tabla 3 · pág. 352 · línea 29","n":"G8, G9","tm":538,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0],[250,172.0],[275,172.0],[300,172.0],[325,172.0],[350,172.0],[375,172.0],[400,172.0],[425,172.0],[450,172.0],[475,172.0],[500,172.0],[525,169.0],[550,164.0]],"dmax":19},{"l":"19–25 mm (¾\"–1\")","ref":"Tabla 3 · pág. 352 · línea 27","n":"G8, G9","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,138.0],[450,138.0],[475,138.0],[500,138.0],[525,138.0],[550,138.0]],"dmax":25},{"l":"25–32 mm (1\"–1¼\")","ref":"Tabla 3 · pág. 352 · línea 25","n":"G8, G9","tm":538,"p":[[-30,130.0],[40,130.0],[65,121.0],[100,115.0],[125,114.0],[150,112.0],[175,112.0],[200,112.0],[225,112.0],[250,112.0],[275,112.0],[300,112.0],[325,112.0],[350,112.0],[375,112.0],[400,112.0],[425,112.0],[450,112.0],[475,112.0],[500,112.0],[525,112.0],[550,112.0]],"dmax":32},{"l":"32–38 mm (1¼\"–1½\")","ref":"Tabla 3 · pág. 352 · línea 23","n":"G8, G9","tm":538,"p":[[-30,130.0],[40,130.0],[65,122.0],[100,114.0],[125,108.0],[150,103.0],[175,99.2],[200,95.7],[225,92.6],[250,89.9],[275,87.8],[300,86.5],[325,86.2],[350,86.2],[375,86.2],[400,86.2],[425,86.2],[450,86.2],[475,86.2],[500,86.2],[525,86.2],[550,86.2]],"dmax":38}],"byD":1},{"id":"sa193_b8m","cat":"pernos","t":"SA-193 B8M Cl. 1","d":"Inoxidable 316, solubilizado.","c":["16Cr-12Ni-2Mo · Perno/Espárrago","UNS S31600","Clase 1"],"tab":"Tabla 3","v":[{"l":"Clase 1","ref":"Tabla 3 · pág. 352 · línea 5","n":"G5, G6, T11","tm":816,"p":[[-30,130.0],[40,130.0],[65,127.0],[100,121.0],[125,114.0],[150,107.0],[175,103.0],[200,99.2],[225,95.9],[250,92.8],[275,90.2],[300,88.1],[325,86.1],[350,84.4],[375,83.2],[400,82.0],[425,80.7],[450,80.1],[475,79.5],[500,78.8],[525,78.2],[550,77.6],[575,77.1],[600,74.7],[625,65.5],[650,50.4],[675,38.6],[700,29.6],[725,23.0],[750,17.7],[775,13.4],[800,10.4],[825,8.05]],"tc":620}]},{"id":"sa193_b8m_2","cat":"pernos","t":"SA-193 B8M Cl. 2","d":"Inoxidable 316 endurecido por deformación · según diámetro.","c":["16Cr-12Ni-2Mo · Perno/Espárrago","UNS S31600","Clase 2"],"tab":"Tabla 3","v":[{"l":"≤ 19 mm (¾\")","ref":"Tabla 3 · pág. 352 · línea 17","n":"G8","tm":427,"p":[[-30,152.0],[40,152.0],[65,152.0],[100,152.0],[125,152.0],[150,152.0],[175,152.0],[200,152.0],[225,152.0],[250,152.0],[275,152.0],[300,152.0],[325,152.0],[350,152.0],[375,152.0],[400,152.0],[425,152.0],[450,152.0]],"dmax":19},{"l":"19–25 mm (¾\"–1\")","ref":"Tabla 3 · pág. 352 · línea 15","n":"G8","tm":427,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,138.0],[450,138.0]],"dmax":25},{"l":"25–32 mm (1\"–1¼\")","ref":"Tabla 3 · pág. 352 · línea 12","n":"G8","tm":427,"p":[[-30,130.0],[40,130.0],[65,127.0],[100,121.0],[125,115.0],[150,112.0],[175,112.0],[200,112.0],[225,112.0],[250,112.0],[275,112.0],[300,112.0],[325,112.0],[350,112.0],[375,112.0],[400,112.0],[425,112.0],[450,112.0]],"dmax":32},{"l":"32–38 mm (1¼\"–1½\")","ref":"Tabla 3 · pág. 352 · línea 9","n":"G8","tm":427,"p":[[-30,130.0],[40,130.0],[65,127.0],[100,121.0],[125,114.0],[150,107.0],[175,103.0],[200,99.2],[225,96.0],[250,92.9],[275,90.1],[300,87.8],[325,86.5],[350,86.2],[375,86.2],[400,86.2],[425,86.2],[450,86.2]],"dmax":38}],"byD":1},{"id":"sa320_l7","cat":"pernos","t":"SA-320 L7","d":"Cr-Mo para baja temperatura.","c":["1Cr-0,2Mo · Perno baja T","UNS G41400"],"tab":"Tabla 3","v":[{"l":"≤ 64 mm (2½\")","ref":"Tabla 3 · pág. 344 · línea 32","n":"","tm":427,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0],[250,172.0],[275,172.0],[300,172.0],[325,172.0],[350,172.0],[375,172.0],[400,162.0],[425,146.0],[450,118.0]],"dmax":64}],"byD":1},{"id":"sa320_l7m","cat":"pernos","t":"SA-320 L7M","d":"Cr-Mo baja temperatura, dureza controlada.","c":["1Cr-0,2Mo · Perno baja T","UNS G41400"],"tab":"Tabla 3","v":[{"l":"≤ 64 mm (2½\")","ref":"Tabla 3 · pág. 344 · línea 29","n":"T5","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,128.0],[450,115.0],[475,93.6],[500,68.4],[525,43.7],[550,18.9]],"tc":450,"dmax":64}],"byD":1},{"id":"sa320_l43","cat":"pernos","t":"SA-320 L43","d":"Ni-Cr-Mo para baja temperatura.","c":["1¾Ni-¾Cr-¼Mo · Perno baja T","UNS G43400"],"tab":"Tabla 3","v":[{"l":"≤ 100 mm (4\")","ref":"Tabla 3 · pág. 348 · línea 23","n":"","tm":204,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0]],"dmax":100}],"byD":1},{"id":"sa320_b8","cat":"pernos","t":"SA-320 B8 Cl. 1","d":"Inoxidable 304 para baja temperatura.","c":["18Cr-8Ni · Perno baja T","UNS S30400","Clase 1"],"tab":"Tabla 3","v":[{"l":"Clase 1","ref":"Tabla 3 · pág. 352 · línea 21","n":"","tm":40,"p":[[-30,130.0],[40,130.0]]}]},{"id":"sa320_b8_2","cat":"pernos","t":"SA-320 B8 Cl. 2","d":"Inoxidable 304 endurecido · según diámetro.","c":["18Cr-8Ni · Perno baja T","UNS S30400","Clase 2"],"tab":"Tabla 3","v":[{"l":"≤ 19 mm (¾\")","ref":"Tabla 3 · pág. 352 · línea 30","n":"G8","tm":538,"p":[[-30,172.0],[40,172.0],[65,172.0],[100,172.0],[125,172.0],[150,172.0],[175,172.0],[200,172.0],[225,172.0],[250,172.0],[275,172.0],[300,172.0],[325,172.0],[350,172.0],[375,172.0],[400,172.0],[425,172.0],[450,172.0],[475,172.0],[500,172.0],[525,169.0],[550,164.0]],"dmax":19},{"l":"19–25 mm (¾\"–1\")","ref":"Tabla 3 · pág. 352 · línea 28","n":"G8","tm":538,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,138.0],[450,138.0],[475,138.0],[500,138.0],[525,138.0],[550,138.0]],"dmax":25},{"l":"25–32 mm (1\"–1¼\")","ref":"Tabla 3 · pág. 352 · línea 26","n":"G8","tm":538,"p":[[-30,130.0],[40,130.0],[65,121.0],[100,115.0],[125,114.0],[150,112.0],[175,112.0],[200,112.0],[225,112.0],[250,112.0],[275,112.0],[300,112.0],[325,112.0],[350,112.0],[375,112.0],[400,112.0],[425,112.0],[450,112.0],[475,112.0],[500,112.0],[525,112.0],[550,112.0]],"dmax":32},{"l":"32–38 mm (1¼\"–1½\")","ref":"Tabla 3 · pág. 352 · línea 24","n":"G8","tm":538,"p":[[-30,130.0],[40,130.0],[65,122.0],[100,114.0],[125,108.0],[150,103.0],[175,99.2],[200,95.7],[225,92.6],[250,89.9],[275,87.8],[300,86.5],[325,86.2],[350,86.2],[375,86.2],[400,86.2],[425,86.2],[450,86.2],[475,86.2],[500,86.2],[525,86.2],[550,86.2]],"dmax":38}],"byD":1},{"id":"sa320_b8m","cat":"pernos","t":"SA-320 B8M Cl. 1","d":"Inoxidable 316 para baja temperatura.","c":["16Cr-12Ni-2Mo · Perno baja T","UNS S31600","Clase 1"],"tab":"Tabla 3","v":[{"l":"Clase 1","ref":"Tabla 3 · pág. 352 · línea 6","n":"","tm":40,"p":[[-30,130.0],[40,130.0]]}]},{"id":"sb209_5083","cat":"noferrosos","t":"SB-209 5083","d":"Al-Mg naval. Límite 65 °C.","c":["Aluminio 5083 · Plancha","UNS A95083","P-No 25"],"tab":"Tabla 1B","v":[{"l":"O · 1,30–38,10 mm","ref":"Tabla 1B · pág. 162 · línea 31","n":"G18, G19","tm":65,"p":[[-30,78.8],[40,78.8],[65,78.8]]},{"l":"O · 38,11–76,20 mm","ref":"Tabla 1B · pág. 162 · línea 32","n":"G18, G19","tm":65,"p":[[-30,76.8],[40,76.8],[65,76.8]]},{"l":"H112 · 6,35–38,10 mm","ref":"Tabla 1B · pág. 162 · línea 36","n":"G18, G19, W3","tm":65,"p":[[-30,78.8],[40,78.8],[65,78.8]]},{"l":"H32 · 3,18–38,10 mm","ref":"Tabla 1B · pág. 162 · línea 38","n":"G18, G19, W3","tm":65,"p":[[-30,86.8],[40,86.8],[65,86.8]]}],"sub":"Aluminio"},{"id":"sb209_5052","cat":"noferrosos","t":"SB-209 5052","d":"Al-Mg de uso general.","c":["Aluminio 5052 · Plancha","UNS A95052","P-No 22"],"tab":"Tabla 1B","v":[{"l":"O · 0,15–76,20 mm","ref":"Tabla 1B · pág. 162 · línea 20","n":"","tm":204,"p":[[-30,43.7],[40,43.7],[65,43.7],[100,43.6],[125,43.5],[150,38.1],[175,28.8],[200,17.4],[225,11.1]]},{"l":"H32 · 0,43–50,80 mm","ref":"Tabla 1B · pág. 162 · línea 23","n":"W3","tm":204,"p":[[-30,61.1],[40,61.1],[65,61.1],[100,61.1],[125,61.1],[150,42.0],[175,29.0],[200,17.7],[225,11.1]]},{"l":"H34 · 0,23–25,40 mm","ref":"Tabla 1B · pág. 162 · línea 24","n":"W3","tm":204,"p":[[-30,67.0],[40,67.0],[65,67.0],[100,67.0],[125,67.0],[150,42.0],[175,29.0],[200,17.7],[225,11.1]]}],"sub":"Aluminio"},{"id":"sb209_6061","cat":"noferrosos","t":"SB-209 6061","d":"Al-Mg-Si tratable térmicamente.","c":["Aluminio 6061 · Plancha","UNS A96061","P-No 23"],"tab":"Tabla 1B","v":[{"l":"T6 · 0,15–6,34 mm","ref":"Tabla 1B · pág. 170 · línea 29","n":"G24, T3, W4","tm":204,"p":[[-30,82.7],[40,82.7],[65,82.7],[100,82.7],[125,79.3],[150,57.3],[175,44.2],[200,32.5],[225,24.2]],"tc":175},{"l":"T651 · 6,35–101,60 mm","ref":"Tabla 1B · pág. 170 · línea 30","n":"G24, T3, W4, W16","tm":204,"p":[[-30,82.7],[40,82.7],[65,82.7],[100,82.7],[125,79.3],[150,57.3],[175,44.2],[200,32.5],[225,24.2]],"tc":175},{"l":"T4 · 0,15–6,34 mm","ref":"Tabla 1B · pág. 170 · línea 27","n":"G24, T3, W4","tm":204,"p":[[-30,59.1],[40,59.1],[65,59.1],[100,59.1],[125,58.5],[150,47.4],[175,43.7],[200,31.5],[225,24.2]],"tc":175},{"l":"T6 soldado · 0,15–6,34 mm","ref":"Tabla 1B · pág. 170 · línea 34","n":"G24, T3, W7","tm":204,"p":[[-30,47.3],[40,47.3],[65,47.3],[100,47.3],[125,47.1],[150,37.7],[175,32.1],[200,24.8],[225,19.7]],"tc":175}],"sub":"Aluminio"},{"id":"sb241_6061","cat":"noferrosos","t":"SB-241 6061","d":"Tubería de aluminio sin costura.","c":["Aluminio 6061 · Tubería s/costura","UNS A96061","P-No 23"],"tab":"Tabla 1B","v":[{"l":"T6 · ≥ 25,40 mm","ref":"Tabla 1B · pág. 174 · línea 18","n":"T3, W4, W16","tm":204,"p":[[-30,74.9],[40,74.9],[65,74.9],[100,74.9],[125,71.3],[150,54.0],[175,44.0],[200,32.2],[225,24.2]],"tc":175},{"l":"T6 estirado · < 25,40 mm","ref":"Tabla 1B · pág. 174 · línea 17","n":"T3, W4, W16","tm":204,"p":[[-30,82.7],[40,82.7],[65,82.7],[100,82.7],[125,79.3],[150,57.3],[175,44.2],[200,32.5],[225,24.2]],"tc":175},{"l":"T6 soldado","ref":"Tabla 1B · pág. 174 · línea 19","n":"T3, W7, W16","tm":204,"p":[[-30,47.3],[40,47.3],[65,47.3],[100,47.3],[125,47.1],[150,37.7],[175,32.1],[200,24.8],[225,19.7]],"tc":175}],"sub":"Aluminio"},{"id":"sb152_c12200","cat":"noferrosos","t":"SB-152 C12200","d":"Cobre desoxidado al fósforo.","c":["Cobre DHP · Plancha","UNS C12200","P-No 31"],"tab":"Tabla 1B","v":[{"l":"Recocido O25","ref":"Tabla 1B · pág. 182 · línea 18","n":"T2","tm":204,"p":[[-30,46.2],[40,46.2],[65,38.7],[100,37.1],[125,36.4],[150,34.3],[175,28.0],[200,21.8],[225,15.6]],"tc":150}],"sub":"Cobre y aleaciones"},{"id":"sb111_c44300","cat":"noferrosos","t":"SB-111 C44300","d":"Latón almirantazgo, tubo de condensador.","c":["Latón almirantazgo · Tubo","UNS C44300","P-No 32"],"tab":"Tabla 1B","v":[{"l":"Recocido O61","ref":"Tabla 1B · pág. 186 · línea 23","n":"G1, G6, T3, W10","tm":232,"p":[[-30,68.9],[40,68.9],[65,68.9],[100,68.9],[125,68.9],[150,68.9],[175,68.3],[200,29.4],[225,16.4],[250,9.1]],"tc":175}],"sub":"Cobre y aleaciones"},{"id":"sb111_c68700","cat":"noferrosos","t":"SB-111 C68700","d":"Latón de aluminio, tubo de condensador.","c":["Latón de aluminio · Tubo","UNS C68700","P-No 32"],"tab":"Tabla 1B","v":[{"l":"Recocido O61","ref":"Tabla 1B · pág. 190 · línea 36","n":"T3","tm":232,"p":[[-30,82.7],[40,82.7],[65,82.1],[100,81.1],[125,80.7],[150,80.2],[175,47.2],[200,24.8],[225,14.9],[250,5.88]],"tc":175}],"sub":"Cobre y aleaciones"},{"id":"sb111_c70600","cat":"noferrosos","t":"SB-111 C70600","d":"Cuproníquel 90/10, tubo de condensador.","c":["Cu-Ni 90/10 · Tubo","UNS C70600","P-No 34"],"tab":"Tabla 1B","v":[{"l":"Recocido O61","ref":"Tabla 1B · pág. 194 · línea 8","n":"T5","tm":316,"p":[[-30,68.9],[40,68.9],[65,66.9],[100,65.2],[125,63.9],[150,62.0],[175,60.7],[200,60.1],[225,59.1],[250,56.8],[275,51.7],[300,45.2],[325,39.0]],"tc":260},{"l":"H55","ref":"Tabla 1B · pág. 194 · línea 15","n":"G41, T5","tm":316,"p":[[-30,68.9],[40,68.9],[65,66.9],[100,65.2],[125,63.9],[150,62.0],[175,60.7],[200,60.1],[225,59.1],[250,56.8],[275,51.7],[300,45.2],[325,39.0]],"tc":260}],"sub":"Cobre y aleaciones"},{"id":"sb466_c70600","cat":"noferrosos","t":"SB-466 C70600","d":"Cuproníquel 90/10, tubería sin costura.","c":["Cu-Ni 90/10 · Tubería","UNS C70600","P-No 34"],"tab":"Tabla 1B","v":[{"l":"Recocido O60","ref":"Tabla 1B · pág. 190 · línea 42","n":"T6","tm":316,"p":[[-30,60.0],[40,60.0],[65,57.9],[100,56.2],[125,54.9],[150,53.7],[175,53.1],[200,51.9],[225,51.1],[250,50.8],[275,49.2],[300,45.8],[325,38.8]],"tc":290},{"l":"H55","ref":"Tabla 1B · pág. 194 · línea 16","n":"G41, T5","tm":316,"p":[[-30,68.9],[40,68.9],[65,66.9],[100,65.2],[125,63.9],[150,62.0],[175,60.7],[200,60.1],[225,59.1],[250,56.8],[275,51.7],[300,45.2],[325,39.0]],"tc":260}],"sub":"Cobre y aleaciones"},{"id":"sb171_c70600","cat":"noferrosos","t":"SB-171 C70600","d":"Cuproníquel 90/10, placa tubular.","c":["Cu-Ni 90/10 · Plancha","UNS C70600","P-No 34"],"tab":"Tabla 1B","v":[{"l":"≤ 125 mm · O25","ref":"Tabla 1B · pág. 194 · línea 6","n":"T5","tm":316,"p":[[-30,68.9],[40,68.9],[65,66.9],[100,65.2],[125,63.9],[150,62.0],[175,60.7],[200,60.1],[225,59.1],[250,56.8],[275,51.7],[300,45.2],[325,39.0]],"tc":260}],"sub":"Cobre y aleaciones"},{"id":"sb111_c71500","cat":"noferrosos","t":"SB-111 C71500","d":"Cuproníquel 70/30, tubo de condensador.","c":["Cu-Ni 70/30 · Tubo","UNS C71500","P-No 34"],"tab":"Tabla 1B","v":[{"l":"Recocido O61","ref":"Tabla 1B · pág. 194 · línea 31","n":"G1, W10","tm":371,"p":[[-30,82.7],[40,82.7],[65,80.0],[100,77.4],[125,75.6],[150,74.4],[175,72.5],[200,71.2],[225,70.0],[250,68.7],[275,67.9],[300,67.0],[325,65.9],[350,65.4],[375,64.7]]}],"sub":"Cobre y aleaciones"},{"id":"sb171_c71500","cat":"noferrosos","t":"SB-171 C71500","d":"Cuproníquel 70/30, placa tubular.","c":["Cu-Ni 70/30 · Plancha","UNS C71500","P-No 34"],"tab":"Tabla 1B","v":[{"l":"≤ 64 mm · O25","ref":"Tabla 1B · pág. 194 · línea 28","n":"","tm":371,"p":[[-30,91.7],[40,91.7],[65,89.0],[100,86.4],[125,84.5],[150,82.6],[175,80.8],[200,79.5],[225,77.7],[250,76.3],[275,75.1],[300,74.1],[325,73.6],[350,72.8],[375,71.5]]},{"l":"64–125 mm · O25","ref":"Tabla 1B · pág. 194 · línea 26","n":"","tm":371,"p":[[-30,82.7],[40,82.7],[65,80.0],[100,77.4],[125,75.6],[150,74.4],[175,72.5],[200,71.2],[225,70.0],[250,68.7],[275,67.9],[300,67.0],[325,65.9],[350,65.4],[375,64.7]]}],"sub":"Cobre y aleaciones"},{"id":"sb171_c46400","cat":"noferrosos","t":"SB-171 C46400","d":"Latón naval, placa tubular.","c":["Latón naval · Plancha","UNS C46400","P-No 32"],"tab":"Tabla 1B","v":[{"l":"≤ 75 mm · O25","ref":"Tabla 1B · pág. 186 · línea 42","n":"T3","tm":200,"p":[[-30,91.7],[40,91.7],[65,91.7],[100,91.7],[125,91.7],[150,91.0],[175,46.4],[200,20.3]],"tc":175},{"l":"75–125 mm · O25","ref":"Tabla 1B · pág. 186 · línea 40","n":"T3","tm":200,"p":[[-30,82.7],[40,82.7],[65,82.7],[100,82.7],[125,82.7],[150,82.2],[175,46.0],[200,20.6]],"tc":175}],"sub":"Cobre y aleaciones"},{"id":"sb171_c63000","cat":"noferrosos","t":"SB-171 C63000","d":"Bronce de aluminio-níquel, placa tubular.","c":["Bronce Al-Ni · Plancha","UNS C63000","P-No 35"],"tab":"Tabla 1B","v":[{"l":"≤ 50 mm · O25","ref":"Tabla 1B · pág. 190 · línea 19","n":"T6","tm":371,"p":[[-30,165.0],[40,165.0],[65,164.0],[100,162.0],[125,160.0],[150,158.0],[175,157.0],[200,156.0],[225,153.0],[250,151.0],[275,128.0],[300,96.7],[325,74.4],[350,54.6],[375,38.9]],"tc":290},{"l":"50–89 mm · O25","ref":"Tabla 1B · pág. 190 · línea 17","n":"T6","tm":371,"p":[[-30,152.0],[40,152.0],[65,150.0],[100,148.0],[125,146.0],[150,145.0],[175,144.0],[200,143.0],[225,140.0],[250,137.0],[275,123.0],[300,97.9],[325,74.1],[350,54.7],[375,38.9]],"tc":290},{"l":"89–125 mm · O25","ref":"Tabla 1B · pág. 190 · línea 15","n":"T6","tm":371,"p":[[-30,138.0],[40,138.0],[65,137.0],[100,135.0],[125,133.0],[150,132.0],[175,131.0],[200,130.0],[225,128.0],[250,124.0],[275,117.0],[300,99.3],[325,73.8],[350,54.7],[375,38.9]],"tc":290}],"sub":"Cobre y aleaciones"},{"id":"sb127_n04400","cat":"noferrosos","t":"SB-127 N04400","d":"Monel 400 (67Ni-30Cu), plancha.","c":["67Ni-30Cu · Plancha","UNS N04400","P-No 42"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 198 · línea 30","n":"T19","tm":482,"p":[[-30,129.0],[40,129.0],[65,121.0],[100,112.0],[125,108.0],[150,105.0],[175,103.0],[200,101.0],[225,101.0],[250,101.0],[275,101.0],[300,101.0],[325,101.0],[350,101.0],[375,101.0],[400,100.0],[425,99.3],[450,79.9],[475,60.2],[500,42.1]],"tc":450},{"l":"Laminado (as rolled)","ref":"Tabla 1B · pág. 198 · línea 35","n":"G12, G20, T9","tm":482,"p":[[-30,148.0],[40,148.0],[65,148.0],[100,148.0],[125,148.0],[150,148.0],[175,148.0],[200,148.0],[225,148.0],[250,148.0],[275,148.0],[300,148.0],[325,148.0],[350,147.0],[375,141.0],[400,127.0],[425,102.0],[450,64.9],[475,35.0],[500,8.02]],"tc":425}],"sub":"Níquel y aleaciones"},{"id":"sb165_n04400","cat":"noferrosos","t":"SB-165 N04400","d":"Monel 400, tubería sin costura.","c":["67Ni-30Cu · Tubería","UNS N04400","P-No 42"],"tab":"Tabla 1B","v":[{"l":"Recocido · ≤ 125 mm D.E.","ref":"Tabla 1B · pág. 198 · línea 32","n":"T19","tm":482,"p":[[-30,129.0],[40,129.0],[65,121.0],[100,112.0],[125,108.0],[150,105.0],[175,103.0],[200,101.0],[225,101.0],[250,101.0],[275,101.0],[300,101.0],[325,101.0],[350,101.0],[375,101.0],[400,100.0],[425,99.3],[450,79.9],[475,60.2],[500,42.1]],"tc":450},{"l":"Recocido · > 125 mm D.E.","ref":"Tabla 1B · pág. 198 · línea 28","n":"T19","tm":482,"p":[[-30,115.0],[40,115.0],[65,107.0],[100,99.4],[125,95.9],[150,93.7],[175,92.1],[200,91.1],[225,90.6],[250,90.4],[275,90.3],[300,90.3],[325,90.3],[350,90.2],[375,89.5],[400,88.9],[425,87.9],[450,78.5],[475,60.8],[500,41.8]],"tc":450}],"sub":"Níquel y aleaciones"},{"id":"sb168_n06600","cat":"noferrosos","t":"SB-168 N06600","d":"Aleación 600 (72Ni-15Cr-8Fe), plancha.","c":["72Ni-15Cr-8Fe · Plancha","UNS N06600","P-No 43"],"tab":"Tabla 1B","v":[{"l":"Recocido · alta S (nota G5)","ref":"Tabla 1B · pág. 218 · línea 13","n":"G5, T11","tm":649,"p":[[-30,158.0],[40,158.0],[65,158.0],[100,158.0],[125,158.0],[150,158.0],[175,158.0],[200,158.0],[225,158.0],[250,158.0],[275,158.0],[300,158.0],[325,158.0],[350,158.0],[375,158.0],[400,158.0],[425,158.0],[450,156.0],[475,124.0],[500,86.5],[525,58.7],[550,40.0],[575,26.8],[600,19.0],[625,14.8],[650,13.8]],"tc":480},{"l":"Recocido · S básica","ref":"Tabla 1B · pág. 218 · línea 14","n":"T11","tm":649,"p":[[-30,158.0],[40,158.0],[65,152.0],[100,146.0],[125,144.0],[150,143.0],[175,142.0],[200,142.0],[225,141.0],[250,140.0],[275,139.0],[300,138.0],[325,137.0],[350,136.0],[375,135.0],[400,134.0],[425,132.0],[450,130.0],[475,118.0],[500,86.5],[525,58.7],[550,40.0],[575,26.8],[600,19.0],[625,14.8],[650,13.8]],"tc":480}],"sub":"Níquel y aleaciones"},{"id":"sb409_n08800","cat":"noferrosos","t":"SB-409 N08800","d":"Aleación 800 (33Ni-42Fe-21Cr), plancha.","c":["33Ni-42Fe-21Cr · Plancha","UNS N08800","P-No 45"],"tab":"Tabla 1B","v":[{"l":"Recocido · alta S (nota G5)","ref":"Tabla 1B · pág. 238 · línea 12","n":"G5, T14","tm":816,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,138.0],[275,138.0],[300,138.0],[325,138.0],[350,138.0],[375,138.0],[400,138.0],[425,138.0],[450,138.0],[475,138.0],[500,138.0],[525,137.0],[550,131.0],[575,108.0],[600,85.0],[625,64.4],[650,44.8],[675,30.0],[700,15.5],[725,11.3],[750,8.82],[775,6.98],[800,6.43],[825,5.0]],"tc":565},{"l":"Recocido · S básica","ref":"Tabla 1B · pág. 238 · línea 13","n":"T15","tm":816,"p":[[-30,138.0],[40,138.0],[65,132.0],[100,127.0],[125,124.0],[150,123.0],[175,121.0],[200,119.0],[225,117.0],[250,116.0],[275,115.0],[300,113.0],[325,112.0],[350,111.0],[375,109.0],[400,108.0],[425,107.0],[450,106.0],[475,104.0],[500,103.0],[525,102.0],[550,101.0],[575,98.1],[600,85.0],[625,64.4],[650,44.8],[675,30.0],[700,15.5],[725,11.3],[750,8.82],[775,6.98],[800,6.43],[825,5.0]],"tc":595}],"sub":"Níquel y aleaciones"},{"id":"sb424_n08825","cat":"noferrosos","t":"SB-424 N08825","d":"Aleación 825, plancha.","c":["42Ni-21,5Cr-3Mo-2,3Cu · Plancha","UNS N08825","P-No 45"],"tab":"Tabla 1B","v":[{"l":"Recocido · alta S (nota G5)","ref":"Tabla 1B · pág. 242 · línea 15","n":"G5","tm":538,"p":[[-30,161.0],[40,161.0],[65,161.0],[100,161.0],[125,161.0],[150,161.0],[175,161.0],[200,161.0],[225,161.0],[250,161.0],[275,161.0],[300,161.0],[325,161.0],[350,161.0],[375,161.0],[400,160.0],[425,159.0],[450,158.0],[475,157.0],[500,156.0],[525,155.0],[550,153.0]]},{"l":"Recocido · S básica","ref":"Tabla 1B · pág. 242 · línea 14","n":"","tm":538,"p":[[-30,161.0],[40,161.0],[65,154.0],[100,146.0],[125,143.0],[150,140.0],[175,137.0],[200,134.0],[225,131.0],[250,129.0],[275,126.0],[300,124.0],[325,122.0],[350,120.0],[375,119.0],[400,119.0],[425,117.0],[450,117.0],[475,117.0],[500,116.0],[525,115.0],[550,113.0]]}],"sub":"Níquel y aleaciones"},{"id":"sb443_n06625","cat":"noferrosos","t":"SB-443 N06625","d":"Aleación 625, plancha.","c":["60Ni-22Cr-9Mo-3,5Cb · Plancha","UNS N06625","P-No 43"],"tab":"Tabla 1B","v":[{"l":"Gr. 1 recocido","ref":"Tabla 1B · pág. 222 · línea 10","n":"G23, T16","tm":649,"p":[[-30,217.0],[40,217.0],[65,217.0],[100,217.0],[125,217.0],[150,217.0],[175,217.0],[200,217.0],[225,217.0],[250,217.0],[275,207.0],[300,205.0],[325,204.0],[350,202.0],[375,201.0],[400,199.0],[425,197.0],[450,196.0],[475,194.0],[500,192.0],[525,190.0],[550,188.0],[575,185.0],[600,179.0],[625,137.0],[650,88.9]],"tc":620},{"l":"Gr. 2 solubilizado · alta S (nota G5)","ref":"Tabla 1B · pág. 222 · línea 1","n":"G4, G5, G23, T17, W13","tm":871,"p":[[-30,184.0],[40,184.0],[65,184.0],[100,184.0],[125,184.0],[150,184.0],[175,184.0],[200,184.0],[225,184.0],[250,184.0],[275,184.0],[300,184.0],[325,184.0],[350,184.0],[375,184.0],[400,184.0],[425,184.0],[450,184.0],[475,184.0],[500,184.0],[525,183.0],[550,182.0],[575,181.0],[600,178.0],[625,173.0],[650,136.0],[675,105.0],[700,84.3],[725,63.6],[750,50.2],[775,39.3],[800,30.3],[825,23.4],[850,16.5],[875,12.5]],"tc":650},{"l":"Gr. 2 solubilizado · S básica","ref":"Tabla 1B · pág. 222 · línea 2","n":"G4, G23, T18, W13","tm":871,"p":[[-30,184.0],[40,184.0],[65,175.0],[100,169.0],[125,165.0],[150,161.0],[175,158.0],[200,155.0],[225,153.0],[250,150.0],[275,148.0],[300,146.0],[325,144.0],[350,143.0],[375,141.0],[400,140.0],[425,139.0],[450,138.0],[475,137.0],[500,136.0],[525,135.0],[550,135.0],[575,134.0],[600,134.0],[625,133.0],[650,133.0],[675,105.0],[700,84.3],[725,63.6],[750,50.2],[775,39.3],[800,30.3],[825,23.4],[850,16.5],[875,12.5]],"tc":675}],"sub":"Níquel y aleaciones"},{"id":"sb575_n10276","cat":"noferrosos","t":"SB-575 N10276","d":"Aleación C-276, plancha.","c":["54Ni-16Mo-15Cr · Plancha","UNS N10276","P-No 43"],"tab":"Tabla 1B","v":[{"l":"Solubilizado · alta S (nota G5)","ref":"Tabla 1B · pág. 246 · línea 36","n":"G5, T14","tm":677,"p":[[-30,188.0],[40,188.0],[65,188.0],[100,188.0],[125,188.0],[150,188.0],[175,188.0],[200,188.0],[225,188.0],[250,187.0],[275,183.0],[300,177.0],[325,172.0],[350,169.0],[375,165.0],[400,162.0],[425,159.0],[450,157.0],[475,156.0],[500,155.0],[525,154.0],[550,145.0],[575,118.0],[600,99.1],[625,81.6],[650,67.0],[675,54.6],[700,42.2]],"tc":565},{"l":"Solubilizado · S básica","ref":"Tabla 1B · pág. 246 · línea 37","n":"T15","tm":677,"p":[[-30,188.0],[40,188.0],[65,180.0],[100,170.0],[125,164.0],[150,158.0],[175,153.0],[200,148.0],[225,143.0],[250,139.0],[275,135.0],[300,131.0],[325,128.0],[350,125.0],[375,122.0],[400,120.0],[425,118.0],[450,117.0],[475,115.0],[500,115.0],[525,114.0],[550,114.0],[575,112.0],[600,99.1],[625,81.6],[650,67.0],[675,54.6],[700,42.2]],"tc":595}],"sub":"Níquel y aleaciones"},{"id":"sb265_gr1","cat":"noferrosos","t":"SB-265 Grado 1","d":"Titanio no aleado, plancha.","c":["Titanio · Plancha","UNS R50250","P-No 51"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 258 · línea 7","n":"","tm":316,"p":[[-30,68.9],[40,68.9],[65,64.2],[100,55.6],[125,50.2],[150,45.3],[175,41.6],[200,38.4],[225,33.9],[250,30.3],[275,27.4],[300,25.2],[325,23.4]]}],"sub":"Titanio"},{"id":"sb265_gr2","cat":"noferrosos","t":"SB-265 Grado 2","d":"Titanio no aleado, plancha (el más habitual).","c":["Titanio · Plancha","UNS R50400","P-No 51"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 258 · línea 16","n":"","tm":316,"p":[[-30,98.6],[40,98.6],[65,94.6],[100,83.5],[125,76.9],[150,70.8],[175,65.8],[200,61.4],[225,57.6],[250,53.9],[275,50.1],[300,46.7],[325,43.7]]}],"sub":"Titanio"},{"id":"sb338_gr2","cat":"noferrosos","t":"SB-338 Grado 2","d":"Titanio, tubo de intercambiador.","c":["Titanio · Tubo","UNS R50400","P-No 51"],"tab":"Tabla 1B","v":[{"l":"Sin costura","ref":"Tabla 1B · pág. 258 · línea 17","n":"","tm":316,"p":[[-30,98.6],[40,98.6],[65,94.6],[100,83.5],[125,76.9],[150,70.8],[175,65.8],[200,61.4],[225,57.6],[250,53.9],[275,50.1],[300,46.7],[325,43.7]]},{"l":"Soldado (0,85 incl.)","ref":"Tabla 1B · pág. 258 · línea 18","n":"G14, W6","tm":316,"p":[[-30,83.4],[40,83.4],[65,80.8],[100,71.2],[125,65.4],[150,60.5],[175,56.1],[200,52.3],[225,49.1],[250,46.1],[275,43.0],[300,39.9],[325,36.7]]}],"sub":"Titanio"},{"id":"sb861_gr2","cat":"noferrosos","t":"SB-861 Grado 2","d":"Titanio, tubería sin costura.","c":["Titanio · Tubería s/costura","UNS R50400","P-No 51"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 258 · línea 22","n":"","tm":316,"p":[[-30,98.6],[40,98.6],[65,94.6],[100,83.5],[125,76.9],[150,70.8],[175,65.8],[200,61.4],[225,57.6],[250,53.9],[275,50.1],[300,46.7],[325,43.7]]}],"sub":"Titanio"},{"id":"sb265_gr7","cat":"noferrosos","t":"SB-265 Grado 7","d":"Titanio-paladio, plancha.","c":["Ti-Pd · Plancha","UNS R52400","P-No 51"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 262 · línea 1","n":"","tm":316,"p":[[-30,98.6],[40,98.6],[65,94.6],[100,83.5],[125,76.9],[150,70.8],[175,65.8],[200,61.4],[225,57.6],[250,53.9],[275,50.1],[300,46.7],[325,43.7]]}],"sub":"Titanio"},{"id":"sb265_gr12","cat":"noferrosos","t":"SB-265 Grado 12","d":"Ti-0,3Mo-0,8Ni, plancha.","c":["Ti-0,3Mo-0,8Ni · Plancha","UNS R53400","P-No 52"],"tab":"Tabla 1B","v":[{"l":"Recocido","ref":"Tabla 1B · pág. 266 · línea 10","n":"","tm":316,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,126.0],[125,119.0],[150,111.0],[175,105.0],[200,99.5],[225,94.9],[250,91.4],[275,88.8],[300,86.4],[325,83.9]]}],"sub":"Titanio"},{"id":"sb211_6061","cat":"noferrosos","t":"SB-211 6061-T6 (pernos)","d":"Pernos de aluminio.","c":["Aluminio 6061 · Perno","UNS A96061","Tabla 3"],"tab":"Tabla 3","v":[{"l":"T6 · 3–200 mm","ref":"Tabla 3 · pág. 360 · línea 7","n":"T2, W4","tm":204,"p":[[-30,57.9],[40,57.9],[65,57.9],[100,57.9],[125,57.9],[150,57.7],[175,44.5],[200,32.2],[225,20.8]],"tc":175}],"sub":"Pernos no ferrosos"},{"id":"sb150_c63000","cat":"noferrosos","t":"SB-150 C63000 (pernos)","d":"Pernos de bronce de aluminio-níquel.","c":["Bronce Al-Ni · Perno","UNS C63000","Tabla 3"],"tab":"Tabla 3","v":[{"l":"13–25 mm · HR50","ref":"Tabla 3 · pág. 360 · línea 28","n":"T4, W4","tm":371,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,137.0],[275,125.0],[300,99.9],[325,73.5],[350,54.1],[375,39.0]],"tc":290,"dmax":25},{"l":"25–50 mm · HR50","ref":"Tabla 3 · pág. 360 · línea 27","n":"T4, W4","tm":371,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,137.0],[275,125.0],[300,99.9],[325,73.5],[350,54.1],[375,39.0]],"tc":290,"dmax":50},{"l":"50–75 mm · HR50","ref":"Tabla 3 · pág. 360 · línea 25","n":"T4, W4","tm":371,"p":[[-30,138.0],[40,138.0],[65,138.0],[100,138.0],[125,138.0],[150,138.0],[175,138.0],[200,138.0],[225,138.0],[250,137.0],[275,125.0],[300,99.9],[325,73.5],[350,54.1],[375,39.0]],"tc":290,"dmax":75}],"sub":"Pernos no ferrosos"}];
 
-    if (view === 'catalog') {
-      catalogView.hidden = false;
-      calcView.hidden = true;
-      btnCat.classList.add('active');
-      btnCalc.classList.remove('active');
-    } else {
-      catalogView.hidden = true;
-      calcView.hidden = false;
-      btnCat.classList.remove('active');
-      btnCalc.classList.add('active');
+  var CATS = [
+    {id:'plancha',   name:'Plancha / Chapa',      badge:'Plates',        desc:'Envolventes, fondos y componentes estructurales.'},
+    {id:'tubo',      name:'Tubo',                 badge:'Pipes / Tubes', desc:'Tubería de proceso, calderas e intercambiadores.'},
+    {id:'forja',     name:'Forja',                badge:'Forgings',      desc:'Bridas, boquillas y componentes macizos.'},
+    {id:'bridas',    name:'Bridas',               badge:'Flanges',       desc:'Uniones desmontables (mismos materiales de forja).',
+      refs:['sa105','sa350_lf2','sa182_f304','sa182_f304L','sa182_f316','sa182_f316L','sa182_f11','sa182_f22']},
+    {id:'fittings',  name:'Accesorios / Fittings',badge:'Fittings',      desc:'Codos, tes y reducciones.'},
+    {id:'fundicion', name:'Fundiciones',          badge:'Castings',      desc:'Cuerpos moldeados. Aplicar factor de calidad UG-24.'},
+    {id:'pernos',    name:'Pernos y Espárragos',  badge:'Bolting',       desc:'Elementos de fijación (Tabla 3).',
+      info:[{t:'SA-194 (tuercas)', tag:'Sin S tabulada', d:'La II-D no tabula tensión admisible para tuercas. Se seleccionan según UCS-11 (VIII-1), acordes al perno.'}]},
+    {id:'noferrosos',name:'Materiales no ferrosos',badge:'Nonferrous',   desc:'Aluminio, cobre, níquel y titanio (Tabla 1B) y pernos no ferrosos (Tabla 3).', wide:true}
+  ];
+
+  // Notas más habituales, parafraseadas de las notas de cada tabla.
+  var NOTE_TXT = {
+    'Tabla 1A': {
+      G1:'Aplicar el factor de calidad de fundición de UG-24.',
+      G3:'Incluye una eficiencia de junta de 0,85.',
+      G5:'Valores altos (hasta el 90 % del límite elástico a temperatura): pueden producir deformación permanente. No recomendados para bridas con junta ni donde una ligera distorsión cause fugas.',
+      G10:'Exposición prolongada por encima de 425 °C: posible grafitización del acero al carbono.',
+      G12:'Por encima de 550 °C, válido solo con C ≥ 0,04 %.',
+      G19:'Puede fragilizarse tras servicio a temperatura moderadamente elevada.',
+      G24:'Factor 0,85 ya aplicado; dividir por 0,85 para la tensión longitudinal admisible.',
+      H1:'Por encima de 550 °C, solo con el tratamiento térmico indicado en la nota.'
+    },
+    'Tabla 1B': {
+      G5:'Valores altos (hasta el 90 % del límite elástico a temperatura): pueden producir deformación permanente. No recomendados para bridas con junta.',
+      G14:'Factor 0,85 ya aplicado (VIII); dividir por 0,85 para la tensión longitudinal admisible.',
+      G16:'Valores al 90 % de los del material del núcleo (Alclad).',
+      G18:'Considerar el riesgo de corrosión bajo tensión.',
+      G19:'Considerar el riesgo de corrosión bajo tensión; consultar al suministrador.',
+      G23:'Pérdida severa de tenacidad a temperatura ambiente tras exposición entre 550 y 750 °C.',
+      G24:'Para temples con alivio de tensiones (T451, T651…), usar los valores del temple básico.'
+    },
+    'Tabla 3': {
+      G5:'Por encima de 550 °C, válido solo con C ≥ 0,04 %.',
+      G6:'Por encima de 550 °C, solo si se trata térmicamente a 1040 °C mínimo.',
+      G8:'Dureza máxima HRC 35 bajo la raíz de la rosca.'
     }
-  }
+  };
 
-  function openMaterial(materialId) {
-    switchView('calc');
-    selectTab(materialId);
-  }
+  var KSI = 6.894757, IN = 25.4;
+  var units = 'si';
+  var BYID = {};
+  MATERIALS.forEach(function(m){ BYID[m.id] = m; });
+  var state = { mat: MATERIALS[0], vi: 0, T: 150, P: 1.5, D: 25.4 };
 
-  (function(){
-    'use strict';
-    var NS = 'http://www.w3.org/2000/svg';
-    function toC(f){ return (f - 32) * 5 / 9; }
-    function toMPa(ksi){ return ksi * 6.89476; }
-    function el(tag, attrs){
-      var e = document.createElementNS(NS, tag);
-      for (var k in attrs){ e.setAttribute(k, attrs[k]); }
-      return e;
-    }
+  function cToF(c){ return c * 9 / 5 + 32; }
+  function fToC(f){ return (f - 32) * 5 / 9; }
+  function decFor(x){ return x >= 100 ? 0 : (x >= 10 ? 1 : 2); }
+  function fmtS(x){ return x.toFixed(decFor(x)).replace('.', ','); }
+  function fmtT(x){ return String(Math.round(x)); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
-    // BASE DE DATOS EXTENDIDA DE MATERIALES ASME SECCIÓN II-D
-    var MATERIALS = [
-      {
-        id: 'sa516', kind: 'single',
-        title: 'SA-516 Grado 70', ref: 'Tabla 1A, línea 37',
-        chips: ['Acero al carbono · Plancha', 'UNS K02700', 'P-No 1/2'],
-        defaultP: 1.60, defaultT: 150,
-        data: [
-          {f:100,s:17.9},{f:150,s:17.9},{f:200,s:17.9},{f:250,s:17.9},{f:300,s:17.9},
-          {f:400,s:17.9},{f:500,s:17.9},{f:600,s:17.9},{f:650,s:17.9},{f:700,s:16.9},
-          {f:750,s:13.9},{f:800,s:11.4},{f:850,s:8.7},{f:900,s:5.9},{f:950,s:4.0},{f:1000,s:2.5}
-        ]
-      },
-      {
-        id: 'sa516_60', kind: 'single',
-        title: 'SA-516 Grado 60', ref: 'Tabla 1A',
-        chips: ['Acero al carbono · Plancha', 'UNS K02100', 'P-No 1/1'],
-        defaultP: 1.40, defaultT: 150,
-        data: [
-          {f:100,s:15.0},{f:150,s:15.0},{f:200,s:15.0},{f:300,s:15.0},
-          {f:400,s:15.0},{f:500,s:15.0},{f:600,s:15.0},{f:700,s:14.3},
-          {f:800,s:10.0},{f:900,s:5.5},{f:1000,s:2.5}
-        ]
-      },
-      {
-        id: 'sa240_304', kind: 'single',
-        title: 'SA-240 Gr. 304 / 304L', ref: 'Tabla 1A',
-        chips: ['Inoxidable austenítico', 'P-No 8'],
-        defaultP: 1.50, defaultT: 150,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:18.9},{f:400,s:17.5},
-          {f:500,s:16.4},{f:600,s:15.6},{f:700,s:15.0},{f:800,s:14.6}
-        ]
-      },
-      {
-        id: 'sa240_316', kind: 'single',
-        title: 'SA-240 Gr. 316 / 316L', ref: 'Tabla 1A',
-        chips: ['Inoxidable con Mo', 'P-No 8'],
-        defaultP: 1.50, defaultT: 150,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:19.4},{f:400,s:18.4},
-          {f:500,s:17.5},{f:600,s:16.8},{f:700,s:16.3},{f:800,s:15.9}
-        ]
-      },
-      {
-        id: 'sa106b', kind: 'single',
-        title: 'SA-106 Grado B', ref: 'Tabla 1A, línea 15',
-        chips: ['Acero al carbono · Tubo s/costura', 'UNS K03006', 'P-No 1/1'],
-        defaultP: 1.20, defaultT: 200,
-        data: [
-          {f:100,s:15.7},{f:150,s:15.7},{f:200,s:15.7},{f:300,s:15.7},
-          {f:400,s:15.7},{f:500,s:15.7},{f:600,s:15.7},{f:650,s:15.7},{f:700,s:15.6},
-          {f:750,s:13.0},{f:800,s:10.8},{f:850,s:8.7},{f:900,s:5.9}
-        ]
-      },
-      {
-        id: 'sa333_6', kind: 'single',
-        title: 'SA-333 Grado 6', ref: 'Tabla 1A',
-        chips: ['Tubo criogénico', 'P-No 1'],
-        defaultP: 1.00, defaultT: 100,
-        data: [
-          {f:-20,s:15.0},{f:100,s:15.0},{f:200,s:15.0},{f:300,s:15.0},
-          {f:400,s:15.0},{f:500,s:15.0},{f:600,s:15.0},{f:700,s:14.3}
-        ]
-      },
-      {
-        id: 'sa213_t11', kind: 'single',
-        title: 'SA-213 T11 / T22', ref: 'Tabla 1A',
-        chips: ['Aleados Cr-Mo · Calderas', 'P-No 4/5A'],
-        defaultP: 2.50, defaultT: 350,
-        data: [
-          {f:100,s:17.5},{f:200,s:17.5},{f:300,s:17.5},{f:400,s:17.5},
-          {f:500,s:17.5},{f:600,s:17.5},{f:700,s:17.5},{f:800,s:16.8},
-          {f:900,s:15.0},{f:1000,s:11.2}
-        ]
-      },
-      {
-        id: 'sa105', kind: 'single',
-        title: 'SA-105 (Normalizado)', ref: 'Tabla 1A, línea 23',
-        chips: ['Acero al carbono forjado', 'UNS K03504', 'P-No 1/2'],
-        defaultP: 1.00, defaultT: 120,
-        data: [
-          {f:100,s:17.1},{f:150,s:17.1},{f:200,s:17.1},{f:250,s:17.1},{f:300,s:17.1},
-          {f:400,s:17.1},{f:500,s:17.1},{f:600,s:17.1},{f:650,s:17.1}
-        ]
-      },
-      {
-        id: 'sa350_lf2', kind: 'single',
-        title: 'SA-350 LF2 Cl. 1', ref: 'Tabla 1A',
-        chips: ['Forja baja temperatura', 'P-No 1'],
-        defaultP: 1.20, defaultT: 100,
-        data: [
-          {f:-20,s:17.5},{f:100,s:17.5},{f:200,s:17.5},{f:300,s:17.5},
-          {f:400,s:17.5},{f:500,s:17.5},{f:600,s:17.5},{f:700,s:16.6}
-        ]
-      },
-      {
-        id: 'sa182_f304', kind: 'single',
-        title: 'SA-182 Gr. F304 / F304L', ref: 'Tabla 1A',
-        chips: ['Bridas inox austenítico', 'P-No 8'],
-        defaultP: 1.50, defaultT: 150,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:18.9},{f:400,s:17.5},
-          {f:500,s:16.4},{f:600,s:15.6},{f:700,s:15.0},{f:800,s:14.6}
-        ]
-      },
-      {
-        id: 'sa182_f316', kind: 'single',
-        title: 'SA-182 Gr. F316 / F316L', ref: 'Tabla 1A',
-        chips: ['Bridas inox con Mo', 'P-No 8'],
-        defaultP: 1.50, defaultT: 150,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:19.4},{f:400,s:18.4},
-          {f:500,s:17.5},{f:600,s:16.8},{f:700,s:16.3},{f:800,s:15.9}
-        ]
-      },
-      {
-        id: 'sa182_f11', kind: 'single',
-        title: 'SA-182 Gr. F11 Cl. 2', ref: 'Tabla 1A',
-        chips: ['Forja aleada Cr-Mo', 'P-No 4'],
-        defaultP: 2.00, defaultT: 250,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:20.0},{f:400,s:20.0},
-          {f:500,s:20.0},{f:600,s:20.0},{f:700,s:20.0},{f:800,s:19.2}
-        ]
-      },
-      {
-        id: 'sa234_wpb', kind: 'single',
-        title: 'SA-234 Grado WPB', ref: 'Tabla 1A',
-        chips: ['Accesorios acero al carbono', 'P-No 1'],
-        defaultP: 1.20, defaultT: 150,
-        data: [
-          {f:100,s:15.7},{f:200,s:15.7},{f:300,s:15.7},{f:400,s:15.7},
-          {f:500,s:15.7},{f:600,s:15.7},{f:700,s:15.6},{f:800,s:10.8}
-        ]
-      },
-      {
-        id: 'sa420_wpl6', kind: 'single',
-        title: 'SA-420 Grado WPL6', ref: 'Tabla 1A',
-        chips: ['Accesorios baja temperatura', 'P-No 1'],
-        defaultP: 1.00, defaultT: 100,
-        data: [
-          {f:-50,s:15.0},{f:100,s:15.0},{f:200,s:15.0},{f:300,s:15.0},
-          {f:400,s:15.0},{f:500,s:15.0},{f:600,s:15.0}
-        ]
-      },
-      {
-        id: 'sa193b7', kind: 'b7',
-        title: 'SA-193 Grado B7', ref: 'Tabla 3, líneas 31 / 30 / 27',
-        chips: ['Acero aleado Cr-Mo · Perno', 'UNS G41400'],
-        defaultP: 4.00, defaultT: 200, defaultD: 25.4,
-        data: [
-          {f:100,s1:25.0,s2:23.0,s3:18.8},{f:150,s1:25.0,s2:23.0,s3:18.8},{f:200,s1:25.0,s2:23.0,s3:18.8},
-          {f:300,s1:25.0,s2:23.0,s3:18.8},{f:400,s1:25.0,s2:23.0,s3:18.8},{f:500,s1:25.0,s2:23.0,s3:18.8},
-          {f:550,s1:25.0,s2:23.0,s3:18.8},{f:600,s1:25.0,s2:23.0,s3:18.8},{f:650,s1:25.0,s2:23.0,s3:18.8},
-          {f:700,s1:25.0,s2:23.0,s3:18.8},{f:750,s1:23.6,s2:22.2,s3:18.8},{f:800,s1:21.0,s2:20.0,s3:18.0},
-          {f:850,s1:16.3,s2:16.3,s3:16.3},{f:900,s1:12.5,s2:12.5,s3:12.5},{f:950,s1:8.5,s2:8.5,s3:8.5},
-          {f:1000,s1:4.5,s2:4.5,s3:4.5}
-        ],
-        classes: [
-          {key:'s1', label:'≤ 2.1/2" (63,5 mm)', dmax:2.5},
-          {key:'s2', label:'2.1/2"–4" (63,5–101,6 mm)', dmax:4},
-          {key:'s3', label:'4"–7" (101,6–177,8 mm)', dmax:7}
-        ]
-      },
-      {
-        id: 'sa193_b8', kind: 'single',
-        title: 'SA-193 Grado B8 Cl. 1', ref: 'Tabla 3',
-        chips: ['Espárragos acero inoxidable', 'P-No 8'],
-        defaultP: 3.00, defaultT: 150,
-        data: [
-          {f:100,s:20.0},{f:200,s:20.0},{f:300,s:18.4},{f:400,s:16.7},
-          {f:500,s:15.3},{f:600,s:14.3},{f:700,s:13.5},{f:800,s:12.9}
-        ]
-      }
-    ];
-
-    MATERIALS.forEach(function(m){
-      m.rows = m.data.map(function(d){
-        var r = {f:d.f, c:toC(d.f)};
-        if (m.kind === 'single'){ r.s = toMPa(d.s); }
-        else { r.s1 = toMPa(d.s1); r.s2 = toMPa(d.s2); r.s3 = toMPa(d.s3); }
-        return r;
-      });
-      m.tmin = m.rows[0].c;
-      m.tmax = m.rows[m.rows.length-1].c;
-      m.activeKey = m.kind === 'single' ? 's' : 's1';
-      m.dOutOfRange = false;
-    });
-
-    function interpAt(rows, key, tC){
-      var tmin = rows[0].c, tmax = rows[rows.length-1].c;
-      var tc = Math.min(Math.max(tC, tmin), tmax);
-      var idx = rows.length - 2;
-      for (var i=0;i<rows.length-1;i++){
-        if (tc >= rows[i].c && tc <= rows[i+1].c){ idx = i; break; }
-      }
-      var r0 = rows[idx], r1 = rows[idx+1];
-      var span = r1.c - r0.c;
-      var frac = span === 0 ? 0 : (tc - r0.c) / span;
-      var s = r0[key] + frac * (r1[key] - r0[key]);
-      return { s: s, tc: tc, below: tC < tmin, above: tC > tmax, tmin: tmin, tmax: tmax };
-    }
-
-    var tabbar = document.getElementById('tabbar');
-    var panels = document.getElementById('panels');
-
-    MATERIALS.forEach(function(m, i){
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
-      btn.id = 'tabbtn-' + m.id;
-      btn.textContent = m.title;
-      btn.addEventListener('click', function(){ selectTab(m.id); });
-      tabbar.appendChild(btn);
-
-      var card = document.createElement('div');
-      card.className = 'card';
-      card.id = 'panel-' + m.id;
-      if (i !== 0) card.hidden = true;
-
-      var chipsHtml = m.chips.map(function(c){ return '<span>'+c+'</span>'; }).join('');
-      var inputsHtml = '' +
-        '<div class="field">' +
-          '<label for="p-'+m.id+'">Presión de diseño P</label>' +
-          '<div class="in-row">' +
-            '<input type="number" id="p-'+m.id+'" value="'+m.defaultP.toFixed(2)+'" step="0.1">' +
-            '<span class="unit">MPa</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="field">' +
-          '<label for="t-'+m.id+'">Temperatura de diseño T</label>' +
-          '<div class="in-row">' +
-            '<input type="number" id="t-'+m.id+'" value="'+m.defaultT+'" step="5">' +
-            '<span class="unit">°C</span>' +
-          '</div>' +
-        '</div>';
-      if (m.kind === 'b7'){
-        inputsHtml += '' +
-          '<div class="field">' +
-            '<label for="d-'+m.id+'">Diámetro del perno D</label>' +
-            '<div class="in-row">' +
-              '<input type="number" id="d-'+m.id+'" value="'+m.defaultD+'" step="1">' +
-              '<span class="unit">mm</span>' +
-            '</div>' +
-          '</div>';
-      }
-      inputsHtml += '<div class="input-hint">P es un dato de registro; la curva S&#8209;T depende exclusivamente de la temperatura.</div>';
-
-      var legendHtml = m.kind === 'b7' ? '<div class="legend" id="legend-'+m.id+'"></div>' : '';
-
-      card.innerHTML =
-        '<div class="card-top-row">' +
-          '<div>' +
-            '<div class="card-eyebrow">'+m.ref+'</div>' +
-            '<div class="card-title">'+m.title+'</div>' +
-            '<div class="idline">'+chipsHtml+'</div>' +
-          '</div>' +
-          '<button class="back-btn" onclick="switchView(\'catalog\')">← Volver al Catálogo</button>' +
-        '</div>' +
-        '<div class="body-row">' +
-          '<div class="side">' +
-            '<div class="inputs">'+inputsHtml+'</div>' +
-            '<div class="result"><span class="r-label">S admisible</span><span class="r-value" id="r-'+m.id+'">–</span></div>' +
-            legendHtml +
-            '<div class="status" id="status-'+m.id+'"></div>' +
-          '</div>' +
-          '<div class="chart-col">' +
-            '<svg id="chart-'+m.id+'" viewBox="0 0 600 280" role="img"></svg>' +
-          '</div>' +
-        '</div>';
-
-      panels.appendChild(card);
-      buildChart(m);
-    });
-
-    window.selectTab = function(id){
-      MATERIALS.forEach(function(m){
-        var isActive = m.id === id;
-        var pEl = document.getElementById('panel-' + m.id);
-        if(pEl) pEl.hidden = !isActive;
-        var btn = document.getElementById('tabbtn-' + m.id);
-        if(btn) btn.classList.toggle('active', isActive);
-      });
+  // Curva de una variante en las unidades activas. official=true si los valores son tabulados.
+  function curve(v){
+    if (units === 'si') return { pts: v.p.map(function(p){ return [p[0], p[1]]; }), tm: v.tm, tc: v.tc, official: true };
+    if (v.us) return { pts: v.us, tm: v.us[v.us.length-1][0], tc: null, official: true };
+    return {
+      pts: v.p.map(function(p){ return [cToF(p[0]), p[1] / KSI]; }),
+      tm: cToF(v.tm), tc: v.tc ? cToF(v.tc) : null, official: false
     };
+  }
 
-    function buildChart(m){
-      var svg = document.getElementById('chart-'+m.id);
-      var W = 600, H = 280;
-      var Mg = { l: 48, r: 16, t: 14, b: 34 };
-      var plotW = W - Mg.l - Mg.r;
-      var plotH = H - Mg.t - Mg.b;
-
-      var xMax = Math.ceil(m.tmax * 1.06 / 10) * 10;
-      var maxS = 0;
-      m.rows.forEach(function(r){
-        if (m.kind === 'single'){ maxS = Math.max(maxS, r.s); }
-        else { maxS = Math.max(maxS, r.s1, r.s2, r.s3); }
-      });
-      var yMax = Math.ceil(maxS * 1.2 / 20) * 20;
-      var xMin = Math.min(0, Math.floor(m.tmin / 50) * 50), yMin = 0;
-
-      function sx(v){ return Mg.l + (v - xMin) / (xMax - xMin) * plotW; }
-      function sy(v){ return Mg.t + plotH - (v - yMin) / (yMax - yMin) * plotH; }
-
-      var yTicks = [];
-      for (var yt = 0; yt <= yMax + 1; yt += (yMax/4)){ yTicks.push(Math.round(yt)); }
-      var xTicks = [];
-      var xRange = xMax - xMin;
-      var xStep = xRange <= 300 ? 50 : 100;
-      for (var xt = Math.ceil(xMin/xStep)*xStep; xt <= xMax; xt += xStep){ xTicks.push(xt); }
-
-      var series;
-      if (m.kind === 'single'){
-        series = [ { key:'s', cls:'c-s' } ];
-      } else {
-        series = [
-          { key:'s1', cls:'c-s1', label: m.classes[0].label },
-          { key:'s2', cls:'c-s2', label: m.classes[1].label },
-          { key:'s3', cls:'c-s3', label: m.classes[2].label }
-        ];
-        var legend = document.getElementById('legend-'+m.id);
-        legend.innerHTML = series.map(function(s){
-          return '<span class="lg"><span class="sw '+s.key+'"></span>'+s.label+'</span>';
-        }).join('') + '<span class="lg"><span class="sw dot"></span>Punto</span>';
-      }
-
-      function seriesPath(key){
-        var pts = m.rows.map(function(r){ return [sx(r.c), sy(r[key])]; });
-        return { d: 'M' + pts.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L') };
-      }
-
-      function render(){
-        while (svg.firstChild) svg.removeChild(svg.firstChild);
-
-        yTicks.forEach(function(t){
-          var y = sy(t);
-          svg.appendChild(el('line', {class:'gridline', x1:Mg.l, x2:W-Mg.r, y1:y, y2:y}));
-          var lbl = el('text', {class:'tick-label', x:Mg.l-8, y:y+3, 'text-anchor':'end'});
-          lbl.textContent = t;
-          svg.appendChild(lbl);
-        });
-        xTicks.forEach(function(t){
-          var x = sx(t);
-          var lbl = el('text', {class:'tick-label', x:x, y:H-Mg.b+16, 'text-anchor':'middle'});
-          lbl.textContent = t;
-          svg.appendChild(lbl);
-        });
-        var xAxisLabel = el('text', {class:'axis-label', x:Mg.l+plotW/2, y:H-3, 'text-anchor':'middle'});
-        xAxisLabel.textContent = 'Temperatura (°C)';
-        svg.appendChild(xAxisLabel);
-        var yAxisLabel = el('text', {class:'axis-label', x:10, y:Mg.t+plotH/2, 'text-anchor':'middle',
-          transform:'rotate(-90 10 '+(Mg.t+plotH/2)+')'});
-        yAxisLabel.textContent = 'S (MPa)';
-        svg.appendChild(yAxisLabel);
-        svg.appendChild(el('line', {class:'baseline', x1:Mg.l, x2:W-Mg.r, y1:Mg.t+plotH, y2:Mg.t+plotH}));
-
-        var activeKey = m.activeKey;
-
-        series.forEach(function(s){
-          var path = seriesPath(s.key);
-          var isActive = m.kind === 'single' || s.key === activeKey;
-          var lineEl = el('path', {
-            d: path.d, class: 'curve-line ' + s.cls,
-            'stroke-width': isActive ? 2.5 : 1.7,
-            opacity: isActive ? 1 : 0.35
-          });
-          svg.appendChild(lineEl);
-        });
-
-        var activeCls = m.kind === 'single' ? 'c-s' : ('c-' + activeKey);
-        var hoverLine = el('line', {class:'hover-line', x1:0, x2:0, y1:Mg.t, y2:Mg.t+plotH});
-        var hoverDot = el('circle', {class:'hover-dot ' + activeCls, r:4.5, cx:0, cy:0});
-        var hoverBox = el('g', {class:'hover-box'});
-        var hoverRect = el('rect', {x:0, y:0, width:92, height:32, rx:4});
-        var hoverT = el('text', {class:'hb-t', x:7, y:13});
-        var hoverS = el('text', {class:'hb-s', x:7, y:25});
-        hoverBox.appendChild(hoverRect); hoverBox.appendChild(hoverT); hoverBox.appendChild(hoverS);
-        var capture = el('rect', {class:'hover-capture', x:Mg.l, y:Mg.t, width:plotW, height:plotH});
-        svg.appendChild(capture); svg.appendChild(hoverLine); svg.appendChild(hoverDot); svg.appendChild(hoverBox);
-
-        function onMove(evt){
-          var rect = svg.getBoundingClientRect();
-          var scaleX = W / rect.width;
-          var mx = (evt.clientX - rect.left) * scaleX;
-          var vx = xMin + (mx - Mg.l) / plotW * (xMax - xMin);
-          var nearest = m.rows[0], best = Infinity;
-          m.rows.forEach(function(r){
-            var diff = Math.abs(r.c - vx);
-            if (diff < best){ best = diff; nearest = r; }
-          });
-          var sVal = nearest[activeKey];
-          var px = sx(nearest.c), py = sy(sVal);
-          hoverLine.setAttribute('x1', px); hoverLine.setAttribute('x2', px);
-          hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py);
-          hoverLine.style.opacity = 1; hoverDot.style.opacity = 1; hoverBox.style.opacity = 1;
-          var boxX = Math.min(px + 8, W - Mg.r - 96);
-          var boxY = Math.max(py - 38, Mg.t + 2);
-          hoverBox.setAttribute('transform', 'translate('+boxX+','+boxY+')');
-          hoverT.textContent = nearest.c.toFixed(0) + ' °C';
-          hoverS.textContent = sVal.toFixed(1) + ' MPa';
-        }
-        function onLeave(){ hoverLine.style.opacity = 0; hoverDot.style.opacity = 0; hoverBox.style.opacity = 0; }
-        capture.addEventListener('mousemove', onMove);
-        capture.addEventListener('mouseleave', onLeave);
-        capture.addEventListener('touchmove', function(e){ onMove(e.touches[0]); }, {passive:true});
-        capture.addEventListener('touchend', onLeave);
-
-        var res = interpAt(m.rows, activeKey, m.currentT);
-        if (!m.dOutOfRange){
-          var dpx = sx(res.tc), dpy = sy(res.s);
-          svg.appendChild(el('line', {class:'design-line', x1:dpx, x2:dpx, y1:Mg.t+plotH, y2:dpy}));
-          svg.appendChild(el('line', {class:'design-line', x1:Mg.l, x2:dpx, y1:dpy, y2:dpy}));
-          svg.appendChild(el('circle', {class:'design-point', cx:dpx, cy:dpy, r:6}));
-        }
-
-        var resultEl = document.getElementById('r-'+m.id);
-        resultEl.innerHTML = m.dOutOfRange ? '&ndash;' : (res.s.toFixed(1) + ' <small>MPa</small>');
-        var statusEl = document.getElementById('status-'+m.id);
-        var msgs = [];
-        var warn = false;
-        msgs.push('P = ' + m.currentP.toFixed(2) + ' MPa.');
-        if (res.below){
-          warn = true;
-          msgs.push('⚠ T por debajo del rango tabulado (mín. '+res.tmin.toFixed(0)+' °C).');
-        } else if (res.above){
-          warn = true;
-          msgs.push('⚠ T por encima del límite tabulado ('+res.tmax.toFixed(0)+' °C).');
-        } else {
-          msgs.push('T en rango (' + res.tmin.toFixed(0) + '–' + res.tmax.toFixed(0) + ' °C).');
-        }
-        if (m.kind === 'b7'){
-          if (m.dOutOfRange){
-            warn = true;
-            msgs.push('⚠ Diámetro fuera de rango (> 7 in).');
-          } else {
-            msgs.push('Clase: ' + m.classes[['s1','s2','s3'].indexOf(activeKey)].label + '.');
-          }
-        }
-        statusEl.className = warn ? 'status warn' : 'status';
-        statusEl.textContent = msgs.join('  ');
-      }
-
-      m.render = render;
-
-      var pInput = document.getElementById('p-'+m.id);
-      m.currentP = parseFloat(pInput.value);
-      pInput.addEventListener('input', function(){
-        m.currentP = parseFloat(pInput.value) || 0;
-        render();
-      });
-
-      var tInput = document.getElementById('t-'+m.id);
-      m.currentT = parseFloat(tInput.value);
-      tInput.addEventListener('input', function(){
-        m.currentT = parseFloat(tInput.value) || 0;
-        render();
-      });
-
-      if (m.kind === 'b7'){
-        var dInput = document.getElementById('d-'+m.id);
-        function updateClass(){
-          var dMm = parseFloat(dInput.value) || 0;
-          var dIn = dMm / 25.4;
-          var found = m.classes.find(function(c){ return dIn <= c.dmax; });
-          m.dOutOfRange = !found;
-          m.activeKey = found ? found.key : 's3';
-        }
-        updateClass();
-        dInput.addEventListener('input', function(){ updateClass(); render(); });
-      }
-
-      render();
+  // Interpolación lineal; en SI se redondea a los decimales del valor tabulado a mayor temperatura (Nota General b).
+  function interp(c, T){
+    var pts = c.pts, tmin = pts[0][0], tmax = c.tm;
+    var t = Math.min(Math.max(T, tmin), tmax);
+    var i = pts.length - 2;
+    for (var k = 0; k < pts.length - 1; k++){
+      if (t >= pts[k][0] && t <= pts[k+1][0]){ i = k; break; }
     }
-  })();
+    var a = pts[i], b = pts[i+1];
+    var f = b[0] === a[0] ? 0 : (t - a[0]) / (b[0] - a[0]);
+    var s = a[1] + f * (b[1] - a[1]);
+    if (units === 'si' && f > 0 && f < 1){ var d = decFor(b[1]); s = Math.round(s * Math.pow(10, d)) / Math.pow(10, d); }
+    return { s: s, t: t, below: T < tmin, above: T > tmax, tmin: tmin, tmax: tmax };
+  }
+
+  // ---------------- CATÁLOGO ----------------
+  function itemHtml(m){
+    var n = m.v.length;
+    return '<button type="button" class="material-item interactive" data-id="'+m.id+'" data-q="'+esc((m.t+' '+m.d+' '+m.c.join(' ')).toLowerCase())+'">' +
+      '<div class="mat-title">'+esc(m.t)+' <span>'+esc(m.c[m.c.length-1])+'</span></div>' +
+      '<div class="mat-details">'+esc(m.tab)+' · '+esc(m.d)+'</div>' +
+      '<div class="action-hint">Ver curva S-T'+(n > 1 ? ' ('+n+' curvas)' : '')+' →</div>' +
+    '</button>';
+  }
+  function buildCatalog(){
+    var grid = document.getElementById('catalog-grid');
+    var html = '';
+    CATS.forEach(function(c){
+      var list = c.refs ? c.refs.map(function(id){ return BYID[id]; }) : MATERIALS.filter(function(m){ return m.cat === c.id; });
+      var inner = '', lastSub = null;
+      list.forEach(function(m){
+        if (!c.refs && m.sub && m.sub !== lastSub){ inner += '<div class="subhead">'+esc(m.sub)+'</div>'; lastSub = m.sub; }
+        inner += itemHtml(m);
+      });
+      (c.info || []).forEach(function(i){
+        inner += '<div class="material-item" data-q="'+esc((i.t+' '+i.d).toLowerCase())+'"><div class="mat-title">'+esc(i.t)+' <span>'+esc(i.tag)+'</span></div><div class="mat-details">'+esc(i.d)+'</div></div>';
+      });
+      html += '<div class="cat-card'+(c.wide ? ' wide' : '')+'" data-cat="'+c.id+'">' +
+        '<h3>'+esc(c.name)+' <span class="badge">'+esc(c.badge)+'</span></h3>' +
+        '<div class="subcat-desc">'+esc(c.desc)+'</div>' +
+        '<div class="items">'+inner+'</div></div>';
+    });
+    grid.innerHTML = html;
+    grid.addEventListener('click', function(e){
+      var it = e.target.closest('.material-item.interactive');
+      if (it) openMaterial(it.getAttribute('data-id'));
+    });
+    document.getElementById('search').addEventListener('input', function(){
+      var q = this.value.trim().toLowerCase().replace(/\s+/g, ' ');
+      var qq = q.replace(/[\s-]/g, '');
+      grid.querySelectorAll('.cat-card').forEach(function(card){
+        var any = false;
+        card.querySelectorAll('.material-item').forEach(function(it){
+          var hay = it.getAttribute('data-q');
+          var ok = !q || hay.indexOf(q) >= 0 || hay.replace(/[\s-]/g, '').indexOf(qq) >= 0;
+          it.hidden = !ok; if (ok) any = true;
+        });
+        card.querySelectorAll('.subhead').forEach(function(s){ s.hidden = !!q; });
+        card.hidden = !any;
+      });
+    });
+  }
+
+  // ---------------- NAVEGACIÓN ----------------
+  window.switchView = function(view){
+    document.getElementById('view-catalog').hidden = view !== 'catalog';
+    document.getElementById('view-calc').hidden = view === 'catalog';
+    document.getElementById('btn-catalog').classList.toggle('active', view === 'catalog');
+    document.getElementById('btn-calc').classList.toggle('active', view !== 'catalog');
+    if (view !== 'catalog') renderPanel();
+  };
+  window.openMaterial = function(id){
+    selectMaterial(id);
+    window.switchView('calc');
+    window.scrollTo(0, 0);
+  };
+  window.setUnits = function(u){
+    units = u;
+    document.getElementById('u-si').classList.toggle('active', u === 'si');
+    document.getElementById('u-us').classList.toggle('active', u === 'us');
+    renderPanel();
+  };
+
+  var selCat = document.getElementById('sel-cat'), selMat = document.getElementById('sel-mat');
+  function fillCats(){
+    selCat.innerHTML = CATS.filter(function(c){ return !c.refs; }).map(function(c){
+      return '<option value="'+c.id+'">'+esc(c.name)+'</option>';
+    }).join('');
+  }
+  function fillMats(cat){
+    var html = '', lastSub = null, open = false;
+    MATERIALS.filter(function(m){ return m.cat === cat; }).forEach(function(m){
+      if (m.sub && m.sub !== lastSub){ if (open) html += '</optgroup>'; html += '<optgroup label="'+esc(m.sub)+'">'; open = true; lastSub = m.sub; }
+      html += '<option value="'+m.id+'">'+esc(m.t)+'</option>';
+    });
+    if (open) html += '</optgroup>';
+    selMat.innerHTML = html;
+  }
+  function selectMaterial(id){
+    var m = BYID[id]; if (!m) return;
+    state.mat = m; state.vi = 0;
+    selCat.value = m.cat; fillMats(m.cat); selMat.value = m.id;
+    // Temperatura por defecto dentro del rango del material
+    var v = m.v[0];
+    if (state.T > v.tm || state.T < v.p[0][0]) state.T = Math.min(150, Math.round(v.tm));
+    if (m.byD) pickByDiameter();
+    renderPanel();
+  }
+  selCat.addEventListener('change', function(){
+    var first = MATERIALS.filter(function(m){ return m.cat === selCat.value; })[0];
+    selectMaterial(first.id);
+  });
+  selMat.addEventListener('change', function(){ selectMaterial(selMat.value); });
+
+  function pickByDiameter(){
+    var m = state.mat, found = -1;
+    for (var i = 0; i < m.v.length; i++){ if (state.D <= m.v[i].dmax){ found = i; break; } }
+    state.dOut = found < 0;
+    state.vi = found < 0 ? m.v.length - 1 : found;
+  }
+
+  // ---------------- PANEL ----------------
+  var panel = document.getElementById('panel');
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  function renderPanel(){
+    var m = state.mat, us = units === 'us';
+    var uT = us ? '°F' : '°C', uS = us ? 'ksi' : 'MPa', uP = us ? 'psi' : 'MPa', uD = us ? 'in' : 'mm';
+    document.getElementById('calc-sub').textContent = us
+      ? 'Unidades US (°F / ksi). Salvo indicación, los valores son conversión de la tabla métrica.'
+      : 'Unidades SI (°C / MPa), valores tabulados de la II-D Metric.';
+
+    var tVal = us ? Math.round(cToF(state.T)) : Math.round(state.T * 10) / 10;
+    var pVal = us ? Math.round(state.P * 145.0377) : Math.round(state.P * 100) / 100;
+    var dVal = us ? Math.round(state.D / IN * 1000) / 1000 : Math.round(state.D * 10) / 10;
+
+    var inputs = '' +
+      '<div class="field"><label for="in-p">Presión de diseño P</label><div class="in-row">' +
+        '<input type="number" id="in-p" value="'+pVal+'" step="'+(us ? 10 : 0.1)+'"><span class="unit">'+uP+'</span></div></div>' +
+      '<div class="field"><label for="in-t">Temperatura de diseño T</label><div class="in-row">' +
+        '<input type="number" id="in-t" value="'+tVal+'" step="'+(us ? 10 : 5)+'"><span class="unit">'+uT+'</span></div></div>';
+    if (m.byD){
+      inputs += '<div class="field"><label for="in-d">Diámetro del perno D</label><div class="in-row">' +
+        '<input type="number" id="in-d" value="'+dVal+'" step="'+(us ? 0.125 : 1)+'"><span class="unit">'+uD+'</span></div></div>';
+    } else if (m.v.length > 1){
+      inputs += '<div class="field"><label for="in-v">Línea de la tabla / condición</label><select id="in-v">' +
+        m.v.map(function(v, i){ return '<option value="'+i+'"'+(i === state.vi ? ' selected' : '')+'>'+esc(v.l)+'</option>'; }).join('') +
+        '</select></div>';
+    }
+    inputs += '<div class="input-hint">P es un dato de registro; la curva S&#8209;T depende exclusivamente de la temperatura.</div>';
+
+    panel.innerHTML =
+      '<div class="card-top-row"><div>' +
+          '<div class="card-eyebrow" id="p-ref"></div>' +
+          '<div class="card-title">'+esc(m.t)+'</div>' +
+          '<div class="idline">'+m.c.map(function(c){ return '<span>'+esc(c)+'</span>'; }).join('')+'</div>' +
+        '</div>' +
+        '<button class="back-btn" onclick="switchView(\'catalog\')">← Volver al Catálogo</button>' +
+      '</div>' +
+      '<div class="body-row">' +
+        '<div class="side">' +
+          '<div class="inputs">'+inputs+'</div>' +
+          '<div class="result"><span class="r-label">S admisible</span><span class="r-value" id="p-res">–</span></div>' +
+          '<div class="r-alt" id="p-alt"></div>' +
+          (m.v.length > 1 ? '<div class="legend" id="p-legend"></div>' : '') +
+          '<div class="status" id="p-status"></div>' +
+        '</div>' +
+        '<div class="chart-col"><svg id="p-chart" viewBox="0 0 600 300" role="img" aria-label="Curva S-T '+esc(m.t)+'"></svg></div>' +
+      '</div>' +
+      '<div class="notes" id="p-notes"></div>';
+
+    document.getElementById('in-p').addEventListener('input', function(){
+      var x = parseFloat(this.value) || 0; state.P = us ? x / 145.0377 : x; draw();
+    });
+    document.getElementById('in-t').addEventListener('input', function(){
+      var x = parseFloat(this.value); if (isNaN(x)) x = 0; state.T = us ? fToC(x) : x; draw();
+    });
+    if (m.byD){
+      document.getElementById('in-d').addEventListener('input', function(){
+        var x = parseFloat(this.value) || 0; state.D = us ? x * IN : x; pickByDiameter(); draw();
+      });
+    } else if (m.v.length > 1){
+      document.getElementById('in-v').addEventListener('change', function(){ state.vi = parseInt(this.value, 10); draw(); });
+    }
+    draw();
+  }
+
+  function niceStep(range, target){
+    var raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+  }
+
+  function draw(){
+    var m = state.mat, us = units === 'us';
+    var uT = us ? '°F' : '°C', uS = us ? 'ksi' : 'MPa';
+    var v = m.v[state.vi], curves = m.v.map(curve), c = curves[state.vi];
+    var T = us ? cToF(state.T) : state.T;
+
+    document.getElementById('p-ref').textContent = v.ref;
+
+    // ---- gráfico
+    var svg = document.getElementById('p-chart');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 600, H = 300, Mg = { l: 48, r: 16, t: 14, b: 34 };
+    var plotW = W - Mg.l - Mg.r, plotH = H - Mg.t - Mg.b;
+
+    var tLo = Infinity, tHi = -Infinity, sHi = 0;
+    curves.forEach(function(cv){
+      tLo = Math.min(tLo, cv.pts[0][0]); tHi = Math.max(tHi, cv.tm);
+      cv.pts.forEach(function(p){ if (p[0] <= cv.tm) sHi = Math.max(sHi, p[1]); });
+    });
+    var xStep = niceStep(tHi - tLo, 7);
+    var xMin = Math.floor(tLo / 50) * 50, xMax = Math.ceil(tHi / xStep) * xStep;
+    var yStep = niceStep(sHi * 1.1, 4), yMax = Math.ceil(sHi * 1.1 / yStep) * yStep;
+    function sx(x){ return Mg.l + (x - xMin) / (xMax - xMin) * plotW; }
+    function sy(y){ return Mg.t + plotH - y / yMax * plotH; }
+
+    for (var yt = 0; yt <= yMax + 1e-9; yt += yStep){
+      svg.appendChild(el('line', {class:'gridline', x1:Mg.l, x2:W-Mg.r, y1:sy(yt), y2:sy(yt)}));
+      var yl = el('text', {class:'tick-label', x:Mg.l-8, y:sy(yt)+3, 'text-anchor':'end'});
+      yl.textContent = String(Math.round(yt * 100) / 100).replace('.', ','); svg.appendChild(yl);
+    }
+    for (var xt = Math.ceil(xMin / xStep) * xStep; xt <= xMax + 1e-9; xt += xStep){
+      var xl = el('text', {class:'tick-label', x:sx(xt), y:H-Mg.b+16, 'text-anchor':'middle'});
+      xl.textContent = Math.round(xt); svg.appendChild(xl);
+    }
+    var xa = el('text', {class:'axis-label', x:Mg.l+plotW/2, y:H-3, 'text-anchor':'middle'});
+    xa.textContent = 'Temperatura (' + uT + ')'; svg.appendChild(xa);
+    var ya = el('text', {class:'axis-label', x:10, y:Mg.t+plotH/2, 'text-anchor':'middle', transform:'rotate(-90 10 '+(Mg.t+plotH/2)+')'});
+    ya.textContent = 'S (' + uS + ')'; svg.appendChild(ya);
+    svg.appendChild(el('line', {class:'baseline', x1:Mg.l, x2:W-Mg.r, y1:Mg.t+plotH, y2:Mg.t+plotH}));
+
+    if (c.tc != null && c.tc < c.tm){
+      svg.appendChild(el('line', {class:'creep-line', x1:sx(c.tc), x2:sx(c.tc), y1:Mg.t, y2:Mg.t+plotH}));
+      var cl = el('text', {class:'creep-label', x:sx(c.tc)+4, y:Mg.t+9});
+      cl.textContent = 'fluencia ≥ ' + fmtT(c.tc) + ' ' + uT; svg.appendChild(cl);
+    }
+
+    function pathFor(cv){
+      var pts = cv.pts.filter(function(p){ return p[0] < cv.tm; });
+      var end = interpRaw(cv, cv.tm);
+      pts.push([cv.tm, end]);
+      return 'M' + pts.map(function(p){ return sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join(' L');
+    }
+    function interpRaw(cv, t){
+      var pts = cv.pts;
+      for (var k = 0; k < pts.length - 1; k++){
+        if (t >= pts[k][0] && t <= pts[k+1][0]){
+          var f = (t - pts[k][0]) / (pts[k+1][0] - pts[k][0]);
+          return pts[k][1] + f * (pts[k+1][1] - pts[k][1]);
+        }
+      }
+      return pts[pts.length-1][1];
+    }
+    // inactivas primero, activa encima
+    curves.forEach(function(cv, i){
+      if (i === state.vi) return;
+      svg.appendChild(el('path', {d:pathFor(cv), class:'curve-line c-s'+(i+1), 'stroke-width':1.7, opacity:0.4}));
+    });
+    svg.appendChild(el('path', {d:pathFor(c), class:'curve-line c-s'+(state.vi+1), 'stroke-width':2.5}));
+
+    // hover: punto tabulado más cercano de la curva activa
+    var hp = c.pts.filter(function(p){ return p[0] <= c.tm; });
+    var hoverLine = el('line', {class:'hover-line', x1:0, x2:0, y1:Mg.t, y2:Mg.t+plotH});
+    var hoverDot = el('circle', {class:'hover-dot c-s'+(state.vi+1), r:4.5, cx:0, cy:0});
+    var hoverBox = el('g', {class:'hover-box'});
+    var hoverRect = el('rect', {x:0, y:0, width:96, height:32, rx:4});
+    var hoverT = el('text', {class:'hb-t', x:7, y:13});
+    var hoverS = el('text', {class:'hb-s', x:7, y:25});
+    hoverBox.appendChild(hoverRect); hoverBox.appendChild(hoverT); hoverBox.appendChild(hoverS);
+    var capture = el('rect', {class:'hover-capture', x:Mg.l, y:Mg.t, width:plotW, height:plotH});
+    svg.appendChild(capture); svg.appendChild(hoverLine); svg.appendChild(hoverDot);
+
+    // punto de diseño
+    var res = interp(c, T);
+    var show = !(m.byD && state.dOut);
+    if (show){
+      var dpx = sx(res.t), dpy = sy(res.s);
+      svg.appendChild(el('line', {class:'design-line', x1:dpx, x2:dpx, y1:Mg.t+plotH, y2:dpy}));
+      svg.appendChild(el('line', {class:'design-line', x1:Mg.l, x2:dpx, y1:dpy, y2:dpy}));
+      svg.appendChild(el('circle', {class:'design-point', cx:dpx, cy:dpy, r:6}));
+    }
+    svg.appendChild(hoverBox);
+
+    function onMove(evt){
+      var rect = svg.getBoundingClientRect();
+      var mx = (evt.clientX - rect.left) * (W / rect.width);
+      var vx = xMin + (mx - Mg.l) / plotW * (xMax - xMin);
+      var near = hp[0], best = Infinity;
+      hp.forEach(function(p){ var d = Math.abs(p[0] - vx); if (d < best){ best = d; near = p; } });
+      var px = sx(near[0]), py = sy(near[1]);
+      hoverLine.setAttribute('x1', px); hoverLine.setAttribute('x2', px);
+      hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py);
+      hoverLine.style.opacity = 1; hoverDot.style.opacity = 1; hoverBox.style.opacity = 1;
+      hoverBox.setAttribute('transform', 'translate('+Math.min(px + 8, W - Mg.r - 100)+','+Math.max(py - 38, Mg.t + 2)+')');
+      hoverT.textContent = fmtT(near[0]) + ' ' + uT;
+      hoverS.textContent = fmtS(near[1]) + ' ' + uS;
+    }
+    function onLeave(){ hoverLine.style.opacity = 0; hoverDot.style.opacity = 0; hoverBox.style.opacity = 0; }
+    capture.addEventListener('mousemove', onMove);
+    capture.addEventListener('mouseleave', onLeave);
+    capture.addEventListener('touchmove', function(e){ onMove(e.touches[0]); }, {passive:true});
+    capture.addEventListener('touchend', onLeave);
+
+    // ---- resultado
+    var resEl = document.getElementById('p-res'), altEl = document.getElementById('p-alt');
+    if (!show){ resEl.innerHTML = '&ndash;'; altEl.textContent = ''; }
+    else {
+      resEl.innerHTML = fmtS(res.s) + ' <small>' + uS + (c.official ? '' : ' conv.') + '</small>';
+      if (us){
+        altEl.textContent = c.official ? 'Valor tabulado en unidades US.' : 'Convertido desde ' + fmtS(res.s * KSI) + ' MPa (II-D Metric).';
+      } else {
+        altEl.textContent = '≈ ' + fmtS(res.s / KSI) + ' ksi';
+      }
+    }
+
+    // ---- leyenda
+    var lg = document.getElementById('p-legend');
+    if (lg){
+      lg.innerHTML = m.v.map(function(x, i){
+        return '<button type="button" class="lg'+(i === state.vi ? ' on' : '')+'" data-i="'+i+'"'+(m.byD ? ' disabled' : '')+'><span class="sw s'+(i+1)+'"></span>'+esc(x.l)+'</button>';
+      }).join('');
+      if (!m.byD){
+        lg.querySelectorAll('.lg').forEach(function(b){
+          b.addEventListener('click', function(){
+            state.vi = parseInt(b.getAttribute('data-i'), 10);
+            var sel = document.getElementById('in-v'); if (sel) sel.value = state.vi;
+            draw();
+          });
+        });
+      }
+    }
+
+    // ---- estado
+    var msgs = [], warn = false;
+    msgs.push('P = ' + (us ? Math.round(state.P * 145.0377) + ' psi' : state.P.toFixed(2).replace('.', ',') + ' MPa') + '.');
+    if (res.below){
+      msgs.push('T por debajo de ' + fmtT(res.tmin) + ' ' + uT + ': se usa el valor de la primera columna; comprobar tenacidad/MDMT.');
+    } else if (res.above){
+      warn = true;
+      msgs.push('⚠ T supera el límite VIII-1 de este material (' + fmtT(res.tmax) + ' ' + uT + '). No extrapolar.');
+    } else {
+      msgs.push('T en rango VIII-1 (hasta ' + fmtT(res.tmax) + ' ' + uT + ').');
+    }
+    if (!res.above && c.tc != null && T >= c.tc){
+      msgs.push('Zona de fluencia: S gobernada por propiedades dependientes del tiempo.');
+    }
+    if (m.byD){
+      if (state.dOut){ warn = true; msgs.push('⚠ Diámetro fuera del rango tabulado.'); }
+      else msgs.push('Clase por diámetro: ' + v.l + '.');
+    }
+    var st = document.getElementById('p-status');
+    st.className = warn ? 'status warn' : 'status';
+    st.textContent = msgs.join('  ');
+
+    // ---- notas
+    var nEl = document.getElementById('p-notes');
+    var codes = v.n ? v.n.split(', ') : [];
+    var dict = NOTE_TXT[m.tab] || {};
+    var expl = codes.filter(function(k){ return dict[k]; }).map(function(k){ return '<li><b>'+k+'</b> — '+dict[k]+'</li>'; }).join('');
+    var tnote = c.tc != null ? '<li><b>'+codes.filter(function(k){ return /^T\d+$/.test(k); }).join(', ')+'</b> — Valores obtenidos de propiedades dependientes del tiempo a partir de ' + fmtT(us ? cToF(v.tc) : v.tc) + ' ' + uT + '.</li>' : '';
+    nEl.innerHTML = '<b>'+esc(v.ref)+'</b>' + (codes.length ? ' · Notas de la tabla: <b>'+esc(v.n)+'</b>' : ' · Sin notas.') +
+      (expl || tnote ? '<ul>'+expl+tnote+'</ul>' : '') +
+      (m.src === 'viii' ? '<ul><li>Valor único entre −29 y 345 °C (−20 a 650 °F). Aplicar el factor de calidad de fundición de UG-24.</li></ul>' : '');
+  }
+
+  buildCatalog();
+  fillCats();
+  selectMaterial(MATERIALS[0].id);
+})();
 </script>
 
 </body>
