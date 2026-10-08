@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tubo — Materiales ASME II-D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="asme.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">ASME II-D · Tubo</div>
+    <nav>
+      <span class="units" role="group" aria-label="Sistema de unidades">
+        <button id="u-si" class="active" onclick="setUnits('si')">SI · °C / MPa</button>
+        <button id="u-us" onclick="setUnits('us')">US · °F / ksi</button>
+      </span>
+      <button class="btn-cerrar" onclick="cerrarPagina()" title="Cerrar y volver a index.html">✕ Cerrar</button>
+    </nav>
+  </header>
+
+  <div id="view-catalog" class="catalog-view">
+    <div>
+      <div class="eyebrow">Catálogo extendido · Sección II Parte D</div>
+      <div class="title-row"><h1>Tubo</h1><span class="badge">Pipes / Tubes</span></div>
+      <div class="sub">Tubería de proceso, calderas e intercambiadores. Haz clic en un material para ver su curva S-T y situar el punto de diseño.</div>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Buscar en tubo…" aria-label="Buscar material">
+    <div class="items-grid" id="catalog-grid"></div>
+    <div class="empty" id="no-hits" hidden>Ningún material coincide con la búsqueda.</div>
+  </div>
+
+  <div id="view-calc" class="calc-view" hidden>
+    <div>
+      <div class="eyebrow">Tubo · Tensión máxima admisible</div>
+      <h1>Punto de diseño sobre la curva S&#8209;T</h1>
+      <div class="sub" id="calc-sub"></div>
+    </div>
+    <div class="pickers">
+      <div class="field">
+        <label for="sel-mat">Material</label>
+        <select id="sel-mat"></select>
+      </div>
+    </div>
+    <div class="card" id="panel"></div>
+  </div>
+
+  <footer>
+    Fuente: ASME BPVC Sección II, Parte D (Metric), edición 2015 — Tablas 1A, 1B y 3, columna de aplicabilidad VIII-1. SA-395: ASME VIII-1 (2017), Tabla UCD-23.
+    Los valores en MPa/°C son los tabulados; la interpolación entre temperaturas es lineal y se redondea según la Nota General (b) de las tablas.
+    Los valores en ksi/°F marcados «conv.» son conversión de la tabla métrica y pueden diferir en el último dígito de la II-D Customary.
+    La columna −30 a 40 °C no fija la MDMT (ver UCS-66 / UHA-51 / UNF-65). Verificar siempre contra la edición y adenda vigentes.
+  </footer>
+</div>
+<script>window.ASME_PAGE = { cat: 'tubo' };</script>
+<script src="materiales.js"></script>
+<script src="asme.js"></script>
+</body>
+</html>
