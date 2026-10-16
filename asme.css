@@ -437,3 +437,5 @@
   .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   @media (prefers-reduced-motion: reduce){ a.hub-card { transition: none; } a.hub-card:hover { transform: none; } }
 
+
+  a.hub-calc { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-wash), var(--card) 60%); }

@@ -99,7 +99,13 @@
         '<div class="hub-specs">'+esc(specs.join(' · '))+'</div>' +
         '<div class="hub-foot"><span>'+list.length+' materiales</span><span class="action-hint">Abrir catálogo →</span></div>' +
       '</a>';
-    }).join('');
+    }).join('') +
+      '<a class="cat-card hub-card hub-calc" href="calculo.html">' +
+        '<h3>Cálculo de recipientes <span class="badge">VIII-1</span></h3>' +
+        '<div class="subcat-desc">Recipientes verticales u horizontales: virolas, fondos, conos, tapas planas, bridas de cuerpo y boquillas con bridas B16.5 / LWN.</div>' +
+        '<div class="hub-specs">UG-27 · UG-28 · UG-32 · UG-33 · UG-34 · UG-37 · UG-45 · Ap. 2 · UCS-66 · UG-99</div>' +
+        '<div class="hub-foot"><span>MAWP · MAEP · MDMT · prueba</span><span class="action-hint">Abrir programa →</span></div>' +
+      '</a>';
   }
 
   // ---------------- CATÁLOGO DE LA PÁGINA ----------------
