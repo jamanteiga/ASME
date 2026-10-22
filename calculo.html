@@ -68,6 +68,15 @@
   #sketch .orig{ fill:var(--point); }
   #sketch .liq{ stroke:var(--liq); stroke-dasharray:6 3; stroke-width:1.5; }
   #sketch .liqt{ fill:var(--liq); }
+  #v3d{ width:100%; height:600px; border-radius:8px; background:linear-gradient(#f4f6f9,#e3e8ee); overflow:hidden; cursor:grab; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #v3d{ background:linear-gradient(#1d232b,#11151a); } }
+  .vbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; } .vbar .units button{ font-size:12px; } .vchk{ font-size:12px; margin-left:6px; }
+  #sketch .fln{ fill:var(--card-2); stroke:var(--ink-2); stroke-width:1.2; }
+  #sketch .sup{ fill:var(--card-2); stroke:var(--ink-mute); stroke-width:1.1; }
+  #sketch .ground{ stroke:var(--ink-2); stroke-width:2; }
+  #sketch .bolt{ stroke:var(--ink-2); stroke-width:2; }
+  td.okc{ color:var(--ok); font-weight:700; } td.koc{ color:var(--ko); font-weight:700; }
+  .fld textarea{ font-family:"IBM Plex Mono",monospace; font-size:12px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--ink); width:100%; resize:vertical; }
   .checks{ list-style:none; padding:0; margin:6px 0; display:flex; flex-direction:column; gap:4px; }
   .checks li{ font-size:12px; line-height:1.4; padding-left:18px; position:relative; }
   .checks li::before{ position:absolute; left:0; top:0; font-weight:700; }
@@ -95,9 +104,9 @@
     #memoria table{ break-inside:auto; } #memoria tr{ break-inside:avoid; }
     #memoria .m-head{ display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:6px; }
     #memoria .m-t{ font-weight:700; font-size:15px; } #memoria .m-s{ font-size:12px; margin-top:3px; } #memoria .m-r{ text-align:right; font-size:10px; }
-    #memoria .m-sk{ text-align:center; margin:8px 0; } #memoria svg.msk{ max-height:330px; width:auto; max-width:100%; }
+    #memoria .m-sk{ text-align:center; margin:8px 0; display:flex; gap:8px; justify-content:center; align-items:center; } #memoria img.m3d{ max-height:330px; max-width:60%; } #memoria svg.msk .fln{ fill:#fff; stroke:#333; } #memoria svg.msk{ max-height:330px; width:auto; max-width:100%; }
     #memoria svg.msk .wall{ fill:#e8f0fb; stroke:#333; } #memoria svg.msk .noz{ fill:#fff; stroke:#333; } #memoria svg.msk text{ fill:#333; font-family:monospace; font-size:10px; }
-    #memoria svg.msk .axis{ stroke:#888; stroke-dasharray:8 3 2 3; } #memoria svg.msk .tick{ stroke:#ccc; stroke-dasharray:2 3; } #memoria svg.msk .fl{ stroke:#333; stroke-width:3; } #memoria svg.msk .liq{ stroke:#2a78d6; stroke-dasharray:6 3; }
+    #memoria svg.msk .axis{ stroke:#888; stroke-dasharray:8 3 2 3; } #memoria svg.msk .tick{ stroke:#ccc; stroke-dasharray:2 3; } #memoria svg.msk .fl{ stroke:#333; stroke-width:3; } #memoria svg.msk .liq{ stroke:#2a78d6; stroke-dasharray:6 3; } #memoria svg.msk .sup{ fill:#eee; stroke:#555; } #memoria svg.msk .ground, #memoria svg.msk .bolt{ stroke:#333; stroke-width:2; }
     #memoria .ref{ color:#444; } #memoria .checks li.ko{ color:#000; font-weight:700; }
     #memoria table.steps th, #memoria table.steps td, #memoria table.kv th, #memoria table.kv td{ border-bottom:1px solid #bbb; color:#000; }
   }
@@ -132,19 +141,31 @@
         <div class="tiles" id="summary"></div>
         <div id="warns"></div>
       </div>
-      <div class="panel"><svg id="sketch" viewBox="0 0 380 560" role="img" aria-label="Esquema del recipiente"></svg></div>
+      <div class="panel">
+        <div class="vbar">
+          <span class="units" role="group" aria-label="Vista"><button id="bt3d" onclick="APP.view('v3d')">3D</button><button id="bt2d" onclick="APP.view('2d')">Alzado 2D</button></span>
+          <span id="vtools"><button class="btn sm" onclick="APP.fit()">Iso</button><button class="btn sm" onclick="APP.fit('front')">Frente</button><button class="btn sm" onclick="APP.fit('side')">Lateral</button><button class="btn sm" onclick="APP.fit('top')">Planta</button>
+          <label class="vchk"><input type="checkbox" onchange="APP.clip(this.checked)"> Corte</label></span>
+        </div>
+        <div id="v3d" aria-label="Visor 3D del recipiente"></div>
+        <svg id="sketch" viewBox="0 0 380 560" role="img" aria-label="Esquema del recipiente"></svg>
+        <div class="f-note">3D: arrastrar para girar, rueda para zoom, botón derecho para desplazar; clic en una pieza para seleccionarla.</div>
+      </div>
     </section>
   </div>
 
   <footer>
-    ASME BPVC VIII División 1 (2017) · tensiones admisibles ASME II-D (Metric) 2015 · cartas de presión exterior II-D Subparte 3 · bridas ASME B16.5-2013.
-    Motor validado con ejemplos del ASME PTB-4 (E3.1, E3.2, E4.3.1, E4.3.5, E4.4.1, E4.5.1, E4.16.1). Verificar siempre contra la edición y adenda vigentes.
+    ASME BPVC VIII División 1 (2017) · VIII-2 4.3.10 y 4.15.3 · tensiones admisibles ASME II-D (Metric) 2015 · cartas II-D Subparte 3 · bridas ASME B16.5-2013 · juntas ASME B16.20-2012 · EN 1991-1-4 / CTE DB SE-AE · EN 1998-1 · ASCE 7-16.
+    Motor validado con ejemplos del ASME PTB-4 (E3.1, E3.2, E4.3.1, E4.3.5, E4.3.6, E4.3.7, E4.4.1, E4.4.7, E4.5.1, E4.5.5, E4.15.1, E4.15.2, E4.16.1). Verificar siempre contra la edición y adenda vigentes.
   </footer>
   <div id="memoria"></div>
 </div>
 <script src="materiales.js"></script>
 <script src="normas.js"></script>
 <script src="motor.js"></script>
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="visor3d.js"></script>
 <script src="calculo.js"></script>
 </body>
 </html>
