@@ -838,7 +838,9 @@
     memoria: function(){ $('memoria').innerHTML = memoria(); window.print(); },
     setUnits: function(u){ units = u; try { localStorage.setItem('asme-units', u); } catch (e) {} $('u-si').classList.toggle('active', u === 'si'); $('u-us').classList.toggle('active', u === 'us'); renderAll(); },
     cerrar: function(){ window.location.href = 'index.html'; },
-    view: function(v){ setView(v); }, fit: function(v){ if (has3D) VISOR3D.fit(v); }, clip: function(on){ if (has3D){ VISOR3D.setClip(on); } },
+    view: function(v){ setView(v); },
+    sm: function(){ if (!has3D) return; VISOR3D.connectHID(smShow).catch(function(e){ $('smst').textContent = e.message; }); },
+    smSens: function(v){ if (has3D) VISOR3D.setSens(v); }, smInv: function(v){ if (has3D) VISOR3D.setInv(v); }, fit: function(v){ if (has3D) VISOR3D.fit(v); }, clip: function(on){ if (has3D){ VISOR3D.setClip(on); } },
     _prj: function(){ return prj; }, _res: function(){ return res; }
   };
   $('file').addEventListener('change', function(){
@@ -857,5 +859,7 @@
   try { has3D = typeof VISOR3D !== 'undefined' && VISOR3D.init($('v3d'), function(kind, id){ APP.select(kind, id); }); } catch (e) { has3D = false; if (window.console) console.error(e); }
   if (!has3D){ $('bt3d').disabled = true; $('bt3d').title = 'WebGL no disponible'; }
   setView(view);
+  function smShow(name){ $('smst').textContent = 'Ratón 3D: ' + name; }
+  if (has3D){ VISOR3D.smStatus(smShow); $('smsens').value = String(VISOR3D.getSens()); $('sminv').checked = VISOR3D.getInv(); }
   renderAll();
 })();

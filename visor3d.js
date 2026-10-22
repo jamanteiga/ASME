@@ -30,7 +30,10 @@ var VISOR3D = (function(){
       for (var k = 0; k < hits.length; k++){ var o = hits[k].object; while (o && !o.userData.kind) o = o.parent; if (o && onPick){ onPick(o.userData.kind, o.userData.id); return; } }
     });
     window.addEventListener('resize', resize);
-    (function loop(){ requestAnimationFrame(loop); if (!el.offsetParent) return; ctl.update(); ren.render(scene, cam); })();
+    var tPrev = performance.now();
+    (function loop(now){ requestAnimationFrame(loop); var dt = Math.min(0.1, ((now || performance.now()) - tPrev) / 1000); tPrev = now || performance.now();
+      if (!el.offsetParent) return; pollGamepad(); sm3d(dt); ctl.update(); ren.render(scene, cam); })();
+    if (navigator.hid && navigator.hid.getDevices) navigator.hid.getDevices().then(function(ds){ ds.filter(isSM).forEach(openHID); }).catch(function(){});
     resize();
     return true;
   }
@@ -205,15 +208,70 @@ var VISOR3D = (function(){
     var key = prj.design.orient + (prj.design.hdir || '') + '|' + prj.comps.length + '|' + prj.nozzles.length + '|' + Math.round(Math.max(sz.x, sz.y, sz.z) / 250);
     if (!fitted || key !== lastKey){ fit(); fitted = true; lastKey = key; }
   }
+  // ---------- ratón 3D (3Dconnexion SpaceMouse / SpaceNavigator): WebHID y Gamepad API ----------
+  var SM = { t: [0, 0, 0], r: [0, 0, 0], sens: 1, dev: null, name: '', btn: 0, last: 0, cb: null };
+  try { SM.sens = +localStorage.getItem('asme-sm-sens') || 1; SM.inv = localStorage.getItem('asme-sm-inv') === '1'; } catch (e) {}
+  var SM_VID = [0x046d, 0x256f];
+  function isSM(d){ return SM_VID.indexOf(d.vendorId) >= 0 && (/3d|space|navigator|mouse|cad/i.test(d.productName || '') || d.vendorId === 0x256f); }
+  function i16(dv, o){ return dv.byteLength >= o + 2 ? dv.getInt16(o, true) : 0; }
+  function onReport(e){
+    var dv = e.data, id = e.reportId, k = 1 / 350;
+    if (id === 1){ SM.t = [i16(dv, 0) * k, i16(dv, 2) * k, i16(dv, 4) * k]; if (dv.byteLength >= 12) SM.r = [i16(dv, 6) * k, i16(dv, 8) * k, i16(dv, 10) * k]; }
+    else if (id === 2) SM.r = [i16(dv, 0) * k, i16(dv, 2) * k, i16(dv, 4) * k];
+    else if (id === 3){ var b = dv.byteLength ? dv.getUint8(0) : 0; if (b && !SM.btn){ if (b & 1) fit(); else if (b & 2) fit('front'); } SM.btn = b; }
+    SM.last = performance.now();
+  }
+  function openHID(d){
+    var go = d.opened ? Promise.resolve() : d.open();
+    return go.then(function(){ d.removeEventListener('inputreport', onReport); d.addEventListener('inputreport', onReport); SM.dev = d; SM.name = d.productName || 'Ratón 3D'; if (SM.cb) SM.cb(SM.name); });
+  }
+  function connectHID(cb){
+    SM.cb = cb || SM.cb;
+    if (!navigator.hid) return Promise.reject(new Error('Este navegador no admite WebHID (usar Chrome o Edge en https). Se intentará como mando (Gamepad API).'));
+    return navigator.hid.requestDevice({ filters: SM_VID.map(function(v){ return { vendorId: v }; }) }).then(function(ds){
+      if (!ds.length) throw new Error('No se ha seleccionado ningún dispositivo');
+      return openHID(ds[0]).then(function(){ return SM.name; });
+    });
+  }
+  function pollGamepad(){
+    if (SM.dev || !navigator.getGamepads) return;
+    var gps = navigator.getGamepads() || [];
+    for (var k = 0; k < gps.length; k++){ var g = gps[k];
+      if (g && /3dconnexion|space ?(mouse|navigator|pilot)|046d.*c6|256f/i.test(g.id) && g.axes.length >= 6){
+        SM.t = [g.axes[0], g.axes[1], g.axes[2]]; SM.r = [g.axes[3], g.axes[4], g.axes[5]]; SM.last = performance.now();
+        if (!SM.gp){ SM.gp = g.id; if (SM.cb) SM.cb(g.id); }
+        var b0 = g.buttons[0] && g.buttons[0].pressed, b1 = g.buttons[1] && g.buttons[1].pressed;
+        if (b0 && !SM.b0) fit(); if (b1 && !SM.b1) fit('front'); SM.b0 = b0; SM.b1 = b1; return; } }
+  }
+  function dz(v){ return Math.abs(v) < 0.04 ? 0 : v; }
+  function sm3d(dt){
+    if (!SM.last || performance.now() - SM.last > 400) return;
+    var t = SM.t.map(dz), r = SM.r.map(dz); if (!t[0] && !t[1] && !t[2] && !r[0] && !r[1] && !r[2]) return;
+    var sp = SM.sens * dt, off = cam.position.clone().sub(ctl.target), dist = off.length();
+    var right = new T.Vector3().setFromMatrixColumn(cam.matrixWorld, 0), up = new T.Vector3().setFromMatrixColumn(cam.matrixWorld, 1), fwd = off.clone().normalize().negate();
+    // traslación: X → desplazar lateral, Z (empujar abajo/subir) → desplazar vertical, Y (empujar/tirar) → acercar/alejar
+    var pan = right.clone().multiplyScalar(t[0]).addScaledVector(up, -t[2]).multiplyScalar(dist * 0.9 * sp);
+    cam.position.add(pan); ctl.target.add(pan);
+    var zoom = Math.exp((SM.inv ? -1 : 1) * t[1] * 1.6 * sp); off = cam.position.clone().sub(ctl.target).multiplyScalar(zoom);
+    // rotación alrededor del objetivo: Rx inclinar, Rz girar, Ry balancear
+    var q = new T.Quaternion();
+    q.multiply(new T.Quaternion().setFromAxisAngle(right, -r[0] * 1.8 * sp));
+    q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 0, 1), -r[2] * 1.8 * sp));
+    q.multiply(new T.Quaternion().setFromAxisAngle(fwd, r[1] * 1.2 * sp));
+    off.applyQuaternion(q); cam.up.applyQuaternion(new T.Quaternion().setFromAxisAngle(fwd, r[1] * 1.2 * sp));
+    cam.position.copy(ctl.target).add(off); cam.lookAt(ctl.target);
+  }
+  function setSens(v){ SM.sens = +v || 1; try { localStorage.setItem('asme-sm-sens', String(SM.sens)); } catch (e) {} }
+  function smStatus(cb){ SM.cb = cb; if (SM.name || SM.gp) cb(SM.name || SM.gp); }
   function fit(view){
     if (!root) return;
     var bb = new T.Box3().setFromObject(root), c = bb.getCenter(new T.Vector3()), r = bb.getSize(new T.Vector3()).length() / 2 || 1000;
     var dist = r / Math.sin(cam.fov * Math.PI / 360) * 1.12, dir;
     if (view === 'front') dir = new T.Vector3(0, -1, 0.0001); else if (view === 'top') dir = new T.Vector3(0.0001, -0.0001, 1); else if (view === 'side') dir = new T.Vector3(1, 0, 0.0001);
     else dir = new T.Vector3(0.9, -1.4, 0.75);
-    dir.normalize(); ctl.target.copy(c); cam.position.copy(c).addScaledVector(dir, dist); cam.near = dist / 200; cam.far = dist * 20; cam.updateProjectionMatrix(); ctl.update();
+    dir.normalize(); cam.up.set(0, 0, 1); ctl.target.copy(c); cam.position.copy(c).addScaledVector(dir, dist); cam.near = dist / 200; cam.far = dist * 20; cam.updateProjectionMatrix(); ctl.update();
   }
   function setClip(on){ clip = !!on; if (root) root.traverse(function(o){ if (o.material && !(o.material instanceof T.SpriteMaterial)) o.material.clippingPlanes = clip ? [plane] : []; }); }
   function snapshot(){ if (!ren) return null; ren.render(scene, cam); try { return ren.domElement.toDataURL('image/png'); } catch (e){ return null; } }
-  return { init: init, update: update, fit: fit, setClip: setClip, snapshot: snapshot, resize: resize };
+  return { init: init, update: update, fit: fit, setClip: setClip, snapshot: snapshot, resize: resize, connectHID: connectHID, setSens: setSens, smStatus: smStatus, getSens: function(){ return SM.sens; }, setInv: function(v){ SM.inv = !!v; try { localStorage.setItem('asme-sm-inv', v ? '1' : '0'); } catch (e) {} }, getInv: function(){ return !!SM.inv; } };
 })();
