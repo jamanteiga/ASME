@@ -1029,7 +1029,7 @@ var VMODEL = (function(){
     return {
       version: 1,
       info: { proyecto: '', equipo: '', tag: '', cliente: '', autor: '', rev: '0', fecha: new Date().toISOString().slice(0, 10) },
-      design: { orient: orient || 'V', hdir: 'R', P: 1.0, T: 150, Pext: 0, c: 3, MDMT: -10, fluid: 'Agua', rho: 1000, level: null,
+      design: { mfam: 'CS', wmin: 50, orient: orient || 'V', hdir: 'R', P: 1.0, T: 150, Pext: 0, c: 3, MDMT: -10, fluid: 'Agua', rho: 1000, level: null,
         lethal: false, rt: 'RT-1', jt: '1', ndt: { VT: true, RT: true, UT: false, MT: false, PT: false },
         pwht: false, pwhtVol: false, ug20f: true, normalized: false, testPos: 'oper', testUseP: false },
       comps: [ newComp('shell', null) ],
@@ -1039,31 +1039,50 @@ var VMODEL = (function(){
       support: typeof VLOADS !== 'undefined' ? VLOADS.defSupport(orient || 'V') : { type: 'none' }
     };
   }
+  // materiales por defecto según la familia del equipo
+  var DEFMAT = { CS: { plate: 'sa516', pipe: 'sa106b', forge: 'sa105' }, LA: { plate: 'sa387_11', pipe: 'sa335_p11', forge: 'sa182_f11' },
+    SS: { plate: 'sa240_304L', pipe: 'sa312_304L', forge: 'sa182_f304L' }, AL: { plate: 'sb209_5083', pipe: 'sb241_6061', forge: 'sb209_5083' },
+    CU: { plate: 'sb171_c70600', pipe: 'sb466_c70600', forge: 'sb171_c70600' }, NI: { plate: 'sb127_n04400', pipe: 'sb165_n04400', forge: 'sb127_n04400' },
+    TI: { plate: 'sb265_gr2', pipe: 'sb861_gr2', forge: 'sb265_gr2' } };
+  function defMat(prj, form){ var f = (prj && prj.design && DEFMAT[prj.design.mfam]) || DEFMAT.CS; return { id: f[form] || DEFMAT.CS[form], vi: 0 }; }
+  // B16.11 manguitos roscados: [NPS, A (longitud), D clase 3000, D clase 6000] (mm)
+  var CPL = [['1/2', 48, 28, 38], ['3/4', 51, 35, 44], ['1', 60, 44, 57], ['1 1/4', 67, 57, 64], ['1 1/2', 79, 64, 76], ['2', 86, 76, 92], ['2 1/2', 92, 92, 108], ['3', 108, 108, 127], ['4', 121, 140, 159]];
+  var CPL_SW = { '1/2': 21.95, '3/4': 27.3, '1': 34.05, '1 1/4': 42.8, '1 1/2': 48.9, '2': 61.35, '2 1/2': 74.2, '3': 90.15, '4': 115.8 };
+  var PIPE_OD = { '1/2': 21.3, '3/4': 26.7, '1': 33.4, '1 1/4': 42.2, '1 1/2': 48.3, '2': 60.3, '2 1/2': 73.0, '3': 88.9, '4': 114.3 };
+  function cplDims(n){
+    var row = CPL.filter(function(r){ return r[0] === n.cnps; })[0] || CPL[2], D = +n.ccls === 6000 ? row[3] : row[2];
+    var bore = n.cend === 'SW' ? CPL_SW[row[0]] : PIPE_OD[row[0]];
+    return { A: row[1], D: D, bore: bore, tn: (D - bore) / 2, len: n.ctype === 'half' ? row[1] / 2 : row[1] };
+  }
   function newComp(type, prj, near){
     var id = 'C' + (prj ? (++prj.seq) : 1);
     var D = near ? (near.Ds && near.largeAt === 'base' ? near.Ds : near.D) : 1500;
-    var base = { id: id, type: type, name: TYPES[type], mat: { id: 'sa516', vi: 0 }, tn: 10, c: null, E: null, Ec: null };
-    if (type === 'shell') return Object.assign(base, { D: D || 1500, basis: 'id', L: 3000, Lext: null, rn: 0, rh: 100, rb: 12, rside: 'ext', rmat: { id: 'sa516', vi: 0 } });
+    var base = { id: id, type: type, name: TYPES[type], mat: defMat(prj, 'plate'), tn: 10, c: null, E: null, Ec: null, seam: 0 };
+    if (type === 'shell') return Object.assign(base, { D: D || 1500, basis: 'id', L: 3000, Lext: null, rn: 0, rh: 100, rb: 12, rside: 'ext', rmat: defMat(prj, 'plate') });
     if (type === 'ellip') return Object.assign(base, { D: D || 1500, ratio: 2, sf: 50, seamless: true });
     if (type === 'tori') return Object.assign(base, { D: D || 1500, Lc: null, rk: null, sf: 50, seamless: true });
     if (type === 'hemi') return Object.assign(base, { D: D || 1500, sf: 0, seamless: true });
     if (type === 'cone') return Object.assign(base, { D: D || 1500, Ds: Math.round((D || 1500) * 0.6), alpha: 30, largeAt: 'base', ringLh: 0, ringLb: 0, ringSh: 0, ringSb: 0 });
     if (type === 'flat') return Object.assign(base, { sk: 'efg', d: D || 1500, tn: 40, ts: null });
-    if (type === 'bflange') return Object.assign(base, { mat: { id: 'sa105', vi: 0 }, ftype: 'integral', B: D || 1500, A: (D || 1500) + 250, C: (D || 1500) + 160,
+    if (type === 'bflange') return Object.assign(base, { mat: defMat(prj, 'forge'), ftype: 'integral', B: D || 1500, A: (D || 1500) + 250, C: (D || 1500) + 160,
       t: 80, g0: 10, g1: 25, h: 60, Go: (D || 1500) + 60, Gi: (D || 1500) + 20, b0mode: 'N2', w: 0, Tg: 0, m: 2.75, y: 25.5,
       bmat: { id: 'sa193b7', vi: 0 }, n: 44, a: 22.2, Ar: 270.3, bsize: '7/8', Gfix: 0, Ed: 0, Ea: 0 });
     return base;
   }
   function letterMark(k){ var t = ''; k++; while (k > 0){ var m = (k - 1) % 26; t = String.fromCharCode(65 + m) + t; k = Math.floor((k - 1) / 26); } return t; }
   function nextMark(prj){ var used = {}; prj.nozzles.forEach(function(n){ used[String(n.mark).toUpperCase()] = 1; }); for (var k = 0; ; k++){ var m = letterMark(k); if (!used[m]) return m; } }
-  function newNozzle(prj){
+  function newNozzle(prj, kind){
     var id = 'N' + (++prj.nseq), mk = nextMark(prj);
     var host = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0];
-    return { id: id, mark: mk, service: '', host: host.id, a: 500, rad: 0, theta: 0, nps: '6', od: 168.3, tn: 7.11, pipe: true,
-      mat: { id: 'sa106b', vi: 0 }, proj: 200, hin: 0, ti: 0, pad: false, Dp: 0, te: 0, pmat: { id: 'sa516', vi: 0 },
+    var n = { id: id, kind: kind === 'cpl' ? 'cpl' : 'noz', mark: mk, service: '', host: host.id, a: 500, rad: 0, theta: 0, nps: '6', od: 168.3, tn: 7.11, pipe: true,
+      mat: defMat(prj, 'pipe'), proj: 200, hin: 0, ti: 0, pad: false, Dp: 0, te: 0, pmat: defMat(prj, 'plate'),
       leg41: 10, leg42: 10, leg43: 0, E1: 1, access: false, hor: 'axial', wtype: 'setin', tw: null, twp: null, ld: { F: 0, V: 0, M: 0, Mt: 0, kS: 1 }, elb: [{ ang: 0, rt: 'LR', phi: 0, L: 200 }, { ang: 0, rt: 'LR', phi: 0, L: 200 }],
-      fl: { type: 'WN', cls: 150, mat: { id: 'sa105', vi: 0 } } };
+      fl: { type: 'WN', cls: 150, mat: defMat(prj, 'forge') } };
+    if (n.kind === 'cpl'){ Object.assign(n, { cnps: '1', ccls: 3000, cend: 'NPT', ctype: 'full', pipe: false, mat: defMat(prj, 'forge'), fl: { type: 'none', cls: 150, mat: defMat(prj, 'forge') }, leg41: 6 });
+      applyCpl(n); }
+    return n;
   }
+  function applyCpl(n, host){ var c = cplDims(n); n.od = c.D; n.tn = c.tn; n.nps = n.cnps; n.proj = Math.max(0, c.len - (n.wtype === 'seton' ? 0 : (host ? host.tn : 10) + (+n.hin || 0))); return c; }
 
   // ---------------- geometría ----------------
   function headDepth(c){ // profundidad interior del abombado (sin falda)
@@ -1120,7 +1139,7 @@ var VMODEL = (function(){
     if (isF){ var sF = p.side === 'start' ? p.s1 : p.s0; return { s: sF, r: rr, ds: dir, dr: 0, L0: host.tn + (n.hin || 0) + n.proj, cosb: 1, Nq: 1, Nr: 0 }; }
     var hs = headSurfAt(host, rr), sIn = p.side === 'start' ? p.s1 - hs.q : p.s0 + hs.q, sEnd = p.side === 'start' ? p.s0 : p.s1;
     if (n.hor === 'normal') return { s: sIn, r: rr, ds: dir * hs.Nq, dr: hs.Nr, L0: host.tn + (n.hin || 0) + n.proj, cosb: 1, Nq: hs.Nq, Nr: hs.Nr };
-    return { s: sIn, r: rr, ds: dir, dr: 0, L0: Math.abs(sEnd - sIn) + (n.hin || 0) + n.proj, cosb: Math.max(hs.Nq, 1e-3), Nq: hs.Nq, Nr: hs.Nr };
+    return { s: sIn, r: rr, ds: dir, dr: 0, L0: (n.kind === 'cpl' ? host.tn / Math.max(hs.Nq, 0.2) : Math.abs(sEnd - sIn)) + (n.hin || 0) + n.proj, cosb: Math.max(hs.Nq, 1e-3), Nq: hs.Nq, Nr: hs.Nr };
   }
   // Posiciones a lo largo del eje (s) de cada componente; base: virola de origen en s = 0
   function layout(prj){
@@ -1386,6 +1405,7 @@ var VMODEL = (function(){
     var mv = hr.mat, mn = V.mat(n.mat, T), mp = n.pad ? V.mat(n.pmat, T) : null;
     if (!mn){ out.err = 'Material del cuello no definido'; out.ok = false; return out; }
     out.mn = mn; out.mp = mp;
+    if (n.kind === 'cpl'){ var cpd = applyCpl(n, host); out.cpl = cpd; out.checks.push({ t: 'Manguito ASME B16.11 clase ' + n.ccls + ' ' + (n.cend === 'SW' ? 'de enchufe y soldadura (SW)' : 'roscado NPT') + ' NPS ' + n.cnps + ': D.E. ' + cpd.D + ' mm, longitud ' + cpd.len + ' mm' + (n.cend !== 'SW' ? '; conexión roscada: UG-43(e) y Tabla UG-43 (hilos engranados)' : ''), ok: true, info: true }); }
     var hostType = { shell: 'cyl', ellip: ((n.rad || 0) + n.od / 2 <= 0.4 * host.D ? 'ellip' : 'ellipOut'), tori: 'tori', hemi: 'hemi', cone: 'cyl', flat: 'flat' }[host.type];
     var kd = 1, Mk = 1, hz = null;
     if (/ellip|tori|hemi/.test(host.type)){
@@ -1558,9 +1578,10 @@ var VMODEL = (function(){
     nz.forEach(function(r){ mE += r.mass || 0; });
     var nd = ndtReq(prj, cr);
     var ug42 = multiOpenings(prj, L, nz);
+    var seams = weldSpacing(prj, L, nz);
     var out = { L: L, comps: list, byId: cr, nozzles: nz, warn: warn, mawp: mawp, mawpList: cand, map: mapc[0] || null, maep: maepc[0] || null,
       test: { PT: PT, PTbot: PTbot, lsr: lsr, lsrWho: lsrWho, basis: basisP, H: Htest }, mdmt: md[0] || null, mdmtList: md, impact: impact,
-      mass: { empty: mE, oper: mE + Vin * (d.rho || 0), test: mE + Vin * 1000, vol: Vin }, ndt: nd, ug42: ug42 };
+      mass: { empty: mE, oper: mE + Vin * (d.rho || 0), test: mE + Vin * 1000, vol: Vin }, ndt: nd, ug42: ug42, seams: seams };
     // fase 3: cargas exteriores y soportes
     if (typeof VLOADS !== 'undefined'){
       try { out.loads = VLOADS.run(prj, out); } catch (e){ out.loads = { err: 'Error en cargas exteriores: ' + e.message, ok: false }; if (typeof console !== 'undefined') console.error(e); }
@@ -1571,6 +1592,48 @@ var VMODEL = (function(){
     return out;
   }
 
+  // ---------------- separación mínima entre soldaduras ----------------
+  function toeR(n){ return (n.pad && n.Dp > n.od ? n.Dp / 2 + (+n.leg42 || 0) : n.od / 2 + (+n.leg41 || 0)); }
+  function angDist(a, b){ var d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; }
+  function weldSpacing(prj, L, nz){
+    var wmin = +prj.design.wmin || 50, out = [];
+    function add(t, ok, who){ var k = { t: t, ok: ok }; out.push(k); (who || []).forEach(function(z){ z.checks.push(k); if (!ok) z.ok = false; }); }
+    // soldaduras longitudinales de virolas y conos adyacentes
+    for (var i = 0; i < prj.comps.length - 1; i++){
+      var a = prj.comps[i], b = prj.comps[i + 1];
+      if (!/shell|cone/.test(a.type) || !/shell|cone/.test(b.type)) continue;
+      var pa = L.pos[a.id], R = (innerR(a, pa, pa.s1) + a.tn / 2), arc = R * angDist(+a.seam || 0, +b.seam || 0) * Math.PI / 180;
+      add('Longitudinales ' + a.name + ' (' + (+a.seam || 0) + '°) / ' + b.name + ' (' + (+b.seam || 0) + '°): separación en la unión ' + arc.toFixed(0) + ' mm ' + (arc >= wmin ? '≥ ' : '< ') + wmin + ' mm', arc >= wmin - 1e-6);
+    }
+    // conexiones frente a soldaduras longitudinales y circunferenciales
+    nz.forEach(function(z){
+      var n = z.n, host = prj.comps.filter(function(c){ return c.id === n.host; })[0]; if (!host || z.err) return;
+      var p = L.pos[host.id], rt = toeR(n), lbl = (n.kind === 'cpl' ? 'Manguito ' : 'Conexión ') + n.mark;
+      if (/shell|cone/.test(host.type)){
+        var s = p.s0 + (n.a || 0), Rm = innerR(host, p, s) + host.tn / 2, arcL = Rm * angDist(n.theta || 0, +host.seam || 0) * Math.PI / 180 - rt;
+        add(lbl + ': borde de su soldadura a la longitudinal de ' + host.name + ' = ' + arcL.toFixed(0) + ' mm ' + (arcL >= wmin ? '≥ ' : '< ') + wmin + ' mm', arcL >= wmin - 1e-6, [z]);
+        var i2 = prj.comps.indexOf(host), dC = [];
+        if (i2 > 0) dC.push((n.a || 0) - rt); if (i2 < prj.comps.length - 1) dC.push((p.s1 - p.s0) - (n.a || 0) - rt);
+        if (dC.length){ var dm = Math.min.apply(null, dC); add(lbl + ': borde de su soldadura a la circunferencial más próxima = ' + dm.toFixed(0) + ' mm ' + (dm >= wmin ? '≥ ' : '< ') + wmin + ' mm', dm >= wmin - 1e-6, [z]); }
+      } else if (/ellip|tori|hemi/.test(host.type)){
+        var dh = host.D / 2 - (n.rad || 0) - rt + (host.sf || 0);
+        add(lbl + ': borde de su soldadura a la circunferencial fondo-virola ≥ ' + dh.toFixed(0) + ' mm (en planta) ' + (dh >= wmin ? '≥ ' : '< ') + wmin + ' mm', dh >= wmin - 1e-6, [z]);
+      } else if (host.type === 'flat'){
+        var df = (host.d || 0) / 2 - (n.rad || 0) - rt;
+        add(lbl + ': borde de su soldadura al borde de la tapa = ' + df.toFixed(0) + ' mm ' + (df >= wmin ? '≥ ' : '< ') + wmin + ' mm', df >= wmin - 1e-6, [z]);
+      }
+    });
+    // entre conexiones del mismo componente
+    for (var j = 0; j < nz.length; j++) for (var k2 = j + 1; k2 < nz.length; k2++){
+      var A = nz[j], B = nz[k2]; if (A.err || B.err || A.n.host !== B.n.host) continue;
+      var h2 = prj.comps.filter(function(c){ return c.id === A.n.host; })[0], ca = nozCenter(prj, L, A.n, h2), cb = nozCenter(prj, L, B.n, h2), dd;
+      if (ca.cyl){ var dt = angDist(A.n.theta || 0, B.n.theta || 0) * Math.PI / 180, dx = ca.x - cb.x, dy = (ca.Rm + cb.Rm) / 2 * dt; dd = Math.sqrt(dx * dx + dy * dy); }
+      else dd = Math.sqrt(Math.pow(ca.x - cb.x, 2) + Math.pow(ca.y - cb.y, 2));
+      var gap = dd - toeR(A.n) - toeR(B.n);
+      add(A.n.mark + ' / ' + B.n.mark + ': separación entre bordes de soldadura ' + gap.toFixed(0) + ' mm ' + (gap >= wmin ? '≥ ' : '< ') + wmin + ' mm', gap >= wmin - 1e-6, [A, B]);
+    }
+    return out;
+  }
   // ---------------- aberturas múltiples: UG-42, UG-36(c)(3)(-c), UG-39(b)(2) ----------------
   function nozCenter(prj, L, n, host){
     var th = (n.theta || 0) * Math.PI / 180;
@@ -1662,7 +1725,7 @@ var VMODEL = (function(){
     return null;
   }
 
-  return { TYPES: TYPES, newProject: newProject, newComp: newComp, newNozzle: newNozzle, layout: layout, axLen: axLen, headDepth: headDepth,
+  return { TYPES: TYPES, newProject: newProject, newComp: newComp, newNozzle: newNozzle, defMat: defMat, DEFMAT: DEFMAT, CPL: CPL, applyCpl: applyCpl, layout: layout, axLen: axLen, headDepth: headDepth,
     headProfile: headProfile, headSurfAt: headSurfAt, headNoz: headNoz, innerR: innerR, toriL: toriL, toriR: toriR, compute: compute, effFor: effFor, extLength: extLength, hyd: hyd };
 })();
 

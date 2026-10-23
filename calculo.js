@@ -7,12 +7,13 @@
   function deep(dst, src){ Object.keys(src).forEach(function(k){ var v = src[k]; if (v && typeof v === 'object' && !Array.isArray(v)){ if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {}; deep(dst[k], v); } else if (dst[k] === undefined) dst[k] = v; }); return dst; }
   function ensure(p){
     if (!p) return p;
+    if (!p.design.mfam) p.design.mfam = 'ALL'; if (!p.design.wmin) p.design.wmin = 50;
     p.loads = deep(p.loads || {}, VLOADS.defaults());
     var wantH = p.design.orient === 'H', isH = p.support && (p.support.type === 'saddle' || p.support.A != null);
     if (!p.support || wantH !== !!isH) p.support = VLOADS.defSupport(p.design.orient); else deep(p.support, VLOADS.defSupport(p.design.orient));
     var used = {}; p.nozzles.forEach(function(n){ if (!/^N\d+$/.test(n.mark)) used[n.mark] = 1; }); var li = 0; function nl(){ var t; do { var k = li++, m = ''; k++; while (k > 0){ var q = (k - 1) % 26; m = String.fromCharCode(65 + q) + m; k = Math.floor((k - 1) / 26); } t = m; } while (used[t]); used[t] = 1; return t; }
     p.nozzles.forEach(function(n){ if (/^N\d+$/.test(n.mark) && n.mark === n.id) n.mark = nl();
-      if (!n.wtype) n.wtype = 'setin'; if (!n.hor) n.hor = 'axial'; if (!n.ld) n.ld = { F: 0, V: 0, M: 0, Mt: 0, kS: 1 }; if (!n.elb) n.elb = [{ ang: 0, rt: 'LR', phi: 0, L: 200 }, { ang: 0, rt: 'LR', phi: 0, L: 200 }]; });
+      if (!n.kind) n.kind = 'noz'; if (!n.wtype) n.wtype = 'setin'; if (!n.hor) n.hor = 'axial'; if (!n.ld) n.ld = { F: 0, V: 0, M: 0, Mt: 0, kS: 1 }; if (!n.elb) n.elb = [{ ang: 0, rt: 'LR', phi: 0, L: 200 }, { ang: 0, rt: 'LR', phi: 0, L: 200 }]; });
     return p;
   }
   var prj = ensure(load()) || M.newProject('V');
@@ -137,12 +138,16 @@
     if (f.t === 'txt') return '<div class="fld">' + lab + '<input type="text" id="' + id + '" data-k="' + f.k + '" data-t="txt" value="' + esc(v) + '"></div>';
     if (f.t === 'area') return '<div class="fld wide">' + lab + '<textarea id="' + id + '" data-k="' + f.k + '" data-t="txt" rows="' + (f.rows || 4) + '" placeholder="' + esc(f.ph || '') + '">' + esc(v) + '</textarea>' + (f.note ? '<div class="f-note">' + f.note + '</div>' : '') + '</div>';
     if (f.t === 'mat'){
+      var xkey = f.k.replace(/(^|\.)([^.]+)$/, '$1xm_$2'), xall = !!getp(obj, xkey), fam = prj.design.mfam || 'CS', boltF = f.filter === isBolt;
+      var flt0 = f.filter || function(){ return true; }, flt = function(mm){ return flt0(mm) && (boltF || xall || fam === 'ALL' || FAMI(mm) === fam); };
       var m = V.BYID[v && v.id] || MATS[0], vi = (v && v.vi) || 0;
       var mi = V.mat({ id: m.id, vi: vi }, prj.design.T);
       var vsel = m.v.length > 1 ? '<select data-k="' + f.k + '.vi" data-t="seln" data-re="1">' + m.v.map(function(x, i){ return '<option value="' + i + '"' + (i === vi ? ' selected' : '') + '>' + esc(x.l) + '</option>'; }).join('') + '</select>' : '';
       var info = mi ? 'S(T) = ' + (mi.over ? 'T > ' + fmt(mi.tm, 't') : fmt(mi.S, 's')) + ' · S(amb.) = ' + fmt(mi.Sa, 's') + ' · ' + esc(mi.ref) + (mi.ch ? ' · carta ' + mi.ch : '') + (mi.grp ? ' · B16.5 grupo ' + mi.grp : '') : '';
-      return '<div class="fld wide">' + lab + '<select id="' + id + '" data-k="' + f.k + '.id" data-t="matid" data-re="1">' + matOptions(f.filter || function(){ return true; }, m.id) + '</select>' + vsel +
-        '<div class="f-note">' + info + '</div></div>';
+      var opts = matOptions(flt, m.id); if (!flt(m)) opts = '<optgroup label="Seleccionado (fuera del filtro)"><option value="' + m.id + '" selected>' + esc(m.t) + '</option></optgroup>' + opts;
+      var xchk = boltF || fam === 'ALL' ? '' : '<label class="xm"><input type="checkbox" data-k="' + xkey + '" data-t="chk" data-re="1"' + (xall ? ' checked' : '') + '> Material de otra familia (p. ej. inoxidable en un equipo de acero al carbono)</label>';
+      return '<div class="fld wide">' + lab + '<select id="' + id + '" data-k="' + f.k + '.id" data-t="matid" data-re="1">' + opts + '</select>' + vsel + xchk +
+        '<div class="f-note">' + info + (flt(m) ? '' : ' · <b>fuera de la familia o forma de producto prevista</b>') + '</div></div>';
     }
     var ph = f.ph ? ' placeholder="' + esc(f.ph) + '"' : '';
     return '<div class="fld">' + lab + '<input type="number" step="any" id="' + id + '" data-k="' + f.k + '" data-t="num" data-u="' + (f.u || '') + '"' + (f.re ? ' data-re="1"' : '') + ' value="' + inVal(v, f.u) + '"' + ph + '></div>';
@@ -150,10 +155,36 @@
   function getp(o, k){ return k.split('.').reduce(function(a, b){ return a == null ? a : a[b]; }, o); }
   function setp(o, k, v){ var p = k.split('.'), l = p.pop(); var t = p.reduce(function(a, b){ if (a[b] == null) a[b] = {}; return a[b]; }, o); t[l] = v; }
 
-  var notBolt = function(m){ return m.cat !== 'pernos' && !(m.sub === 'Pernos no ferrosos'); };
-  var isBolt = function(m){ return m.cat === 'pernos' || m.sub === 'Pernos no ferrosos'; };
-  var isForge = function(m){ return m.cat === 'forja' || m.cat === 'fundicion' || m.cat === 'plancha' || m.cat === 'noferrosos' && !isBolt(m); };
-  var isPipe = function(m){ return m.cat === 'tubo' || m.cat === 'forja' || m.cat === 'fittings' || (m.cat === 'noferrosos' && !isBolt(m)); };
+  // forma de producto y familia de cada material
+  var NF_PLATE = /^SB-(209|152|171|127|168|409|424|443|575|265)\b/;
+  function FORM(m){
+    if (m.cat === 'pernos' || m.sub === 'Pernos no ferrosos') return 'bolt';
+    if (m.cat === 'plancha') return 'plate'; if (m.cat === 'tubo') return 'pipe'; if (m.cat === 'forja') return 'forge'; if (m.cat === 'fittings') return 'fitting'; if (m.cat === 'fundicion') return 'cast';
+    return NF_PLATE.test(m.t) ? 'plate' : 'pipe';
+  }
+  function FAMI(m){
+    var p = String(m.pno || '').split(' ')[0];
+    if (p === '1' || (!p && m.cat === 'fundicion')) return 'CS'; if (/^(3|4|5A|5B|5C|15E)$/.test(p)) return 'LA'; if (/^(8|10H|10I|10J|10K)$/.test(p)) return 'SS';
+    if (/^2\d$/.test(p)) return 'AL'; if (/^3\d$/.test(p)) return 'CU'; if (/^4\d$/.test(p)) return 'NI'; if (/^5\d$/.test(p)) return 'TI'; return 'OTRO';
+  }
+  var FAMS = [['CS', 'Acero al carbono (P-No. 1)'], ['LA', 'Acero de baja aleación Cr-Mo (P-No. 3, 4, 5)'], ['SS', 'Acero inoxidable (austenítico y dúplex)'], ['AL', 'Aluminio'], ['CU', 'Cobre y aleaciones'], ['NI', 'Níquel y aleaciones'], ['TI', 'Titanio'], ['ALL', 'Todos los materiales']];
+  var notBolt = function(m){ return FORM(m) === 'plate'; };                       // chapa
+  var isPlate = notBolt;
+  var isBolt = function(m){ return FORM(m) === 'bolt'; };
+  var isForge = function(m){ return FORM(m) === 'forge' || (/^(AL|CU|NI|TI)$/.test(FAMI(m)) && FORM(m) === 'plate'); };
+  var isForgePlate = function(m){ return FORM(m) === 'forge' || FORM(m) === 'plate'; };
+  var isPipe = function(m){ return FORM(m) === 'pipe'; };
+  var FORM_OF = { plate: 'plate', pipe: 'pipe', forge: 'forge' };
+  // convierte los materiales que no son de la familia del equipo (salvo los marcados como «otra familia»)
+  function convertFamily(fam){
+    if (fam === 'ALL') return 0;
+    var cnt = 0;
+    function fix(obj, key, form){ var ref = obj[key]; if (!ref || obj['xm_' + key]) return; var m = V.BYID[ref.id]; if (m && FAMI(m) !== fam){ obj[key] = M.defMat(prj, form); cnt++; } }
+    prj.comps.forEach(function(c){ fix(c, 'mat', c.type === 'bflange' ? 'forge' : 'plate'); if (c.rmat) fix(c, 'rmat', 'plate'); });
+    prj.nozzles.forEach(function(n){ fix(n, 'mat', n.kind === 'cpl' || (n.fl && n.fl.type === 'LWN') ? 'forge' : 'pipe'); fix(n, 'pmat', 'plate'); if (n.fl) fix(n.fl, 'mat', 'forge'); });
+    var sp = prj.support || {}; ['mat', 'bmat', 'smat', 'wmat'].forEach(function(k){ if (sp[k]) fix(sp, k, 'plate'); }); if (sp.lmat) fix(sp, 'lmat', 'pipe');
+    return cnt;
+  }
 
   function designFields(){
     var d = prj.design, H = d.orient === 'H';
@@ -164,6 +195,9 @@
       { t: 'h', l: 'Disposición' },
       { t: 'sel', k: 'design.orient', l: 'Orientación', o: [['V', 'Vertical (eje Z, origen en el centro inferior de la primera virola)'], ['H', 'Horizontal (eje X, origen en el centro del extremo de la primera virola)']], re: 1 },
       H ? { t: 'sel', k: 'design.hdir', l: 'Sentido de la primera virola', o: [['R', 'Hacia la derecha (+X)'], ['L', 'Hacia la izquierda (−X)']], re: 1 } : null,
+      { t: 'h', l: 'Materiales y soldaduras' },
+      { t: 'sel', k: 'design.mfam', l: 'Familia de material del equipo', o: FAMS, re: 1 },
+      { t: 'num', k: 'design.wmin', l: 'Distancia mínima entre soldaduras', u: 'len' },
       { t: 'h', l: 'Condiciones de diseño' },
       { t: 'num', k: 'design.P', l: 'Presión interior de diseño P (en la parte superior)', u: 'p' },
       { t: 'num', k: 'design.T', l: 'Temperatura de diseño', u: 't', re: 1 },
@@ -240,7 +274,7 @@
         sp.lsec !== 'user' ? { t: 'num', k: 'support.lod', l: 'D.E. del tubo', u: 'len' } : null, sp.lsec !== 'user' ? { t: 'num', k: 'support.lt', l: 'Espesor del tubo', u: 'len' } : null,
         sp.lsec === 'user' ? { t: 'num', k: 'support.lA', l: 'Área A', u: 'a' } : null, sp.lsec === 'user' ? { t: 'num', k: 'support.lI', l: 'Inercia mínima I (mm⁴)' } : null,
         sp.lsec === 'user' ? { t: 'num', k: 'support.lZ', l: 'Módulo plástico Z (mm³)' } : null, sp.lsec === 'user' ? { t: 'num', k: 'support.lb', l: 'Ancho expuesto al viento', u: 'len' } : null,
-        { t: 'num', k: 'support.K', l: 'Factor de longitud efectiva K (2,0 voladizo)' }, { t: 'mat', k: 'support.lmat', l: 'Material de las patas', filter: notBolt },
+        { t: 'num', k: 'support.K', l: 'Factor de longitud efectiva K (2,0 voladizo)' }, { t: 'mat', k: 'support.lmat', l: 'Material de las patas (tubo)', filter: isPipe },
         { t: 'num', k: 'support.nbl', l: 'Pernos de anclaje por pata' }, { t: 'sel', k: 'support.lbsize', l: 'Tamaño del perno', o: boltOpts(), re: 1 }, { t: 'num', k: 'support.lAr', l: 'Área de raíz por perno', u: 'a' },
         { t: 'mat', k: 'support.amat', l: 'Material de los pernos', filter: isBolt }].filter(Boolean));
       if (sp.type === 'lugs') f = f.concat([
@@ -283,13 +317,14 @@
     return f;
   }
   function compFields(c){
-    var base = [{ t: 'txt', k: 'name', l: 'Denominación' }, { t: 'mat', k: 'mat', l: 'Material', filter: c.type === 'bflange' ? isForge : notBolt }];
+    var base = [{ t: 'txt', k: 'name', l: 'Denominación' }, { t: 'mat', k: 'mat', l: c.type === 'bflange' ? 'Material (forja o chapa)' : 'Material (chapa)', filter: c.type === 'bflange' ? isForgePlate : isPlate }];
     var tail = [{ t: 'num', k: 'c', l: 'Corrosión (vacío = general)', u: 'len', ph: 'general' },
       { t: 'num', k: 'E', l: 'Eficiencia E impuesta (vacío = automática)', ph: 'auto' }];
     var f;
     if (c.type === 'shell') f = [{ t: 'sel', k: 'basis', l: 'Diámetro dado como', o: [['id', 'Interior'], ['od', 'Exterior']], re: 1 },
       { t: 'num', k: 'D', l: c.basis === 'od' ? 'Diámetro exterior' : 'Diámetro interior', u: 'len' }, { t: 'num', k: 'L', l: 'Longitud', u: 'len' },
       { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }].concat(tail, [{ t: 'num', k: 'Ec', l: 'E junta circunferencial (vacío = auto)', ph: 'auto' }, { t: 'num', k: 'Lext', l: 'Longitud de cálculo a presión exterior (vacío = automática)', u: 'len', ph: 'auto' },
+        { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' },
         { t: 'h', l: 'Anillos rigidizadores (UG-29)' }, { t: 'num', k: 'rn', l: 'Número de anillos intermedios (equidistantes)', re: 1 },
         (+c.rn > 0) ? { t: 'num', k: 'rh', l: 'Altura radial de la pletina h', u: 'len' } : null, (+c.rn > 0) ? { t: 'num', k: 'rb', l: 'Espesor (ancho axial) de la pletina b', u: 'len' } : null,
         (+c.rn > 0) ? { t: 'sel', k: 'rside', l: 'Posición', o: [['ext', 'Exterior'], ['int', 'Interior']] } : null,
@@ -303,7 +338,7 @@
       { t: 'num', k: 'tn', l: 'Espesor mínimo tras conformado', u: 'len' }, { t: 'chk', k: 'seamless', l: 'Fondo sin costura' }].concat(tail);
     else if (c.type === 'cone') f = [{ t: 'num', k: 'D', l: 'Diámetro interior extremo mayor', u: 'len' }, { t: 'num', k: 'Ds', l: 'Diámetro interior extremo menor', u: 'len' },
       { t: 'num', k: 'alpha', l: 'Semiángulo α (°)' }, { t: 'sel', k: 'largeAt', l: 'Extremo mayor hacia', o: [['base', 'la virola de origen'], ['away', 'el exterior']] },
-      { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }].concat(tail, [
+      { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }, { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' }].concat(tail, [
         { t: 'h', l: 'Anillos en las uniones (Ap. 1-5 / 1-8), pletina h × b; 0 = sin anillo' },
         { t: 'num', k: 'ringLh', l: 'Extremo mayor: altura h', u: 'len' }, { t: 'num', k: 'ringLb', l: 'Extremo mayor: espesor b', u: 'len' },
         { t: 'num', k: 'ringSh', l: 'Extremo menor: altura h', u: 'len' }, { t: 'num', k: 'ringSb', l: 'Extremo menor: espesor b', u: 'len' }]);
@@ -338,31 +373,37 @@
   }
   function nozFields(n){
     var host = prj.comps.filter(function(c){ return c.id === n.host; })[0], head = host && /ellip|tori|hemi|flat/.test(host.type);
-    return [
+    var C = n.kind === 'cpl', NZ = !C;
+    var L = [
       { t: 'txt', k: 'mark', l: 'Marca' }, { t: 'txt', k: 'service', l: 'Servicio' },
       { t: 'sel', k: 'host', l: 'Componente', o: prj.comps.map(function(c){ return [c.id, c.name]; }), re: 1 },
       head ? { t: 'num', k: 'rad', l: 'Distancia radial al eje del recipiente (0 = centro; hasta la línea de tangencia)', u: 'len' } : null,
       head && host.type !== 'flat' ? { t: 'sel', k: 'hor', l: 'Orientación del cuello', o: [['axial', 'Paralela al eje del recipiente'], ['normal', 'Normal a la superficie del fondo (radial)']], re: 1 } : null,
       head ? null : { t: 'num', k: 'a', l: 'Distancia axial desde el inicio del componente', u: 'len' },
-      { t: 'num', k: 'theta', l: 'Orientación θ (°, 0 = +X / derecha en el esquema)' },
-      { t: 'h', l: 'Cuello' },
-      { t: 'sel', k: 'nps', l: 'Tamaño nominal', o: [['', 'No normalizado']].concat(Object.keys(PIPE_OD).map(function(k){ return [k, 'NPS ' + k + ' · D.E. ' + PIPE_OD[k] + ' mm']; })), re: 1 },
-      { t: 'num', k: 'od', l: 'Diámetro exterior', u: 'len' }, { t: 'num', k: 'tn', l: 'Espesor nominal del cuello', u: 'len' },
-      { t: 'chk', k: 'pipe', l: 'Tubería (tolerancia −12,5 %)' },
-      { t: 'mat', k: 'mat', l: 'Material del cuello', filter: isPipe },
-      { t: 'num', k: 'proj', l: head && host.type !== 'flat' && n.hor !== 'normal' ? 'Altura de la cara de brida (o del primer codo) sobre el extremo del fondo' : 'Tramo recto exterior (hasta el primer codo o la cara de brida)', u: 'len' },
+      { t: 'num', k: 'theta', l: 'Orientación en planta θ (°; 0 = 3 h, 90 = 12 h, antihorario)' },
+      C ? { t: 'h', l: 'Manguito ASME B16.11' } : { t: 'h', l: 'Cuello' },
+      C ? { t: 'sel', k: 'cnps', l: 'Tamaño nominal', o: M.CPL.map(function(r){ return [r[0], 'NPS ' + r[0]]; }), re: 1 } : null,
+      C ? { t: 'sel', k: 'ccls', l: 'Clase', o: [['3000', '3000'], ['6000', '6000']], re: 1 } : null,
+      C ? { t: 'sel', k: 'cend', l: 'Conexión', o: [['NPT', 'Roscado NPT'], ['SW', 'Enchufe y soldadura (SW)']], re: 1 } : null,
+      C ? { t: 'sel', k: 'ctype', l: 'Tipo', o: [['full', 'Manguito completo'], ['half', 'Medio manguito']], re: 1 } : null,
+      C ? { t: 'info', html: 'D.E. ' + fmt(n.od, 'len') + ' · espesor de pared ' + fmt(n.tn, 'len') + ' · saliente exterior ' + fmt(n.proj, 'len') + ' (de las dimensiones B16.11)' } : null,
+      NZ ? { t: 'sel', k: 'nps', l: 'Tamaño nominal', o: [['', 'No normalizado']].concat(Object.keys(PIPE_OD).map(function(k){ return [k, 'NPS ' + k + ' · D.E. ' + PIPE_OD[k] + ' mm']; })), re: 1 } : null,
+      NZ ? { t: 'num', k: 'od', l: 'Diámetro exterior', u: 'len' } : null, NZ ? { t: 'num', k: 'tn', l: 'Espesor nominal del cuello', u: 'len' } : null,
+      NZ ? { t: 'chk', k: 'pipe', l: 'Tubería (tolerancia −12,5 %)' } : null,
+      n.kind === 'cpl' ? { t: 'mat', k: 'mat', l: 'Material del manguito (forja)', filter: isForge } : { t: 'mat', k: 'mat', l: n.fl.type === 'LWN' ? 'Material del cuello LWN (forja)' : 'Material del cuello (tubo)', filter: n.fl.type === 'LWN' ? isForge : isPipe },
+      NZ ? { t: 'num', k: 'proj', l: head && host.type !== 'flat' && n.hor !== 'normal' ? 'Altura de la cara de brida (o del primer codo) sobre el extremo del fondo' : 'Tramo recto exterior (hasta el primer codo o la cara de brida)', u: 'len' } : null,
       { t: 'num', k: 'hin', l: 'Proyección interior h', u: 'len' }, { t: 'num', k: 'ti', l: 'Espesor de la proyección interior', u: 'len' },
       { t: 'num', k: 'E1', l: 'E1 (1 si no atraviesa soldadura)' },
       { t: 'chk', k: 'access', l: 'Abertura de acceso o inspección (UG-45: t = ta)' },
-      { t: 'h', l: 'Codos (ASME B16.9, radio largo 1,5·D o corto 1,0·D)' },
-      { t: 'sel', k: 'elb.0.ang', l: 'Codo 1', o: [['0', 'Sin codo'], ['45', '45°'], ['90', '90°']], re: 1 },
-      (+n.elb[0].ang > 0) ? { t: 'sel', k: 'elb.0.rt', l: 'Radio', o: [['LR', 'Largo (1,5·D)'], ['SR', 'Corto (1,0·D)']] } : null,
-      (+n.elb[0].ang > 0) ? { t: 'num', k: 'elb.0.phi', l: 'Orientación del giro φ (°; 0 = hacia +eje del recipiente)' } : null,
-      (+n.elb[0].ang > 0) ? { t: 'num', k: 'elb.0.L', l: 'Tramo recto tras el codo 1', u: 'len' } : null,
-      (+n.elb[0].ang > 0) ? { t: 'sel', k: 'elb.1.ang', l: 'Codo 2', o: [['0', 'Sin codo'], ['45', '45°'], ['90', '90°']], re: 1 } : null,
-      (+n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'sel', k: 'elb.1.rt', l: 'Radio', o: [['LR', 'Largo (1,5·D)'], ['SR', 'Corto (1,0·D)']] } : null,
-      (+n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'num', k: 'elb.1.phi', l: 'Orientación del giro φ (° respecto al plano del codo 1)' } : null,
-      (+n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'num', k: 'elb.1.L', l: 'Tramo recto tras el codo 2', u: 'len' } : null,
+      NZ ? { t: 'h', l: 'Codos (ASME B16.9, radio largo 1,5·D o corto 1,0·D)' } : null,
+      NZ ? { t: 'sel', k: 'elb.0.ang', l: 'Codo 1', o: [['0', 'Sin codo'], ['45', '45°'], ['90', '90°']], re: 1 } : null,
+      (NZ && +n.elb[0].ang > 0) ? { t: 'sel', k: 'elb.0.rt', l: 'Radio', o: [['LR', 'Largo (1,5·D)'], ['SR', 'Corto (1,0·D)']] } : null,
+      (NZ && +n.elb[0].ang > 0) ? { t: 'num', k: 'elb.0.phi', l: 'Orientación del giro φ (°; 0 = hacia +eje del recipiente)' } : null,
+      (NZ && +n.elb[0].ang > 0) ? { t: 'num', k: 'elb.0.L', l: 'Tramo recto tras el codo 1', u: 'len' } : null,
+      (NZ && +n.elb[0].ang > 0) ? { t: 'sel', k: 'elb.1.ang', l: 'Codo 2', o: [['0', 'Sin codo'], ['45', '45°'], ['90', '90°']], re: 1 } : null,
+      (NZ && +n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'sel', k: 'elb.1.rt', l: 'Radio', o: [['LR', 'Largo (1,5·D)'], ['SR', 'Corto (1,0·D)']] } : null,
+      (NZ && +n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'num', k: 'elb.1.phi', l: 'Orientación del giro φ (° respecto al plano del codo 1)' } : null,
+      (NZ && +n.elb[0].ang > 0 && +n.elb[1].ang > 0) ? { t: 'num', k: 'elb.1.L', l: 'Tramo recto tras el codo 2', u: 'len' } : null,
       { t: 'h', l: 'Refuerzo' },
       { t: 'chk', k: 'pad', l: 'Con chapa de refuerzo', re: 1 },
       n.pad ? { t: 'num', k: 'Dp', l: 'Diámetro exterior del refuerzo', u: 'len' } : null,
@@ -380,11 +421,12 @@
       { t: 'sel', k: 'wtype', l: 'Tipo de unión', o: [['setin', 'Insertada (set-in), Fig. UG-41.1 (a)'], ['seton', 'Apoyada (set-on), Fig. UG-41.1 (b)']] },
       { t: 'num', k: 'tw', l: 'Penetración de la soldadura a tope en la pared (vacío = total)', u: 'len', ph: 'total' },
       n.pad ? { t: 'num', k: 'twp', l: 'Penetración de la soldadura refuerzo-cuello (vacío = te)', u: 'len', ph: 'te' } : null,
-      { t: 'h', l: 'Brida (ASME B16.5)' },
-      { t: 'sel', k: 'fl.type', l: 'Tipo', o: [['none', 'Sin brida'], ['WN', 'Welding neck'], ['SO', 'Slip-on'], ['LWN', 'Long welding neck (UG-44(j))']], re: 1 },
-      n.fl.type !== 'none' ? { t: 'sel', k: 'fl.cls', l: 'Clase', o: V.CLASSES.map(function(c){ return [c, 'Clase ' + c]; }) } : null,
-      n.fl.type !== 'none' ? { t: 'mat', k: 'fl.mat', l: 'Material de la brida', filter: function(m){ return !!m.grp; } } : null
-    ].filter(Boolean);
+      NZ ? { t: 'h', l: 'Brida (ASME B16.5)' } : null,
+      NZ ? { t: 'sel', k: 'fl.type', l: 'Tipo', o: [['none', 'Sin brida'], ['WN', 'Welding neck'], ['SO', 'Slip-on'], ['LWN', 'Long welding neck (UG-44(j))']], re: 1 } : null,
+      NZ && n.fl.type !== 'none' ? { t: 'sel', k: 'fl.cls', l: 'Clase', o: V.CLASSES.map(function(c){ return [c, 'Clase ' + c]; }) } : null,
+      NZ && n.fl.type !== 'none' ? { t: 'mat', k: 'fl.mat', l: 'Material de la brida (forja)', filter: function(m){ return !!m.grp && FORM(m) === 'forge'; } } : null
+    ];
+    return L.filter(Boolean);
   }
 
   // ---------------- renderizado ----------------
@@ -413,8 +455,8 @@
         (c.id !== prj.base ? '<button type="button" class="del" title="Eliminar" onclick="APP.delComp(\'' + c.id + '\')">✕</button>' : '') + '</div>'; }).join('') +
       lastAdd +
       '<div class="tree-h">Conexiones</div>' +
-      prj.nozzles.map(function(n){ return '<div class="node-row"><button type="button" class="node' + (sel.kind === 'noz' && sel.id === n.id ? ' on' : '') + '" onclick="APP.select(\'noz\',\'' + n.id + '\')"><span class="dot" id="st-' + n.id + '"></span>' + esc(n.mark) + '<small>' + (n.nps ? 'NPS ' + n.nps : fmt(n.od, 'len')) + (n.fl.type !== 'none' ? ' · ' + n.fl.type + ' ' + n.fl.cls : '') + '</small></button><button type="button" class="del" title="Eliminar" onclick="APP.delNoz(\'' + n.id + '\')">✕</button></div>'; }).join('') +
-      '<div class="addrow"><button type="button" class="btn sm" onclick="APP.addNoz()">+ Añadir conexión</button></div>';
+      prj.nozzles.map(function(n){ return '<div class="node-row"><button type="button" class="node' + (sel.kind === 'noz' && sel.id === n.id ? ' on' : '') + '" onclick="APP.select(\'noz\',\'' + n.id + '\')"><span class="dot" id="st-' + n.id + '"></span>' + esc(n.mark) + '<small>' + (n.kind === 'cpl' ? 'Manguito ' + n.cnps + '" ' + n.ccls + ' ' + n.cend + ' · ' : '') + (n.kind === 'cpl' ? '' : (n.nps ? 'NPS ' + n.nps : fmt(n.od, 'len'))) + (n.fl.type !== 'none' ? ' · ' + n.fl.type + ' ' + n.fl.cls : '') + '</small></button><button type="button" class="del" title="Eliminar" onclick="APP.delNoz(\'' + n.id + '\')">✕</button></div>'; }).join('') +
+      '<div class="addrow"><button type="button" class="btn sm" onclick="APP.addNoz()">+ Añadir conexión</button><button type="button" class="btn sm" onclick="APP.addNoz(\'cpl\')">+ Añadir manguito</button></div>';
   }
   function renderTreeStatus(){
     if (!res) return;
@@ -431,7 +473,7 @@
   function renderEditor(){
     var o = currentObj(); if (!o){ sel = { kind: 'design' }; o = prj; }
     var fl = sel.kind === 'design' ? designFields() : sel.kind === 'loads' ? loadsFields() : sel.kind === 'comp' ? compFields(o) : nozFields(o);
-    var title = sel.kind === 'design' ? 'Proyecto y condiciones de diseño' : sel.kind === 'loads' ? 'Cargas exteriores y soportes' : sel.kind === 'comp' ? (o.name + ' · ' + compLabel(o)) : ('Conexión ' + o.mark);
+    var title = sel.kind === 'design' ? 'Proyecto y condiciones de diseño' : sel.kind === 'loads' ? 'Cargas exteriores y soportes' : sel.kind === 'comp' ? (o.name + ' · ' + compLabel(o)) : ((o.kind === 'cpl' ? 'Manguito ' : 'Conexión ') + o.mark);
     $('editor').innerHTML = '<div class="ed-title">' + esc(title) + '</div><div class="fields">' + fl.map(function(f){ return fieldHtml(o, f); }).join('') + '</div>';
   }
   function onInput(e){
@@ -451,11 +493,13 @@
     if (k === 'b1620' && v){ var q = v.split('|'), g = q[0] === '9' ? NB.b165[q[1]] : NB[q[0]][q[1]][q[2]];
       if (q[0] === '9'){ o.Go = g.od[q[2]]; o.Gi = g.id[q[2]]; } else { o.Go = g[1]; o.Gi = g[0]; }
       o.gk = 'SWS'; o.m = 3.00; o.y = 69; o.b0mode = 'N2'; }
+    if (k === 'design.mfam'){ var nf = 0; if (v !== 'ALL' && confirm('¿Sustituir los materiales que no son de la nueva familia por los de por defecto? (se respetan los marcados como «otra familia»)')) nf = convertFamily(v); if (nf) renderTree(); }
     if (k === 'design.orient' && typeof VLOADS !== 'undefined'){ prj.support = VLOADS.defSupport(v); prj.loads.asce7.R = v === 'H' ? 3 : 2; }
     if (k === 'nps' && PIPE_OD[v]) o.od = PIPE_OD[v];
+    if (/^(cnps|ccls|cend|ctype|host|hin|wtype)$/.test(k) && o.kind === 'cpl'){ if (k === 'ccls') o.ccls = +v; M.applyCpl(o, prj.comps.filter(function(c){ return c.id === o.host; })[0]); }
     if (k === 'design.orient'){ prj.design.level = null; }
     if (k === 'name' || k === 'mark') renderTree();
-    if (e.type === 'change' && (el.getAttribute('data-re') || k === 'gk' || k === 'bsize' || k === 'nps' || k === 'b1620' || /size$/.test(k))){ renderTree(); renderEditor(); }
+    if (e.type === 'change' && (el.getAttribute('data-re') || k === 'gk' || k === 'bsize' || k === 'nps' || k === 'b1620' || /size$/.test(k) || /^(cnps|ccls|cend|ctype)$/.test(k))){ renderTree(); renderEditor(); }
     recompute();
   }
 
@@ -596,6 +640,7 @@
       ['Volumen interior', fmt(res.mass.vol, 'm3')]
     ]);
     html += '<div class="st-h">Requisitos de END y pruebas</div><ul class="checks">' + res.ndt.req.map(function(q){ return '<li class="' + (q.info ? 'info' : q.ok ? 'ok' : q.warn ? 'warn' : 'ko') + '">' + esc(q.t) + ' <span class="ref">' + esc(q.ref) + '</span></li>'; }).join('') + '</ul>';
+    if (res.seams && res.seams.length) html += '<div class="st-h">Separación entre soldaduras (mínimo ' + fmt(+prj.design.wmin || 50, 'len') + ')</div>' + checksHtml(res.seams);
     if (res.ug42 && res.ug42.length) html += '<div class="st-h">Aberturas próximas (UG-36(c)(3), UG-39, UG-42)</div>' + checksHtml([].concat.apply([], res.ug42.map(function(x){ return x.checks; })));
     html += '<div class="st-h">MAWP referida a la parte superior por elemento</div><table class="steps"><tbody>' + res.mawpList.map(function(x){ return '<tr><td>' + esc(x.who) + '</td><td class="num">' + fmt(x.v, 'p') + '</td></tr>'; }).join('') + '</tbody></table>';
     return html;
@@ -621,6 +666,7 @@
     if (n.fl.type === 'SO' && Yh > tf) polys.push([[-tf, -X / 2], [-Yh, -X / 2], [-Yh, X / 2], [-tf, X / 2]]);
     return polys;
   }
+  var SKMAP = null;
   // ---------------- esquema ----------------
   function renderSketch(){
     if (!res) return;
@@ -639,6 +685,7 @@
     // mapa (s, r) → pantalla
     var sCenter = (zlo + zhi) / 2;
     function P(s, r){ var a = (s - sCenter) * sc * sign, b = r * sc; return H ? [W / 2 + a, Hh / 2 - b] : [W / 2 + b, Hh / 2 - a]; }
+    SKMAP = { sc: sc, sCenter: sCenter, sign: sign, W: W, Hh: Hh, H: H };
     var out = '';
     function path(pts){ return 'M' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L') + ' Z'; }
     function wallPoly(inner, t){ // inner: [[s, r]] ; dibuja ambos lados
@@ -691,7 +738,7 @@
     prj.nozzles.forEach(function(n){
       var host = prj.comps.filter(function(c){ return c.id === n.host; })[0]; if (!host) return;
       var p = Lr.pos[host.id], on = sel.kind === 'noz' && sel.id === n.id, rz = res.nozzles.filter(function(x){ return x.n.id === n.id; })[0];
-      var cls = 'noz' + (on ? ' on' : '') + (rz && !rz.ok ? ' bad' : ''), th = (n.theta || 0) * Math.PI / 180, ct = Math.cos(th), g = '';
+      var cls = 'noz' + (on ? ' on' : '') + (rz && !rz.ok ? ' bad' : ''), th = (n.theta || 0) * Math.PI / 180, ct = H ? Math.sin(th) : Math.cos(th), g = '';
       if (/ellip|tori|hemi|flat/.test(host.type)){
         var hz = M.headNoz(host, p, n), x0 = hz.r * ct, dxs = hz.ds, dxr = hz.dr * ct, nl = Math.sqrt(dxs * dxs + dxr * dxr) || 1; dxs /= nl; dxr /= nl;
         var px = -dxr, pr2 = dxs, Lx = hz.L0, sB = hz.s - dxs * (n.hin || 0), rB = x0 - dxr * (n.hin || 0), sE = sB + dxs * Lx, rE = rB + dxr * Lx, hw = n.od / 2;
@@ -717,6 +764,11 @@
       }
       out += g;
     });
+    // soldaduras longitudinales (proyección en el alzado)
+    prj.comps.forEach(function(c){ if (c.type !== 'shell' && c.type !== 'cone') return; var p = Lr.pos[c.id], ph = (+c.seam || 0) * Math.PI / 180, pr = H ? Math.sin(ph) : Math.cos(ph), back = H ? Math.cos(ph) * (d.hdir === 'L' ? -1 : 1) < 0 : Math.sin(ph) > 0;
+      var r0 = (M.innerR(c, p, p.s0) + c.tn) * pr, r1 = (M.innerR(c, p, p.s1) + c.tn) * pr, a0 = P(p.s0, r0), a1 = P(p.s1, r1);
+      out += '<line class="seam' + (back ? ' back' : '') + '" x1="' + a0[0] + '" y1="' + a0[1] + '" x2="' + a1[0] + '" y2="' + a1[1] + '"/>';
+      var lm = P((p.s0 + p.s1) / 2, (r0 + r1) / 2); out += '<text class="dim seamt" x="' + (lm[0] + 3) + '" y="' + (lm[1] - 3) + '">SL ' + (+c.seam || 0) + '°</text>'; });
     // anillos rigidizadores
     prj.comps.forEach(function(c){ if (c.type !== 'shell' || !(+c.rn > 0)) return; var p = Lr.pos[c.id], ri = M.innerR(c, p, p.s0), ro = ri + c.tn;
       for (var q = 1; q <= +c.rn; q++){ var sr = p.s0 + q * (p.s1 - p.s0) / (+c.rn + 1), hb = (+c.rb || 10) / 2, r0 = c.rside === 'int' ? ri - (+c.rh || 0) : ro, r1 = c.rside === 'int' ? ri : ro + (+c.rh || 0);
@@ -812,8 +864,9 @@
       if (/ellip|tori|hemi|flat/.test(ref.type)){ alert('El extremo ya está cerrado por ' + ref.name + '. Elimínalo o añade por el otro extremo.'); return; }
       var near = ref.type === 'cone' ? { D: ref.largeAt === (where === 'end' ? 'base' : 'away') ? ref.Ds : ref.D } : ref;
       var c = M.newComp(type, prj, near);
-      if (ref.mat && type !== 'bflange') c.mat = { id: ref.mat.id, vi: ref.mat.vi };
+      if (ref.mat && type !== 'bflange' && ref.type !== 'bflange') c.mat = { id: ref.mat.id, vi: ref.mat.vi };
       if (ref.tn && type !== 'flat' && type !== 'bflange') c.tn = ref.tn;
+      if (/shell|cone/.test(type) && /shell|cone/.test(ref.type)) c.seam = ((+ref.seam || 0) + 180) % 360;
       if (where === 'end') prj.comps.push(c); else prj.comps.unshift(c);
       var cnt = prj.comps.filter(function(x){ return x.type === type; }).length; c.name = M.TYPES[type] + (cnt > 1 ? ' ' + cnt : '');
       sel = { kind: 'comp', id: c.id }; renderAll();
@@ -825,7 +878,7 @@
       prj.comps = prj.comps.filter(function(c){ return c.id !== id; });
       sel = { kind: 'design' }; renderAll();
     },
-    addNoz: function(){ var n = M.newNozzle(prj); prj.nozzles.push(n); sel = { kind: 'noz', id: n.id }; renderAll(); },
+    addNoz: function(kind){ var n = M.newNozzle(prj, kind); prj.nozzles.push(n); sel = { kind: 'noz', id: n.id }; renderAll(); },
     delNoz: function(id){ prj.nozzles = prj.nozzles.filter(function(n){ return n.id !== id; }); sel = { kind: 'design' }; renderAll(); },
     nuevo: function(){ if (!confirm('¿Crear un recipiente nuevo? Se perderán los datos no guardados.')) return; prj = M.newProject(prj.design.orient); sel = { kind: 'design' }; renderAll(); },
     guardar: function(){
@@ -839,6 +892,25 @@
     setUnits: function(u){ units = u; try { localStorage.setItem('asme-units', u); } catch (e) {} $('u-si').classList.toggle('active', u === 'si'); $('u-us').classList.toggle('active', u === 'us'); renderAll(); },
     cerrar: function(){ window.location.href = 'index.html'; },
     view: function(v){ setView(v); },
+    exportCAD: function(kind){
+      if (!kind) return;
+      if (!res){ alert('No hay resultados que exportar'); return; }
+      var nm = String(prj.info.tag || prj.info.equipo || 'Recipiente').replace(/[^\w.-]+/g, '_'), o, data, type = 'text/plain;charset=utf-8';
+      if (kind === 'inv') o = EXPORT3D.inventor(prj, res);
+      else if (kind === 'sw') o = EXPORT3D.solidworks(prj, res);
+      else if (kind === 'step') o = EXPORT3D.step(prj, res);
+      else if (kind === 'stl' || kind === 'dxf3'){
+        if (!has3D){ alert('El visor 3D no está disponible en este navegador'); return; }
+        if (view !== 'v3d') setView('v3d'); render3D();
+        o = kind === 'stl' ? EXPORT3D.stl(VISOR3D.meshes(prj), nm) : EXPORT3D.dxf3d(VISOR3D.meshes(prj), nm);
+        if (kind === 'stl'){ data = o.data; type = 'application/octet-stream'; }
+      }
+      else if (kind === 'dxf2'){ renderSketch(); o = EXPORT3D.dxf2d($('sketch'), SKMAP, nm); }
+      var blob = new Blob([data || o.text], { type: type }), a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = o.file; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      $('smst').textContent = 'Exportado: ' + o.file + (o.parts ? ' · ' + o.parts.length + ' piezas' : o.n ? ' · ' + o.n + ' triángulos' : '');
+      var sx = $('exsel'); if (sx) sx.value = '';
+    },
     sm: function(){ if (!has3D) return; VISOR3D.connectHID(smShow).catch(function(e){ $('smst').textContent = e.message; }); },
     smSens: function(v){ if (has3D) VISOR3D.setSens(v); }, smInv: function(v){ if (has3D) VISOR3D.setInv(v); }, fit: function(v){ if (has3D) VISOR3D.fit(v); }, clip: function(on){ if (has3D){ VISOR3D.setClip(on); } },
     _prj: function(){ return prj; }, _res: function(){ return res; }

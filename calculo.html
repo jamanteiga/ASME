@@ -70,7 +70,8 @@
   #sketch .liqt{ fill:var(--liq); }
   #v3d{ width:100%; height:600px; border-radius:8px; background:linear-gradient(#f4f6f9,#e3e8ee); overflow:hidden; cursor:grab; }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #v3d{ background:linear-gradient(#1d232b,#11151a); } }
-  .vbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; } .vbar .units button{ font-size:12px; } .vchk{ font-size:12px; margin-left:6px; } .smsel{ font-size:11.5px; padding:4px; } .smst{ font-size:11px; color:var(--ink-mute); }
+  .vbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; } .vbar .units button{ font-size:12px; } .vchk{ font-size:12px; margin-left:6px; } .smsel{ font-size:11.5px; padding:4px; } .smst{ font-size:11px; color:var(--ink-mute); } .xm{ font-size:11px; color:var(--ink-2); display:flex; gap:5px; align-items:center; margin-top:4px; }
+  #sketch .seam{ stroke:#b86b2c; stroke-width:2; } #sketch .seam.back{ stroke-dasharray:5 4; stroke-width:1.2; } #sketch .seamt{ fill:#b86b2c; }
   #sketch .fln{ fill:var(--card-2); stroke:var(--ink-2); stroke-width:1.2; }
   #sketch .sup{ fill:var(--card-2); stroke:var(--ink-mute); stroke-width:1.1; }
   #sketch .ground{ stroke:var(--ink-2); stroke-width:2; }
@@ -146,6 +147,15 @@
           <span class="units" role="group" aria-label="Vista"><button id="bt3d" onclick="APP.view('v3d')">3D</button><button id="bt2d" onclick="APP.view('2d')">Alzado 2D</button></span>
           <span id="vtools"><button class="btn sm" onclick="APP.fit()">Iso</button><button class="btn sm" onclick="APP.fit('front')">Frente</button><button class="btn sm" onclick="APP.fit('side')">Lateral</button><button class="btn sm" onclick="APP.fit('top')">Planta</button>
           <label class="vchk"><input type="checkbox" onchange="APP.clip(this.checked)"> Corte</label>
+          <select id="exsel" class="smsel" onchange="APP.exportCAD(this.value)" title="Exportar el modelo">
+            <option value="">Exportar…</option>
+            <option value="step">STEP AP214 · ensamblaje B-rep (.stp)</option>
+            <option value="inv">Inventor · regla iLogic → .iam + .ipt</option>
+            <option value="sw">SolidWorks · macro VBA → .sldasm + .sldprt</option>
+            <option value="stl">STL · malla (.stl)</option>
+            <option value="dxf2">DXF 2D · alzado por capas (.dxf)</option>
+            <option value="dxf3">DXF 3D · mallas 3DFACE (.dxf)</option>
+          </select>
           <button class="btn sm" onclick="APP.sm()" title="Conectar un ratón 3D 3Dconnexion (WebHID, Chrome/Edge)">Ratón 3D</button>
           <select id="smsens" class="smsel" onchange="APP.smSens(this.value)" title="Sensibilidad del ratón 3D"><option value="0.5">Lenta</option><option value="1">Normal</option><option value="2">Rápida</option><option value="4">Muy rápida</option></select>
           <label class="vchk"><input type="checkbox" id="sminv" onchange="APP.smInv(this.checked)"> Invertir zoom</label>
@@ -153,7 +163,7 @@
         </div>
         <div id="v3d" aria-label="Visor 3D del recipiente"></div>
         <svg id="sketch" viewBox="0 0 380 560" role="img" aria-label="Esquema del recipiente"></svg>
-        <div class="f-note">3D: arrastrar para girar, rueda para zoom, botón derecho para desplazar; clic en una pieza para seleccionarla. Ratón 3D (SpaceMouse): empujar/tirar acerca y aleja, desplazar mueve la vista, inclinar/girar rota; botón 1 = Iso, botón 2 = Frente.</div>
+        <div class="f-note">3D: arrastrar para girar, rueda para zoom, botón derecho para desplazar; clic en una pieza para seleccionarla. Ratón 3D (SpaceMouse): empujar/tirar acerca y aleja, desplazar mueve la vista, inclinar/girar rota; botón 1 = Iso, botón 2 = Frente. Exportar CAD: Inventor → Herramientas › iLogic › Explorador de iLogic › Reglas externas › Añadir regla externa y Ejecutar; SolidWorks → Herramientas › Macro › Nueva, en el editor VBA Archivo › Importar archivo (.bas) y ejecutar Main. Se crean en Documentos\\TAG.</div>
       </div>
     </section>
   </div>
@@ -170,6 +180,7 @@
 <script src="lib/three.min.js"></script>
 <script src="lib/OrbitControls.js"></script>
 <script src="visor3d.js"></script>
+<script src="export3d.js"></script>
 <script src="calculo.js"></script>
 </body>
 </html>

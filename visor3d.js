@@ -64,7 +64,7 @@ var VISOR3D = (function(){
   // ---------- geometría del recipiente ----------
   function frame(prj){
     var d = prj.design, H = d.orient === 'H', e = H ? new T.Vector3(d.hdir === 'L' ? -1 : 1, 0, 0) : new T.Vector3(0, 0, 1);
-    function rad(th){ th = th * Math.PI / 180; return H ? new T.Vector3(0, Math.sin(th), Math.cos(th)) : new T.Vector3(Math.cos(th), Math.sin(th), 0); }
+    function rad(th){ th = th * Math.PI / 180; return H ? new T.Vector3(0, -Math.cos(th) * (d.hdir === 'L' ? -1 : 1), Math.sin(th)) : new T.Vector3(Math.cos(th), Math.sin(th), 0); }
     function P(s, rv, r){ return e.clone().multiplyScalar(s).addScaledVector(rv, r); }
     return { H: H, e: e, rad: rad, P: P };
   }
@@ -79,6 +79,11 @@ var VISOR3D = (function(){
       if (+c.rn > 0){ var mr = mat(COL.sup); for (var q = 1; q <= +c.rn; q++){ var sr = p.s0 + q * (p.s1 - p.s0) / (+c.rn + 1), hb = (+c.rb || 10) / 2, r0 = c.rside === 'int' ? ri - (+c.rh || 0) : ri + c.tn, r1 = c.rside === 'int' ? ri : ri + c.tn + (+c.rh || 0);
         g.add(lathe([[sr - hb, r0], [sr + hb, r0], [sr + hb, r1], [sr - hb, r1]], e, mr)); } } }
     else if (c.type === 'cone'){ var t2 = c.tn / Math.cos(c.alpha * Math.PI / 180), a0 = M.innerR(c, p, p.s0), a1 = M.innerR(c, p, p.s1); g.add(lathe([[p.s0, a0], [p.s1, a1], [p.s1, a1 + t2], [p.s0, a0 + t2]], e, m)); }
+    if (c.type === 'shell' || c.type === 'cone'){ // soldadura longitudinal
+      var rvS = F.rad(+c.seam || 0), tt = c.type === 'cone' ? c.tn / Math.cos(c.alpha * Math.PI / 180) : c.tn, q0 = M.innerR(c, p, p.s0) + tt + 2, q1 = M.innerR(c, p, p.s1) + tt + 2;
+      var A = F.P(p.s0, rvS, q0), B = F.P(p.s1, rvS, q1), dS = B.clone().sub(A);
+      var ws = tube(A, dS.clone().normalize(), dS.length(), 7, 0, mat(0xb86b2c)); ws.userData = ud; g.add(ws);
+    }
     else if (/ellip|tori|hemi/.test(c.type)){ var pi = headPts(c, p, false), po = headPts(c, p, true); g.add(lathe(pi.concat(po.slice().reverse()), e, m)); }
     else if (c.type === 'flat'){ var R0 = (c.d || 0) / 2 + Math.max(c.tn * 0.4, 15); g.add(lathe([[p.s0, 0], [p.s1, 0], [p.s1, R0], [p.s0, R0]], e, m)); }
     else if (c.type === 'bflange'){
@@ -191,13 +196,16 @@ var VISOR3D = (function(){
     root = new T.Group(); var F = frame(prj), Lr = res.L; F.span = Lr.smax - Lr.smin;
     prj.comps.forEach(function(c){ var p = Lr.pos[c.id], r = res.byId[c.id], on = sel.kind === 'comp' && sel.id === c.id;
       root.add(compMesh(prj, c, p, on ? COL.sel : (r && !r.ok ? COL.ko : COL.ok), F)); });
+    for (var iw = 0; iw < prj.comps.length - 1; iw++){ var ca = prj.comps[iw], cb = prj.comps[iw + 1]; if (ca.type === 'bflange' && cb.type === 'bflange') continue; if (cb.type === 'bflange' && ca.type === 'flat') continue; if (ca.type === 'bflange' && cb.type === 'flat') continue;
+      var pj = Lr.pos[ca.id], sj = pj.s1, rj = (ca.type === 'shell' || ca.type === 'cone') ? M.innerR(ca, pj, sj) + ca.tn : (cb.type === 'shell' || cb.type === 'cone') ? M.innerR(cb, Lr.pos[cb.id], sj) + cb.tn : (ca.D || cb.D || 0) / 2 + Math.max(ca.tn, cb.tn);
+      var tor = new T.Mesh(new T.TorusGeometry(rj + 1, 7, 8, 96), mat(0xb86b2c)); tor.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), F.e); tor.position.copy(F.e.clone().multiplyScalar(sj)); root.add(tor); }
     prj.nozzles.forEach(function(n){ var host = prj.comps.filter(function(c){ return c.id === n.host; })[0]; if (!host) return;
       var rz = res.nozzles.filter(function(x){ return x.n.id === n.id; })[0], on = sel.kind === 'noz' && sel.id === n.id;
       try { root.add(nozMesh(prj, n, host, Lr.pos[host.id], on ? COL.sel : (rz && !rz.ok ? COL.ko : COL.noz), F)); } catch (e){ if (window.console) console.error(e); } });
     var gs = new T.Group(); gs.userData = { kind: 'loads', id: null }; var zgr = supports(prj, res, F, gs); root.add(gs);
     // origen y ejes
-    var org = new T.Mesh(new T.SphereGeometry(18, 16, 12), new T.MeshBasicMaterial({ color: 0xe0453a })); root.add(org);
-    var span = Lr.smax - Lr.smin, ax = new T.AxesHelper(Math.max(300, span * 0.12)); root.add(ax);
+    var org = new T.Mesh(new T.SphereGeometry(18, 16, 12), new T.MeshBasicMaterial({ color: 0xe0453a })); org.userData.noexp = true; root.add(org);
+    var span = Lr.smax - Lr.smin, ax = new T.AxesHelper(Math.max(300, span * 0.12)); ax.userData.noexp = true; root.add(ax);
     // suelo
     if (grid){ scene.remove(grid); grid.geometry.dispose(); }
     var bb = new T.Box3().setFromObject(root), sz = bb.getSize(new T.Vector3()), gsz = Math.ceil(Math.max(sz.x, sz.y, sz.z) * 1.6 / 1000) * 1000;
@@ -272,6 +280,18 @@ var VISOR3D = (function(){
     dir.normalize(); cam.up.set(0, 0, 1); ctl.target.copy(c); cam.position.copy(c).addScaledVector(dir, dist); cam.near = dist / 200; cam.far = dist * 20; cam.updateProjectionMatrix(); ctl.update();
   }
   function setClip(on){ clip = !!on; if (root) root.traverse(function(o){ if (o.material && !(o.material instanceof T.SpriteMaterial)) o.material.clippingPlanes = clip ? [plane] : []; }); }
+  function meshes(prj){
+    var out = []; if (!root) return out; root.updateMatrixWorld(true);
+    var names = {}; prj.comps.forEach(function(c){ names['comp:' + c.id] = c.name; }); prj.nozzles.forEach(function(n){ names['noz:' + n.id] = (n.kind === 'cpl' ? 'Manguito ' : 'Conexion ') + n.mark; });
+    root.traverse(function(o){
+      if (!o.isMesh || o.userData.noexp) return;
+      var a = o, nm = 'Soldaduras'; while (a && a !== root){ if (a.userData && a.userData.kind){ nm = a.userData.kind === 'loads' ? 'Soportes' : (names[a.userData.kind + ':' + a.userData.id] || a.userData.kind); break; } a = a.parent; }
+      var g = o.geometry, pa = g.attributes.position, p = new Float32Array(pa.count * 3), v = new T.Vector3();
+      for (var k = 0; k < pa.count; k++){ v.fromBufferAttribute(pa, k).applyMatrix4(o.matrixWorld); p[3 * k] = v.x; p[3 * k + 1] = v.y; p[3 * k + 2] = v.z; }
+      out.push({ pos: p, idx: g.index ? Array.from(g.index.array) : null, name: nm });
+    });
+    return out;
+  }
   function snapshot(){ if (!ren) return null; ren.render(scene, cam); try { return ren.domElement.toDataURL('image/png'); } catch (e){ return null; } }
-  return { init: init, update: update, fit: fit, setClip: setClip, snapshot: snapshot, resize: resize, connectHID: connectHID, setSens: setSens, smStatus: smStatus, getSens: function(){ return SM.sens; }, setInv: function(v){ SM.inv = !!v; try { localStorage.setItem('asme-sm-inv', v ? '1' : '0'); } catch (e) {} }, getInv: function(){ return !!SM.inv; } };
+  return { meshes: meshes, init: init, update: update, fit: fit, setClip: setClip, snapshot: snapshot, resize: resize, connectHID: connectHID, setSens: setSens, smStatus: smStatus, getSens: function(){ return SM.sens; }, setInv: function(v){ SM.inv = !!v; try { localStorage.setItem('asme-sm-inv', v ? '1' : '0'); } catch (e) {} }, getInv: function(){ return !!SM.inv; } };
 })();
