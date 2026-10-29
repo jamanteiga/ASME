@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cálculo de recipientes — ASME VIII-1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="asme.css">
+<link rel="stylesheet" href="asme.css?v=2026.10.29b">
 <style>
   :root{ --ok:#1a8a55; --ko:#c93a39; --wn:#b5590b; --liq:#2a78d6; }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ok:#3fbf86; --ko:#e66767; --wn:#f0a959; --liq:#5aa0ee; } }
@@ -70,7 +71,7 @@
   #sketch .liqt{ fill:var(--liq); }
   #v3d{ width:100%; height:600px; border-radius:8px; background:linear-gradient(#f4f6f9,#e3e8ee); overflow:hidden; cursor:grab; }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #v3d{ background:linear-gradient(#1d232b,#11151a); } }
-  .vbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; } .vbar .units button{ font-size:12px; } .vchk{ font-size:12px; margin-left:6px; } .smsel{ font-size:11.5px; padding:4px; } .smst{ font-size:11px; color:var(--ink-mute); } .xm{ font-size:11px; color:var(--ink-2); display:flex; gap:5px; align-items:center; margin-top:4px; }
+  .vbar{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px; } #vtools{ display:inline-flex; gap:5px; align-items:center; flex-wrap:wrap; } .vbar select.smsel{ width:auto; max-width:230px; } .vbar .vchk{ display:inline-flex; gap:4px; align-items:center; white-space:nowrap; } .vbar .units button{ font-size:12px; } .vchk{ font-size:12px; margin-left:6px; } .smsel{ font-size:11.5px; padding:4px; } .smst{ font-size:11px; color:var(--ink-mute); max-width:380px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block; } .xm{ font-size:11px; color:var(--ink-2); display:flex; gap:5px; align-items:center; margin-top:4px; }
   #sketch .seam{ stroke:#b86b2c; stroke-width:2; } #sketch .seam.back{ stroke-dasharray:5 4; stroke-width:1.2; } #sketch .seamt{ fill:#b86b2c; }
   #sketch .fln{ fill:var(--card-2); stroke:var(--ink-2); stroke-width:1.2; }
   #sketch .sup{ fill:var(--card-2); stroke:var(--ink-mute); stroke-width:1.1; }
@@ -95,6 +96,38 @@
   .pill.ok{ background:rgba(26,138,85,.14); color:var(--ok); } .pill.ko{ background:rgba(201,58,57,.14); color:var(--ko); }
   .bad{ color:var(--ko); }
   #memoria{ display:none; }
+  /* ---------- página de trabajo a pantalla completa, sin desplazamiento general ---------- */
+  @media (min-width:1101px){
+    body.calcpage{ padding:0; height:100vh; overflow:hidden; }
+    body.calcpage .wrap.wide{ max-width:none; height:100vh; padding:8px 10px; gap:8px; }
+    body.calcpage header{ padding:6px 12px; border-radius:9px; flex:0 0 auto; }
+    body.calcpage header .brand{ font-size:.95rem; }
+    body.calcpage nav{ gap:5px; } body.calcpage nav button{ font-size:.8rem; padding:4px 9px; }
+    body.calcpage .app{ flex:1 1 auto; min-height:0; grid-template-columns:240px minmax(340px,.9fr) minmax(460px,1.7fr); gap:8px; align-items:stretch; }
+    body.calcpage .app > aside, body.calcpage .app > section{ min-height:0; height:100%; }
+    body.calcpage #tree{ overflow:auto; }
+    body.calcpage .app > section{ display:flex; flex-direction:column; gap:8px; }
+    body.calcpage .app > section > .panel{ margin-top:0; }
+    body.calcpage #editor{ flex:1 1 52%; min-height:120px; overflow:auto; }
+    body.calcpage #result{ flex:1 1 48%; min-height:120px; overflow:auto; }
+    body.calcpage .app > section:last-child > .panel:first-child{ flex:0 0 auto; padding:7px; max-height:30%; overflow:auto; }
+    body.calcpage #viewer{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:8px; }
+    body.calcpage #v3d{ flex:1 1 auto; height:auto; min-height:200px; position:relative; }
+    body.calcpage #v3d canvas{ position:absolute; inset:0; }
+    body.calcpage #sketch{ flex:1 1 auto; min-height:0; max-height:none; height:100%; }
+    body.calcpage .vhelp{ display:none; }
+  }
+  .tiles{ grid-template-columns:repeat(auto-fill, minmax(118px,1fr)); gap:5px; }
+  .tile{ padding:4px 7px; border-radius:6px; }
+  .tl{ font-size:9.5px; } .tv{ font-size:13px; margin-top:0; } .ts{ font-size:9.5px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #warns .checks{ margin:4px 0 0; } #warns .checks li{ font-size:11px; }
+  .tw{ overflow-x:auto; } table.steps.wide{ min-width:860px; } table.steps.wide td{ white-space:normal; }
+  @media print{ table.steps.wide{ min-width:0; } }
+  .plano svg{ border:1px solid var(--border); border-radius:6px; }
+  #result table.steps td{ word-break:break-word; }
+  .m-cover .m-t{ font-size:22px; font-weight:700; } .m-cover .m-s{ font-size:13px; margin:4px 0 14px; }
+  .m-cover table{ width:100%; border-collapse:collapse; margin:8px 0; } .m-cover th, .m-cover td{ border:1px solid #999; padding:4px 6px; text-align:left; font-size:11px; }
+  .m-cover th{ background:#eef2f7; width:16%; } .m-st{ font-weight:700; margin-top:12px; } .m-sign tr.sg td{ height:46px; } .m-toc{ font-size:11.5px; } .m-toc ol{ font-size:10.5px; }
   @media print{
     @page{ size:A4; margin:14mm 12mm; }
     body{ background:#fff; color:#000; padding:0; }
@@ -103,6 +136,7 @@
     #memoria h2{ font-size:14px; margin:16px 0 6px; border-bottom:1.5px solid #000; padding-bottom:3px; }
     #memoria h3{ font-size:12px; margin:12px 0 4px; break-after:avoid; }
     #memoria table{ break-inside:auto; } #memoria tr{ break-inside:avoid; }
+    #memoria .m-cover{ break-after:page; } #memoria h2{ break-before:auto; }
     #memoria .m-head{ display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:6px; }
     #memoria .m-t{ font-weight:700; font-size:15px; } #memoria .m-s{ font-size:12px; margin-top:3px; } #memoria .m-r{ text-align:right; font-size:10px; }
     #memoria .m-sk{ text-align:center; margin:8px 0; display:flex; gap:8px; justify-content:center; align-items:center; } #memoria img.m3d{ max-height:330px; max-width:60%; } #memoria svg.msk .fln{ fill:#fff; stroke:#333; } #memoria svg.msk{ max-height:330px; width:auto; max-width:100%; }
@@ -113,15 +147,17 @@
   }
 </style>
 </head>
-<body>
+<body class="calcpage">
 <div class="wrap wide">
   <header>
-    <div class="brand">ASME VIII-1 · Cálculo de recipientes</div>
+    <div class="brand">ASME VIII-1 · Cálculo de recipientes <span style="font-size:10px;color:var(--ink-mute);font-weight:400">v2026.10.29b</span></div>
     <nav>
       <button onclick="APP.nuevo()">Nuevo</button>
       <button onclick="APP.abrir()">Abrir</button>
       <button onclick="APP.guardar()">Guardar</button>
       <button onclick="APP.memoria()">Memoria (imprimir / PDF)</button>
+      <button onclick="APP.docx()">Memoria Word</button>
+      <button onclick="APP.nube()">Nube</button>
       <span class="units" role="group" aria-label="Sistema de unidades">
         <button id="u-si" onclick="APP.setUnits('si')">SI · mm / MPa</button>
         <button id="u-us" onclick="APP.setUnits('us')">US · in / psi</button>
@@ -142,7 +178,7 @@
         <div class="tiles" id="summary"></div>
         <div id="warns"></div>
       </div>
-      <div class="panel">
+      <div class="panel" id="viewer">
         <div class="vbar">
           <span class="units" role="group" aria-label="Vista"><button id="bt3d" onclick="APP.view('v3d')">3D</button><button id="bt2d" onclick="APP.view('2d')">Alzado 2D</button></span>
           <span id="vtools"><button class="btn sm" onclick="APP.fit()">Iso</button><button class="btn sm" onclick="APP.fit('front')">Frente</button><button class="btn sm" onclick="APP.fit('side')">Lateral</button><button class="btn sm" onclick="APP.fit('top')">Planta</button>
@@ -163,24 +199,25 @@
         </div>
         <div id="v3d" aria-label="Visor 3D del recipiente"></div>
         <svg id="sketch" viewBox="0 0 380 560" role="img" aria-label="Esquema del recipiente"></svg>
-        <div class="f-note">3D: arrastrar para girar, rueda para zoom, botón derecho para desplazar; clic en una pieza para seleccionarla. Ratón 3D (SpaceMouse): empujar/tirar acerca y aleja, desplazar mueve la vista, inclinar/girar rota; botón 1 = Iso, botón 2 = Frente. Exportar CAD: Inventor → Herramientas › iLogic › Explorador de iLogic › Reglas externas › Añadir regla externa y Ejecutar; SolidWorks → Herramientas › Macro › Nueva, en el editor VBA Archivo › Importar archivo (.bas) y ejecutar Main. Se crean en Documentos\\TAG.</div>
+        <div class="f-note vhelp">3D: arrastrar para girar, rueda para zoom, botón derecho para desplazar; clic en una pieza para seleccionarla. Ratón 3D (SpaceMouse): empujar/tirar acerca y aleja, desplazar mueve la vista, inclinar/girar rota; botón 1 = Iso, botón 2 = Frente. Exportar CAD: Inventor → Herramientas › iLogic › Explorador de iLogic › Reglas externas › Añadir regla externa y Ejecutar; SolidWorks → Herramientas › Macro › Nueva, en el editor VBA Archivo › Importar archivo (.bas) y ejecutar Main. Se crean en Documentos\\TAG.</div>
       </div>
     </section>
   </div>
 
-  <footer>
-    ASME BPVC VIII División 1 (2017) · VIII-2 4.3.10 y 4.15.3 · tensiones admisibles ASME II-D (Metric) 2015 · cartas II-D Subparte 3 · bridas ASME B16.5-2013 · juntas ASME B16.20-2012 · EN 1991-1-4 / CTE DB SE-AE · EN 1998-1 · ASCE 7-16.
-    Motor validado con ejemplos del ASME PTB-4 (E3.1, E3.2, E4.3.1, E4.3.5, E4.3.6, E4.3.7, E4.4.1, E4.4.7, E4.5.1, E4.5.5, E4.15.1, E4.15.2, E4.16.1). Verificar siempre contra la edición y adenda vigentes.
-  </footer>
+
   <div id="memoria"></div>
 </div>
-<script src="materiales.js"></script>
-<script src="normas.js"></script>
-<script src="motor.js"></script>
+<script src="materiales.js?v=2026.10.29b"></script>
+<script src="normas.js?v=2026.10.29b"></script>
+<script src="motor.js?v=2026.10.29b"></script>
 <script src="lib/three.min.js"></script>
 <script src="lib/OrbitControls.js"></script>
-<script src="visor3d.js"></script>
-<script src="export3d.js"></script>
-<script src="calculo.js"></script>
+<script src="visor3d.js?v=2026.10.29b"></script>
+<script src="export3d.js?v=2026.10.29b"></script>
+<script src="plano.js?v=2026.10.29b"></script>
+<script src="docx.js?v=2026.10.29b"></script>
+<script src="nube.js?v=2026.10.29b"></script>
+<script src="calc-ext.js?v=2026.10.29b"></script>
+<script src="calculo.js?v=2026.10.29b"></script>
 </body>
 </html>

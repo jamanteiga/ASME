@@ -9,13 +9,17 @@
     if (!p) return p;
     if (!p.design.mfam) p.design.mfam = 'ALL'; if (!p.design.wmin) p.design.wmin = 50;
     p.loads = deep(p.loads || {}, VLOADS.defaults());
+    if (typeof FAB !== 'undefined'){ var fd = FAB.defaults(p); Object.keys(fd).forEach(function(k){ p[k] = deep(p[k] || {}, fd[k]); }); }
+    if (typeof FABDOC !== 'undefined'){ p.fab = deep(p.fab || {}, FABDOC.defaults(p)); if (!p.fab.revs.length) p.fab.revs = FABDOC.defaults(p).revs; }
     var wantH = p.design.orient === 'H', isH = p.support && (p.support.type === 'saddle' || p.support.A != null);
+    if (p.support && p.support.lstd === undefined && p.support.lmat) p.support.lstd = 'ASME'; if (p.support && p.support.sstd === undefined && p.support.smat) p.support.sstd = 'ASME';
     if (!p.support || wantH !== !!isH) p.support = VLOADS.defSupport(p.design.orient); else deep(p.support, VLOADS.defSupport(p.design.orient));
     var used = {}; p.nozzles.forEach(function(n){ if (!/^N\d+$/.test(n.mark)) used[n.mark] = 1; }); var li = 0; function nl(){ var t; do { var k = li++, m = ''; k++; while (k > 0){ var q = (k - 1) % 26; m = String.fromCharCode(65 + q) + m; k = Math.floor((k - 1) / 26); } t = m; } while (used[t]); used[t] = 1; return t; }
     p.nozzles.forEach(function(n){ if (/^N\d+$/.test(n.mark) && n.mark === n.id) n.mark = nl();
-      if (!n.kind) n.kind = 'noz'; if (!n.wtype) n.wtype = 'setin'; if (!n.hor) n.hor = 'axial'; if (!n.ld) n.ld = { F: 0, V: 0, M: 0, Mt: 0, kS: 1 }; if (!n.elb) n.elb = [{ ang: 0, rt: 'LR', phi: 0, L: 200 }, { ang: 0, rt: 'LR', phi: 0, L: 200 }]; });
+      if (!n.kind) n.kind = 'noz'; if (!n.wtype) n.wtype = 'setin'; if (!n.hor) n.hor = 'axial'; if (!n.ld) n.ld = { F: 0, V: 0, M: 0, Mt: 0, kS: 1 }; if (n.ld.VC == null && n.ld.VL == null){ n.ld.VC = 0; n.ld.VL = +n.ld.V || 0; n.ld.MC = 0; n.ld.ML = +n.ld.M || 0; } if (!n.elb) n.elb = [{ ang: 0, rt: 'LR', phi: 0, L: 200 }, { ang: 0, rt: 'LR', phi: 0, L: 200 }]; });
     return p;
   }
+  var EXT = null, optRes = null;
   var prj = ensure(load()) || M.newProject('V');
   var sel = { kind: 'design', id: null };
   var res = null;
@@ -40,6 +44,7 @@
     i4:   { si: ['cm⁴', 1e-4], us: ['in⁴', 1 / 416231.4] },
     fl:   { si: ['N/mm', 1], us: ['lb/in', 5.710147] },
     a2:   { si: ['m²', 1], us: ['ft²', 10.76391] },
+    mpl:  { si: ['N·mm/mm', 1], us: ['lbf·in/in', 0.2248089] },
     t:    { si: ['°C'], us: ['°F'] }
   };
   function uLbl(u){ return UN[u] ? UN[u][units][0] : ''; }
@@ -195,6 +200,13 @@
       { t: 'h', l: 'Disposición' },
       { t: 'sel', k: 'design.orient', l: 'Orientación', o: [['V', 'Vertical (eje Z, origen en el centro inferior de la primera virola)'], ['H', 'Horizontal (eje X, origen en el centro del extremo de la primera virola)']], re: 1 },
       H ? { t: 'sel', k: 'design.hdir', l: 'Sentido de la primera virola', o: [['R', 'Hacia la derecha (+X)'], ['L', 'Hacia la izquierda (−X)']], re: 1 } : null,
+      { t: 'sel', k: 'support.type', l: 'Soporte', o: H ? [['saddle', 'Dos cunas'], ['none', 'Sin soporte']] : [['legs', 'Patas'], ['lugs', 'Ménsulas (apoyo en estructura)'], ['skirt', 'Faldón cilíndrico'], ['none', 'Sin soporte']], re: 1 },
+      !H && prj.support && prj.support.type === 'legs' ? { t: 'sel', k: 'support.nl', l: 'Número de patas', o: [['auto', 'Automático: 3 hasta Ø ' + (prj.support.nlD || 1000) + ' mm, 4 por encima (ahora ' + VLOADS.legsN(prj, prj.support) + ')'], ['3', '3 patas (a 120°)'], ['4', '4 patas (a 90°)'], ['6', '6 patas'], ['8', '8 patas']], re: 1 } : null,
+      !H && prj.support && prj.support.type === 'legs' && prj.support.nl === 'auto' ? { t: 'num', k: 'support.nlD', l: 'D.E. límite para 3 patas', u: 'len' } : null,
+      !H && prj.support && prj.support.type === 'lugs' ? { t: 'num', k: 'support.nlug', l: 'Número de ménsulas' } : null,
+      !H && prj.support && prj.support.type === 'lugs' ? { t: 'num', k: 'support.zLug', l: 'Cota de apoyo de las ménsulas (vacío = mitad de la virola)', u: 'len', ph: 'auto' } : null,
+      !H && prj.support && prj.support.type === 'legs' ? { t: 'num', k: 'support.th0', l: 'Orientación de la primera pata (°; 0 = 3 h)', ph: '45' } : null,
+      { t: 'info', html: 'Dimensiones y comprobación del soporte en «Cargas exteriores y soportes».' },
       { t: 'h', l: 'Materiales y soldaduras' },
       { t: 'sel', k: 'design.mfam', l: 'Familia de material del equipo', o: FAMS, re: 1 },
       { t: 'num', k: 'design.wmin', l: 'Distancia mínima entre soldaduras', u: 'len' },
@@ -266,22 +278,39 @@
       { t: 'num', k: 'loads.fe', l: 'Factor de sismo', ph: String(fam.fe) }, { t: 'num', k: 'loads.fd', l: 'Factor de peso favorable (vuelco)', ph: String(fam.fd) },
       { t: 'num', k: 'loads.kS', l: 'Multiplicador de S con W/E (UG-23(d): hasta 1,2)', ph: String(fam.kS) }]);
     if (!H){
-      f = f.concat([{ t: 'h', l: 'Soporte' }, { t: 'sel', k: 'support.type', l: 'Tipo', o: [['skirt', 'Faldón cilíndrico'], ['legs', 'Patas'], ['lugs', 'Orejetas (apoyo en estructura)'], ['none', 'Sin soporte (empotrado en el fondo inferior)']], re: 1 }]);
+      f = f.concat([{ t: 'h', l: 'Soporte' }, { t: 'sel', k: 'support.type', l: 'Tipo', o: [['legs', 'Patas'], ['lugs', 'Ménsulas (apoyo en estructura)'], ['skirt', 'Faldón cilíndrico'], ['none', 'Sin soporte (empotrado en el fondo inferior)']], re: 1 }]);
       if (sp.type === 'legs') f = f.concat([
-        { t: 'num', k: 'support.nl', l: 'Número de patas' }, { t: 'num', k: 'support.Hl', l: 'Longitud de las patas (base → línea de tangencia)', u: 'len' },
+        { t: 'sel', k: 'support.nl', l: 'Número de patas', o: [['auto', 'Automático según D.E. (ahora ' + VLOADS.legsN(prj, sp) + ')'], ['3', '3'], ['4', '4'], ['6', '6'], ['8', '8']], re: 1 }, { t: 'num', k: 'support.Hl', l: 'Longitud de las patas (base → línea de tangencia)', u: 'len' },
         { t: 'num', k: 'support.Dl', l: 'Diámetro del círculo de patas (vacío = D.E. + ancho de pata)', u: 'len', ph: 'auto' },
-        { t: 'sel', k: 'support.lsec', l: 'Sección', o: [['pipe', 'Tubo'], ['user', 'Perfil definido por el usuario']], re: 1 },
-        sp.lsec !== 'user' ? { t: 'num', k: 'support.lod', l: 'D.E. del tubo', u: 'len' } : null, sp.lsec !== 'user' ? { t: 'num', k: 'support.lt', l: 'Espesor del tubo', u: 'len' } : null,
+        { t: 'sel', k: 'support.lsec', l: 'Sección', o: [['pipe', 'Tubo'], ['HEB', 'Perfil HEB'], ['HEA', 'Perfil HEA'], ['user', 'Perfil definido por el usuario']], re: 1 },
+        /^HE[AB]$/.test(sp.lsec) ? { t: 'sel', k: 'support.lprof', l: 'Tamaño del perfil', o: Object.keys(VLOADS.PROF[sp.lsec]).map(function(k){ return [k, sp.lsec + ' ' + k]; }) } : null,
+        sp.lsec === 'pipe' ? { t: 'num', k: 'support.lod', l: 'D.E. del tubo', u: 'len' } : null, sp.lsec === 'pipe' ? { t: 'num', k: 'support.lt', l: 'Espesor del tubo', u: 'len' } : null,
         sp.lsec === 'user' ? { t: 'num', k: 'support.lA', l: 'Área A', u: 'a' } : null, sp.lsec === 'user' ? { t: 'num', k: 'support.lI', l: 'Inercia mínima I (mm⁴)' } : null,
         sp.lsec === 'user' ? { t: 'num', k: 'support.lZ', l: 'Módulo plástico Z (mm³)' } : null, sp.lsec === 'user' ? { t: 'num', k: 'support.lb', l: 'Ancho expuesto al viento', u: 'len' } : null,
-        { t: 'num', k: 'support.K', l: 'Factor de longitud efectiva K (2,0 voladizo)' }, { t: 'mat', k: 'support.lmat', l: 'Material de las patas (tubo)', filter: isPipe },
+        { t: 'num', k: 'support.K', l: 'Factor de longitud efectiva K (2,0 voladizo)' },
+        { t: 'sel', k: 'support.lstd', l: 'Material de las patas', o: [['EN', 'Acero europeo EN 10025 / EN 10210'], ['ASME', 'Material ASME (II-D)']], re: 1 },
+        sp.lstd === 'EN' ? { t: 'sel', k: 'support.lgrade', l: 'Calidad', o: Object.keys(VLOADS.EN_GR).map(function(k){ return [k, k]; }) } : { t: 'mat', k: 'support.lmat', l: 'Material ASME de las patas (tubo)', filter: isPipe },
+        { t: 'h', l: 'Chapa intermedia pata-virola (mismo material que la virola)' },
+        { t: 'num', k: 'support.lpt', l: 'Espesor (vacío = espesor de la virola, ≥ 6 mm)', u: 'len', ph: 'auto' }, { t: 'num', k: 'support.lpw', l: 'Ancho (vacío = ancho de la pata + 100)', u: 'len', ph: 'auto' },
+        { t: 'num', k: 'support.lpl', l: 'Longitud (vacío = 400)', u: 'len', ph: '400' },
+        { t: 'info', html: 'La pata se suelda a la chapa intermedia y esta a la virola; la chapa toma el material de la virola (' + esc((V.mat((prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0]).mat, 40) || {}).name || '') + ').' },
+        { t: 'h', l: 'Placa base y anclajes' },
         { t: 'num', k: 'support.nbl', l: 'Pernos de anclaje por pata' }, { t: 'sel', k: 'support.lbsize', l: 'Tamaño del perno', o: boltOpts(), re: 1 }, { t: 'num', k: 'support.lAr', l: 'Área de raíz por perno', u: 'a' },
         { t: 'mat', k: 'support.amat', l: 'Material de los pernos', filter: isBolt }].filter(Boolean));
       if (sp.type === 'lugs') f = f.concat([
-        { t: 'num', k: 'support.zLug', l: 'Cota Z del apoyo de las orejetas (vacío = mitad de altura)', u: 'len', ph: 'auto' },
-        { t: 'num', k: 'support.Hg', l: 'Altura del apoyo sobre el terreno', u: 'len' }, { t: 'num', k: 'support.nlug', l: 'Número de orejetas' },
+        { t: 'num', k: 'support.zLug', l: 'Cota Z del apoyo de las ménsulas (vacío = mitad de altura)', u: 'len', ph: 'auto' },
+        { t: 'num', k: 'support.Hg', l: 'Altura del apoyo sobre el terreno', u: 'len' }, { t: 'num', k: 'support.nlug', l: 'Número de ménsulas' },
         { t: 'num', k: 'support.Dlug', l: 'Diámetro del círculo de apoyo (vacío = D.E. + 200)', u: 'len', ph: 'auto' },
-        { t: 'num', k: 'support.nbg', l: 'Pernos por orejeta' }, { t: 'sel', k: 'support.gbsize', l: 'Tamaño del perno', o: boltOpts(), re: 1 }, { t: 'num', k: 'support.gAr', l: 'Área de raíz por perno', u: 'a' },
+        { t: 'num', k: 'support.th0g', l: 'Orientación de la primera ménsula (°; 0 = 3 h)', ph: '45' },
+        { t: 'h', l: 'Geometría de la ménsula' },
+        { t: 'num', k: 'support.mH', l: 'Altura de las cartelas', u: 'len' }, { t: 'num', k: 'support.mL', l: 'Vuelo radial', u: 'len' },
+        { t: 'num', k: 'support.mS', l: 'Separación entre cartelas', u: 'len' }, { t: 'num', k: 'support.mt', l: 'Espesor de las cartelas', u: 'len' },
+        { t: 'num', k: 'support.mb', l: 'Espesor de las placas de apoyo y superior', u: 'len' },
+        { t: 'num', k: 'support.mpt', l: 'Espesor de la chapa intermedia (vacío = virola, ≥ 6 mm; material de la virola)', u: 'len', ph: 'auto' },
+        { t: 'sel', k: 'support.gstd', l: 'Material de la ménsula', o: [['EN', 'Acero europeo EN 10025'], ['ASME', 'Material ASME (II-D)']], re: 1 },
+        sp.gstd === 'EN' ? { t: 'sel', k: 'support.ggrade', l: 'Calidad', o: Object.keys(VLOADS.EN_GR).map(function(k){ return [k, k]; }) } : { t: 'mat', k: 'support.gmat', l: 'Material ASME de la ménsula', filter: notBolt },
+        { t: 'h', l: 'Fijación' },
+        { t: 'num', k: 'support.nbg', l: 'Pernos por ménsula' }, { t: 'sel', k: 'support.gbsize', l: 'Tamaño del perno', o: boltOpts(), re: 1 }, { t: 'num', k: 'support.gAr', l: 'Área de raíz por perno', u: 'a' },
         { t: 'mat', k: 'support.amat', l: 'Material de los pernos', filter: isBolt }]);
       if (sp.type === 'skirt') f = f.concat([
         { t: 'num', k: 'support.H', l: 'Altura del faldón (base → línea de tangencia)', u: 'len' }, { t: 'num', k: 'support.t', l: 'Espesor del faldón', u: 'len' },
@@ -300,21 +329,32 @@
       if (sp.type === 'saddle') f = f.concat([
         { t: 'num', k: 'support.A', l: 'a · distancia línea de tangencia → eje de la cuna', u: 'len' }, { t: 'num', k: 'support.theta', l: 'θ · ángulo de contacto (°)' },
         { t: 'num', k: 'support.b', l: 'b · ancho de la cuna', u: 'len' }, { t: 'num', k: 'support.h', l: 'Altura del eje del recipiente sobre la base', u: 'len' },
-        { t: 'chk', k: 'support.welded', l: 'Recipiente soldado a la cuna (k = 0,1)' }, { t: 'chk', k: 'support.wear', l: 'Con chapa de desgaste', re: 1 },
-        sp.wear ? { t: 'num', k: 'support.twp', l: 'Espesor de la chapa de desgaste tr', u: 'len' } : null,
-        sp.wear ? { t: 'num', k: 'support.bwp', l: 'Ancho de la chapa b1 (vacío = b + 1,56·√(Rm·t))', u: 'len', ph: 'auto' } : null,
-        sp.wear ? { t: 'num', k: 'support.thwp', l: 'Ángulo de la chapa θ1 (°, vacío = θ + 12)', ph: 'auto' } : null,
-        sp.wear ? { t: 'mat', k: 'support.wmat', l: 'Material de la chapa de desgaste', filter: notBolt } : null,
+        { t: 'chk', k: 'support.welded', l: 'Recipiente soldado a la cuna (k = 0,1)' },
+        { t: 'h', l: 'Chapa de desgaste (pad intermedio, mismo material que la virola)' },
+        { t: 'num', k: 'support.twp', l: 'Espesor de la chapa de desgaste tr (vacío = espesor de la virola)', u: 'len' },
+        { t: 'num', k: 'support.bwp', l: 'Ancho de la chapa b1 (vacío = b + 1,56·√(Rm·t))', u: 'len', ph: 'auto' },
+        { t: 'num', k: 'support.thwp', l: 'Ángulo de la chapa θ1 (°, vacío = θ + 12)', ph: 'auto' },
+        { t: 'info', html: 'La cuna se suelda a la chapa de desgaste y esta a la virola; material de la chapa = material de la virola (' + esc((V.mat((prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0]).mat, 40) || {}).name || '') + ').' },
         { t: 'h', l: 'Estructura de la cuna' },
         { t: 'num', k: 'support.tw', l: 'Espesor del alma', u: 'len' }, { t: 'num', k: 'support.tf', l: 'Espesor de la placa superior (ancho = b)', u: 'len' },
         { t: 'num', k: 'support.Bb', l: 'Ancho de la placa base (axial)', u: 'len' }, { t: 'num', k: 'support.Lbp', l: 'Longitud de la placa base (vacío = cuerda del arco + 100)', u: 'len', ph: 'auto' },
-        { t: 'num', k: 'support.tbp', l: 'Espesor de la placa base', u: 'len' }, { t: 'mat', k: 'support.smat', l: 'Material de la cuna', filter: notBolt },
+        { t: 'num', k: 'support.tbp', l: 'Espesor de la placa base', u: 'len' },
+        { t: 'sel', k: 'support.sstd', l: 'Material de la cuna', o: [['EN', 'Acero europeo EN 10025'], ['ASME', 'Material ASME (II-D)']], re: 1 },
+        sp.sstd === 'EN' ? { t: 'sel', k: 'support.sgrade', l: 'Calidad', o: Object.keys(VLOADS.EN_GR).map(function(k){ return [k, k]; }) } : { t: 'mat', k: 'support.smat', l: 'Material ASME de la cuna', filter: notBolt },
         { t: 'num', k: 'support.fc', l: 'Presión admisible sobre el hormigón', u: 'p' },
         { t: 'num', k: 'support.nbs', l: 'Pernos de anclaje por cuna' }, { t: 'num', k: 'support.eb', l: 'Distancia transversal entre filas de pernos (vacío = 0,8·Lb)', u: 'len', ph: 'auto' },
         { t: 'sel', k: 'support.bsize', l: 'Tamaño del perno', o: boltOpts(), re: 1 }, { t: 'num', k: 'support.Ar', l: 'Área de raíz por perno', u: 'a' },
         { t: 'mat', k: 'support.amat', l: 'Material de los pernos', filter: isBolt }].filter(Boolean));
     }
     return f;
+  }
+  // virolas parciales (según los formatos de chapa) y ángulos de sus longitudinales
+  function seamInfo(c){
+    var cs = M.courses(prj, c); c.seamsTxt = Array.isArray(c.seams) ? c.seams.join('; ') : '';
+    var txt = (cs.nC > 1 ? cs.nC + ' virolas parciales de ' + fmt(cs.list[0].z1 - cs.list[0].z0, 'len') + ' (ancho útil de chapa)' : 'Una sola virola') + (cs.nL > 1 ? ', ' + cs.nL + ' longitudinales por vuelta' : '') +
+      ' · longitudinales a ' + cs.list.map(function(x){ return x.ang.map(function(a){ return Math.round(a) + '°'; }).join(' / '); }).join(' · ') + '. Distancia mínima al borde del tubo de las conexiones: ' + fmt(+prj.design.wmin || 50, 'len') + '.';
+    return cs.nC > 1 ? [{ t: 'txt', k: 'seamsTxt', l: 'Ángulos por virola parcial separados por «;» (vacío = alternados 180°)' }, { t: 'info', html: esc(txt) + ' <button type="button" class="btn sm" onclick="APP.autoSeams()">Colocar longitudinales automáticamente</button>' }]
+      : [{ t: 'info', html: esc(txt) + ' <button type="button" class="btn sm" onclick="APP.autoSeams()">Colocar longitudinales automáticamente</button>' }];
   }
   function compFields(c){
     var base = [{ t: 'txt', k: 'name', l: 'Denominación' }, { t: 'mat', k: 'mat', l: c.type === 'bflange' ? 'Material (forja o chapa)' : 'Material (chapa)', filter: c.type === 'bflange' ? isForgePlate : isPlate }];
@@ -324,7 +364,7 @@
     if (c.type === 'shell') f = [{ t: 'sel', k: 'basis', l: 'Diámetro dado como', o: [['id', 'Interior'], ['od', 'Exterior']], re: 1 },
       { t: 'num', k: 'D', l: c.basis === 'od' ? 'Diámetro exterior' : 'Diámetro interior', u: 'len' }, { t: 'num', k: 'L', l: 'Longitud', u: 'len' },
       { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }].concat(tail, [{ t: 'num', k: 'Ec', l: 'E junta circunferencial (vacío = auto)', ph: 'auto' }, { t: 'num', k: 'Lext', l: 'Longitud de cálculo a presión exterior (vacío = automática)', u: 'len', ph: 'auto' },
-        { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' },
+        { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' }, seamInfo(c),
         { t: 'h', l: 'Anillos rigidizadores (UG-29)' }, { t: 'num', k: 'rn', l: 'Número de anillos intermedios (equidistantes)', re: 1 },
         (+c.rn > 0) ? { t: 'num', k: 'rh', l: 'Altura radial de la pletina h', u: 'len' } : null, (+c.rn > 0) ? { t: 'num', k: 'rb', l: 'Espesor (ancho axial) de la pletina b', u: 'len' } : null,
         (+c.rn > 0) ? { t: 'sel', k: 'rside', l: 'Posición', o: [['ext', 'Exterior'], ['int', 'Interior']] } : null,
@@ -338,7 +378,7 @@
       { t: 'num', k: 'tn', l: 'Espesor mínimo tras conformado', u: 'len' }, { t: 'chk', k: 'seamless', l: 'Fondo sin costura' }].concat(tail);
     else if (c.type === 'cone') f = [{ t: 'num', k: 'D', l: 'Diámetro interior extremo mayor', u: 'len' }, { t: 'num', k: 'Ds', l: 'Diámetro interior extremo menor', u: 'len' },
       { t: 'num', k: 'alpha', l: 'Semiángulo α (°)' }, { t: 'sel', k: 'largeAt', l: 'Extremo mayor hacia', o: [['base', 'la virola de origen'], ['away', 'el exterior']] },
-      { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }, { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' }].concat(tail, [
+      { t: 'num', k: 'tn', l: 'Espesor nominal', u: 'len' }, { t: 'num', k: 'seam', l: 'Soldadura longitudinal: ángulo en planta (°; 0 = 3 h, 90 = 12 h, antihorario)' }, seamInfo(c)].concat(tail, [
         { t: 'h', l: 'Anillos en las uniones (Ap. 1-5 / 1-8), pletina h × b; 0 = sin anillo' },
         { t: 'num', k: 'ringLh', l: 'Extremo mayor: altura h', u: 'len' }, { t: 'num', k: 'ringLb', l: 'Extremo mayor: espesor b', u: 'len' },
         { t: 'num', k: 'ringSh', l: 'Extremo menor: altura h', u: 'len' }, { t: 'num', k: 'ringSb', l: 'Extremo menor: espesor b', u: 'len' }]);
@@ -413,10 +453,12 @@
       n.pad ? { t: 'num', k: 'leg42', l: 'Cateto soldadura exterior refuerzo', u: 'len' } : null,
       { t: 'num', k: 'leg43', l: 'Cateto soldadura interior', u: 'len' },
       { t: 'h', l: 'Cargas exteriores en la boquilla (en la unión con el recipiente)' },
-      { t: 'num', k: 'ld.F', l: 'Fuerza axial F (+ tracción)', u: 'f' }, { t: 'num', k: 'ld.V', l: 'Cortante resultante V', u: 'f' },
-      { t: 'num', k: 'ld.M', l: 'Momento flector resultante M', u: 'm' }, { t: 'num', k: 'ld.Mt', l: 'Momento torsor Mt', u: 'm' },
+      { t: 'info', html: 'Ejes WRC: radial según el eje de la tubuladura; C circunferencial y L longitudinal (paralelo al eje del recipiente).' },
+      { t: 'num', k: 'ld.F', l: 'FR · fuerza radial (+ tracción, saliente)', u: 'f' }, { t: 'num', k: 'ld.Mt', l: 'MT · momento torsor', u: 'm' },
+      { t: 'num', k: 'ld.VC', l: 'VC · cortante circunferencial', u: 'f' }, { t: 'num', k: 'ld.VL', l: 'VL · cortante longitudinal', u: 'f' },
+      { t: 'num', k: 'ld.MC', l: 'MC · momento circunferencial', u: 'm' }, { t: 'num', k: 'ld.ML', l: 'ML · momento longitudinal', u: 'm' },
       { t: 'num', k: 'ld.kS', l: 'Multiplicador de S (UG-23(d): 1,2 con viento/sismo)' },
-      { t: 'info', html: 'Se comprueba el cuello (cortante UG-45 ≤ 0,7·Sn, membrana ≤ S, membrana + flexión ≤ 1,5·S). Las tensiones locales en la pared (WRC 107/537) no se incluyen.' },
+      { t: 'info', html: 'Cuello: cortante ≤ 0,7·Sn, membrana ≤ S, membrana + flexión ≤ 1,5·S con las resultantes. Tensiones locales en la pared: «Cargas locales WRC 107/537» (usa estas cargas automáticamente).' },
       { t: 'h', l: 'Soldaduras de unión (UG-41, UW-16)' },
       { t: 'sel', k: 'wtype', l: 'Tipo de unión', o: [['setin', 'Insertada (set-in), Fig. UG-41.1 (a)'], ['seton', 'Apoyada (set-on), Fig. UG-41.1 (b)']] },
       { t: 'num', k: 'tw', l: 'Penetración de la soldadura a tope en la pared (vacío = total)', u: 'len', ph: 'total' },
@@ -449,14 +491,16 @@
     var lastAdd = (!H || d.hdir === 'L') ? add('start', startLbl) : add('end', endLbl);
     $('tree').innerHTML =
       '<button type="button" class="node' + (sel.kind === 'design' ? ' on' : '') + '" onclick="APP.select(\'design\')"><span class="dot" id="st-design"></span>Proyecto y condiciones de diseño</button>' +
-      '<button type="button" class="node' + (sel.kind === 'loads' ? ' on' : '') + '" onclick="APP.select(\'loads\')"><span class="dot" id="st-loads"></span>Cargas exteriores y soportes<small>' + (prj.loads.windOn ? 'viento ' : '') + (prj.loads.seisOn ? 'sismo ' : '') + '· ' + ({ skirt: 'faldón', saddle: 'cunas', legs: 'patas', lugs: 'orejetas', none: 'sin soporte' }[(prj.support || {}).type] || '') + '</small></button>' +
+      '<button type="button" class="node' + (sel.kind === 'loads' ? ' on' : '') + '" onclick="APP.select(\'loads\')"><span class="dot" id="st-loads"></span>Cargas exteriores y soportes<small>' + (prj.loads.windOn ? 'viento ' : '') + (prj.loads.seisOn ? 'sismo ' : '') + '· ' + ({ skirt: 'faldón', saddle: 'cunas', legs: 'patas', lugs: 'ménsulas', none: 'sin soporte' }[(prj.support || {}).type] || '') + '</small></button>' +
       '<div class="tree-h">Componentes</div>' + firstAdd +
       order.map(function(c){ return '<div class="node-row"><button type="button" class="node' + (sel.kind === 'comp' && sel.id === c.id ? ' on' : '') + '" onclick="APP.select(\'comp\',\'' + c.id + '\')"><span class="dot" id="st-' + c.id + '"></span>' + esc(c.name) + '<small>' + compLabel(c) + (c.id === prj.base ? ' · origen' : '') + '</small></button>' +
         (c.id !== prj.base ? '<button type="button" class="del" title="Eliminar" onclick="APP.delComp(\'' + c.id + '\')">✕</button>' : '') + '</div>'; }).join('') +
       lastAdd +
       '<div class="tree-h">Conexiones</div>' +
       prj.nozzles.map(function(n){ return '<div class="node-row"><button type="button" class="node' + (sel.kind === 'noz' && sel.id === n.id ? ' on' : '') + '" onclick="APP.select(\'noz\',\'' + n.id + '\')"><span class="dot" id="st-' + n.id + '"></span>' + esc(n.mark) + '<small>' + (n.kind === 'cpl' ? 'Manguito ' + n.cnps + '" ' + n.ccls + ' ' + n.cend + ' · ' : '') + (n.kind === 'cpl' ? '' : (n.nps ? 'NPS ' + n.nps : fmt(n.od, 'len'))) + (n.fl.type !== 'none' ? ' · ' + n.fl.type + ' ' + n.fl.cls : '') + '</small></button><button type="button" class="del" title="Eliminar" onclick="APP.delNoz(\'' + n.id + '\')">✕</button></div>'; }).join('') +
-      '<div class="addrow"><button type="button" class="btn sm" onclick="APP.addNoz()">+ Añadir conexión</button><button type="button" class="btn sm" onclick="APP.addNoz(\'cpl\')">+ Añadir manguito</button></div>';
+      '<div class="addrow"><button type="button" class="btn sm" onclick="APP.addNoz()">+ Añadir conexión</button><button type="button" class="btn sm" onclick="APP.addNoz(\'cpl\')">+ Añadir manguito</button></div>' +
+      (EXT ? EXT.tree(sel) : '') +
+      '<div class="tree-h">Biblioteca</div><button type="button" class="node" onclick="APP.nube()"><span class="dot"></span>Proyectos en la nube<small>Supabase · usuarios y revisiones</small></button>';
   }
   function renderTreeStatus(){
     if (!res) return;
@@ -464,16 +508,19 @@
     res.nozzles.forEach(function(r){ var e = $('st-' + r.n.id); if (e) e.className = 'dot ' + (r.ok ? 'ok' : 'ko'); });
     var e = $('st-design'); if (e) e.className = 'dot ' + (res.ok ? 'ok' : 'ko');
     var e2 = $('st-loads'); if (e2) e2.className = 'dot ' + (res.loads && res.loads.ok !== false ? 'ok' : 'ko');
+    if (EXT) EXT.treeStatus();
   }
   function currentObj(){
-    if (sel.kind === 'design' || sel.kind === 'loads') return prj;
+    if (sel.kind === 'design' || sel.kind === 'loads' || (EXT && EXT.isKind(sel.kind))) return prj;
     if (sel.kind === 'comp') return prj.comps.filter(function(c){ return c.id === sel.id; })[0];
     return prj.nozzles.filter(function(n){ return n.id === sel.id; })[0];
   }
   function renderEditor(){
     var o = currentObj(); if (!o){ sel = { kind: 'design' }; o = prj; }
-    var fl = sel.kind === 'design' ? designFields() : sel.kind === 'loads' ? loadsFields() : sel.kind === 'comp' ? compFields(o) : nozFields(o);
-    var title = sel.kind === 'design' ? 'Proyecto y condiciones de diseño' : sel.kind === 'loads' ? 'Cargas exteriores y soportes' : sel.kind === 'comp' ? (o.name + ' · ' + compLabel(o)) : ((o.kind === 'cpl' ? 'Manguito ' : 'Conexión ') + o.mark);
+    var X = EXT && EXT.isKind(sel.kind);
+    var fl = X ? EXT.fields(sel.kind) : sel.kind === 'design' ? designFields() : sel.kind === 'loads' ? loadsFields() : sel.kind === 'comp' ? compFields(o) : nozFields(o);
+    fl = [].concat.apply([], fl.map(function(x){ return Array.isArray(x) ? x : [x]; })).filter(Boolean);
+    var title = X ? EXT.title(sel.kind) : sel.kind === 'design' ? 'Proyecto y condiciones de diseño' : sel.kind === 'loads' ? 'Cargas exteriores y soportes' : sel.kind === 'comp' ? (o.name + ' · ' + compLabel(o)) : ((o.kind === 'cpl' ? 'Manguito ' : 'Conexión ') + o.mark);
     $('editor').innerHTML = '<div class="ed-title">' + esc(title) + '</div><div class="fields">' + fl.map(function(f){ return fieldHtml(o, f); }).join('') + '</div>';
   }
   function onInput(e){
@@ -498,13 +545,15 @@
     if (k === 'nps' && PIPE_OD[v]) o.od = PIPE_OD[v];
     if (/^(cnps|ccls|cend|ctype|host|hin|wtype)$/.test(k) && o.kind === 'cpl'){ if (k === 'ccls') o.ccls = +v; M.applyCpl(o, prj.comps.filter(function(c){ return c.id === o.host; })[0]); }
     if (k === 'design.orient'){ prj.design.level = null; }
+    if (k === 'seamsTxt'){ var qs = String(v || '').split(/[;\s]+/).filter(function(x){ return x !== ''; }).map(function(x){ return +x.replace(',', '.'); }).filter(function(x){ return !isNaN(x); }); o.seams = qs.length ? qs : null; }
+    if (k === 'support.type' && v === 'legs' && !(+prj.support.nl >= 3)) prj.support.nl = 4;
     if (k === 'name' || k === 'mark') renderTree();
     if (e.type === 'change' && (el.getAttribute('data-re') || k === 'gk' || k === 'bsize' || k === 'nps' || k === 'b1620' || /size$/.test(k) || /^(cnps|ccls|cend|ctype)$/.test(k))){ renderTree(); renderEditor(); }
     recompute();
   }
 
   // ---------------- resultados ----------------
-  function tile(l, v, sub, cls){ return '<div class="tile ' + (cls || '') + '"><div class="tl">' + l + '</div><div class="tv">' + v + '</div>' + (sub ? '<div class="ts">' + sub + '</div>' : '') + '</div>'; }
+  function tile(l, v, sub, cls){ var tip = String(sub || '').replace(/<[^>]+>/g, ''); return '<div class="tile ' + (cls || '') + '" title="' + esc(l + ': ' + tip) + '"><div class="tl">' + l + '</div><div class="tv">' + v + '</div>' + (sub ? '<div class="ts">' + sub + '</div>' : '') + '</div>'; }
   function renderSummary(){
     if (!res) return;
     var d = prj.design;
@@ -623,7 +672,7 @@
       html += '<div class="f-note">σθ con la eficiencia longitudinal y σl con la circunferencial; compresión admisible = mín(S ; B) de UG-23(b). Prueba: tracción ≤ 0,9·Sy. El peso encima de las secciones del recipiente no incluye el líquido (lo soporta el fondo inferior).</div>';
       if (L.skirt) html += '<div class="st-h">Faldón, anillo base y pernos de anclaje</div>' + checksHtml(L.skirt.r.checks) + stepsHtml(L.skirt.r);
       if (L.legs) html += '<div class="st-h">Patas (AISC 360-16, ASD) y pernos de anclaje</div>' + checksHtml(L.legs.r.checks) + stepsHtml(L.legs.r);
-      if (L.lugs) html += '<div class="st-h">Orejetas</div>' + checksHtml(L.lugs.r.checks) + stepsHtml(L.lugs.r);
+      if (L.lugs) html += '<div class="st-h">Ménsulas</div>' + checksHtml(L.lugs.r.checks) + stepsHtml(L.lugs.r);
     } else if (L.zick){
       L.zick.forEach(function(z){ html += '<div class="st-h">' + z.k + ' · ' + esc(z.t) + ' — ' + (z.ok ? 'CUMPLE' : 'NO CUMPLE') + '</div>' + checksHtml(z.r.checks) + (full ? stepsHtml(z.r) : ''); });
       if (L.sstruct) html += '<div class="st-h">Estructura de la cuna: alma, placa base y pernos</div>' + checksHtml(L.sstruct.r.checks) + stepsHtml(L.sstruct.r);
@@ -648,7 +697,8 @@
   function renderResult(){
     if (!res) return;
     var box = $('result'), html;
-    if (sel.kind === 'design') html = '<div class="ed-title">Resumen del recipiente</div>' + designBlock();
+    if (EXT && EXT.isKind(sel.kind)) html = '<div class="ed-title">' + esc(EXT.title(sel.kind)) + '</div>' + EXT.result(sel.kind, true);
+    else if (sel.kind === 'design') html = '<div class="ed-title">Resumen del recipiente</div>' + designBlock();
     else if (sel.kind === 'loads') html = '<div class="ed-title">Cargas exteriores y soportes ' + (res.loads ? '<span class="pill ' + (res.loads.ok ? 'ok' : 'ko') + '">' + (res.loads.ok ? 'CUMPLE' : 'NO CUMPLE') + '</span>' : '') + '</div>' + loadsBlock(false);
     else if (sel.kind === 'comp'){ var r = res.byId[sel.id]; html = '<div class="ed-title">Resultados · ' + esc(r.c.name) + ' <span class="pill ' + (r.ok ? 'ok' : 'ko') + '">' + (r.ok ? 'CUMPLE' : 'NO CUMPLE') + '</span></div>' + compBlock(r, true); }
     else { var z = res.nozzles.filter(function(x){ return x.n.id === sel.id; })[0]; html = '<div class="ed-title">Resultados · boquilla ' + esc(z.n.mark) + ' <span class="pill ' + (z.ok ? 'ok' : 'ko') + '">' + (z.ok ? 'CUMPLE' : 'NO CUMPLE') + '</span></div>' + nozBlock(z, true); }
@@ -823,11 +873,10 @@
     if (view === 'v3d'){ VISOR3D.resize(); render3D(); }
   }
   // ---------------- memoria ----------------
-  function memoria(){
-    var d = prj.design, i = prj.info, html = '';
-    html += '<div class="m-head"><div><div class="m-t">Memoria de cálculo · ASME BPVC VIII División 1 (2017)</div><div class="m-s">' + esc(i.proyecto) + ' · ' + esc(i.equipo) + ' · TAG ' + esc(i.tag) + '</div></div>' +
-      '<div class="m-r">Cliente: ' + esc(i.cliente) + '<br>Calculado por: ' + esc(i.autor) + '<br>Rev. ' + esc(i.rev) + ' · ' + esc(i.fecha) + '</div></div>';
-    html += '<h2>1. Datos de diseño</h2>' + kv([
+  function memoria(forDocx){
+    var d = prj.design, i = prj.info, fb = prj.fab || {}, ds = fb.dossier || {}, secs = [], sn = 0;
+    function S(t, h, subs){ secs.push({ n: ++sn, t: t, h: h || '', subs: subs || [] }); }
+    var data = kv([
       ['Orientación', d.orient === 'V' ? 'Vertical (eje Z; origen en el centro inferior de la primera virola)' : 'Horizontal (eje X; origen en el centro del extremo de la primera virola, hacia ' + (d.hdir === 'L' ? '−X' : '+X') + ')'],
       ['Presión interior de diseño', fmt(d.P, 'p') + ' en la parte superior'], ['Temperatura de diseño', fmt(d.T, 't')],
       ['Presión exterior de diseño', d.Pext > 0 ? fmt(d.Pext, 'p') : 'no aplica'], ['Corrosión general', fmt(d.c, 'len')], ['MDMT requerida', fmt(d.MDMT, 't')],
@@ -837,21 +886,40 @@
       ['TTPS', d.pwht ? 'sí' : 'no']
     ]);
     var img = has3D ? (render3D(), VISOR3D.snapshot()) : null;
-    html += '<div class="m-sk">' + (img ? '<img class="m3d" src="' + img + '" alt="Vista 3D">' : '') + $('sketch').outerHTML.replace('id="sketch"', 'class="msk"').replace(/style="[^"]*"/, '') + '</div>';
-    html += '<h2>2. Resumen</h2>' + designBlock();
-    if (res.warn.length) html += '<ul class="checks">' + res.warn.map(function(w){ return '<li class="warn">' + esc(w) + '</li>'; }).join('') + '</ul>';
-    html += '<h2>3. Componentes</h2>';
-    res.comps.forEach(function(r, k){ html += '<h3>3.' + (k + 1) + ' ' + esc(r.c.name) + ' · ' + compLabel(r.c) + ' — ' + (r.ok ? 'CUMPLE' : 'NO CUMPLE') + '</h3>' + compBlock(r, true); });
-    if (res.nozzles.length){ html += '<h2>4. Boquillas</h2>'; res.nozzles.forEach(function(r, k){ html += '<h3>4.' + (k + 1) + ' ' + esc(r.n.mark) + (r.n.service ? ' · ' + esc(r.n.service) : '') + ' — ' + (r.ok ? 'CUMPLE' : 'NO CUMPLE') + '</h3>' + nozBlock(r, true); }); }
-    var hn = res.nozzles.length ? 5 : 4;
-    html += '<h2>' + hn + '. Cargas exteriores y soportes</h2>' + loadsBlock(true);
-    html += '<h2>' + (hn + 1) + '. Alcance y limitaciones</h2><ul class="lim">' +
+    if (!forDocx) data += '<div class="m-sk">' + (img ? '<img class="m3d" src="' + img + '" alt="Vista 3D">' : '') + $('sketch').outerHTML.replace('id="sketch"', 'class="msk"').replace(/style="[^"]*"/, '') + '</div>';
+    else data += '<p data-fig="1"></p>';
+    S('Datos de diseño', data);
+    S('Resumen', designBlock() + (res.warn.length ? '<ul class="checks">' + res.warn.map(function(w){ return '<li class="warn">' + esc(w) + '</li>'; }).join('') + '</ul>' : ''));
+    S('Componentes', '', res.comps.map(function(r){ return [esc(r.c.name) + ' · ' + compLabel(r.c) + ' — ' + (r.ok ? 'CUMPLE' : 'NO CUMPLE'), compBlock(r, true)]; }));
+    if (res.nozzles.length) S('Boquillas', '', res.nozzles.map(function(r){ return [esc(r.n.mark) + (r.n.service ? ' · ' + esc(r.n.service) : '') + ' — ' + (r.ok ? 'CUMPLE' : 'NO CUMPLE'), nozBlock(r, true)]; }));
+    S('Cargas exteriores y soportes', loadsBlock(true));
+    if (EXT) EXT.memoria().forEach(function(x){ S(x.t, x.h, (x.subs || []).map(function(q){ return [esc(q[0]), q[1]]; })); });
+    S('Alcance y limitaciones', '<ul class="lim">' +
       ['Presión interior (UG-27, UG-32, UG-34, Ap. 1 y 2) y exterior (UG-28, UG-33, II-D Subparte 3), anillos rigidizadores de pletina (UG-29) y uniones cono-cilindro sin rebordeo (Ap. 1-5 y 1-8, con α ≤ 30° / 60°); las uniones se tratan como líneas de soporte. La inercia combinada I′ de la unión cono-cilindro es aproximada (VIII-1 no da procedimiento).',
        'Boquillas: UG-37/UG-40, UG-45, UG-39 (tapas planas, d ≤ D/2), soldaduras UG-41 y tamaños UW-16; aberturas próximas UG-42 con área combinada simplificada.',
        'Viento: EN 1991-1-4 (+ AN / CTE) con cs·cd y ψλ (Fig. 7.36 digitalizada) o ASCE 7-16 con G = 0,85 salvo valor impuesto; sin desprendimiento de torbellinos ni ovalización. Sismo: método de fuerzas laterales (EN 1998-1 / ASCE 7-16 cap. 15), modo fundamental por Rayleigh.',
-       'Tensiones combinadas según VIII-2 4.3.10.2 con admisibles de VIII-1 (UG-23), como en PTB-4 E4.3.6 y E4.15.2. Faldón: anillo base sin cartelas. Patas: AISC 360-16 (ASD). Orejetas: solo cargas y pernos. Cunas: VIII-2 4.15.3 (Zick) sin anillos, alma según PTB-4 E4.15.1, placa base y pernos. Cargas en boquillas: solo el cuello; sin tensiones locales WRC 107/537 en la pared.',
+       'Tensiones combinadas según VIII-2 4.3.10.2 con admisibles de VIII-1 (UG-23), como en PTB-4 E4.3.6 y E4.15.2. Faldón: anillo base sin cartelas. Patas: AISC 360-16 (ASD). Ménsulas: solo cargas y pernos. Cunas: VIII-2 4.15.3 (Zick) sin anillos, alma según PTB-4 E4.15.1, placa base y pernos.',
+       'Cargas locales en la pared: suma de tensiones de WRC 107/537 con coeficientes leídos por el usuario en las curvas del boletín (no incluidas).',
+       'PED: categoría por el anexo II (cuadros 1 a 4) con PS y V; los requisitos esenciales se listan como comprobación, no sustituyen la evaluación del organismo notificado. EN 13445-3: virolas, esferas, conos (sin uniones) y fondos toriesféricos/elípticos (7.5.3/7.5.4) con Rp/T estimado salvo valores introducidos.',
+       'Camisas: Ap. 9 (camisa, virola interior a presión exterior y cierres de la Fig. 9-5); media caña: Ap. EE con K introducido de las Figs. EE-1 a EE-3. Placas tubulares: UHX-12 configuraciones a y d (validado con PTB-4 E4.18.1 y E4.18.2); sin placas fijas (UHX-13) ni juntas de expansión (Ap. 26).',
+       'Fatiga: cribado del método A de VIII-2 5.5.2.3. Izado y pescante: criterios ASD de AISC 360 / ASME BTH-1 sin tensiones locales en la pared.',
+       'Despiece: desarrollo por diámetro medio y aprovechamiento por rectángulos envolventes (MaxRects); presupuesto orientativo con precios configurables.',
        'Tensiones admisibles: ASME II-D (Metric) 2015 (valores US convertidos). Ratings: ASME B16.5-2013; juntas: ASME B16.20-2012. MDMT: Fig. UCS-66.1M digitalizada. Áreas de raíz de pernos: UNC/8UN según criterio TEMA, métricos según ISO 724.',
-       'Comprobar contra la edición y adenda vigentes del código antes de usar en fabricación.'].map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+       'Comprobar contra la edición y adenda vigentes del código antes de usar en fabricación.'].map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>');
+    // portada con cajetín, revisiones, firmas e índice
+    var revs = (fb.revs || []), last = revs[revs.length - 1] || { rev: i.rev, date: i.fecha };
+    var cover = '<div class="m-cover"><div class="m-t">Memoria de cálculo</div><div class="m-s">Recipiente a presión · ASME BPVC Sección VIII División 1 (2017)</div>' +
+      '<table class="m-cj"><tr><th>Proyecto</th><td>' + esc(i.proyecto) + '</td><th>Documento</th><td>' + esc(ds.doc || '') + '</td></tr>' +
+      '<tr><th>Equipo</th><td>' + esc(i.equipo) + '</td><th>TAG</th><td>' + esc(i.tag) + '</td></tr>' +
+      '<tr><th>Cliente</th><td>' + esc(i.cliente) + '</td><th>Pedido</th><td>' + esc(ds.client || '') + '</td></tr>' +
+      '<tr><th>Revisión</th><td>' + esc(last.rev) + '</td><th>Fecha</th><td>' + esc(last.date || i.fecha) + '</td></tr></table>' +
+      '<div class="m-st">Revisiones</div>' + (EXT ? EXT.revTable() : '') +
+      '<table class="m-sign"><tr><th>Calculado</th><th>Revisado</th><th>Aprobado</th></tr><tr><td>' + esc(i.autor) + '</td><td>' + esc(ds.chk || '') + '</td><td>' + esc(ds.app || '') + '</td></tr><tr class="sg"><td></td><td></td><td></td></tr></table>' +
+      '<div class="m-st">Índice</div><ol class="m-toc">' + secs.map(function(x){ return '<li>' + esc(x.t) + (x.subs.length ? '<ol>' + x.subs.map(function(q){ return '<li>' + q[0] + '</li>'; }).join('') + '</ol>' : '') + '</li>'; }).join('') + '</ol></div>';
+    var html = cover;
+    secs.forEach(function(x){ html += '<h2>' + x.n + '. ' + esc(x.t) + '</h2>' + x.h; x.subs.forEach(function(q, k){ html += '<h3>' + x.n + '.' + (k + 1) + ' ' + q[0] + '</h3>' + q[1]; }); });
+    if (!forDocx) html = '<div class="m-head"><div><div class="m-t">Memoria de cálculo · ASME BPVC VIII División 1 (2017)</div><div class="m-s">' + esc(i.proyecto) + ' · ' + esc(i.equipo) + ' · TAG ' + esc(i.tag) + '</div></div>' +
+      '<div class="m-r">Cliente: ' + esc(i.cliente) + '<br>Calculado por: ' + esc(i.autor) + '<br>Rev. ' + esc(last.rev) + ' · ' + esc(last.date || i.fecha) + '</div></div>' + html;
     return html;
   }
 
@@ -908,13 +976,20 @@
       else if (kind === 'dxf2'){ renderSketch(); o = EXPORT3D.dxf2d($('sketch'), SKMAP, nm); }
       var blob = new Blob([data || o.text], { type: type }), a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = o.file; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-      $('smst').textContent = 'Exportado: ' + o.file + (o.parts ? ' · ' + o.parts.length + ' piezas' : o.n ? ' · ' + o.n + ' triángulos' : '');
+      $('smst').textContent = 'Exportado: ' + o.file + (o.parts ? ' · ' + o.parts.length + ' piezas' : o.n ? ' · ' + o.n + ' triángulos' : '') + (o.warn && o.warn.length ? ' · ' + o.warn.join('; ') : '');
       var sx = $('exsel'); if (sx) sx.value = '';
     },
     sm: function(){ if (!has3D) return; VISOR3D.connectHID(smShow).catch(function(e){ $('smst').textContent = e.message; }); },
     smSens: function(v){ if (has3D) VISOR3D.setSens(v); }, smInv: function(v){ if (has3D) VISOR3D.setInv(v); }, fit: function(v){ if (has3D) VISOR3D.fit(v); }, clip: function(on){ if (has3D){ VISOR3D.setClip(on); } },
+    autoSeams: function(){ var ch = M.autoSeams(prj); renderAll(); $('smst').textContent = ch.length ? 'Longitudinales recolocadas: ' + ch.join(', ') : 'Las longitudinales ya cumplen o no hay posición mejor'; },
+    ext: function(a, arg){ if (!EXT) return; var r = EXT.action(a, arg); if (r === 're') renderAll(); else if (r === 'res') renderResult(); },
+    docx: function(){ if (typeof DOCX === 'undefined'){ alert('Módulo Word no cargado'); return; } var html = memoria(true), img = has3D ? VISOR3D.snapshot() : null;
+      DOCX.fromMemoria(html, { prj: prj, img3d: img, sketch: $('sketch'), file: (prj.info.tag || prj.info.equipo || 'Recipiente').replace(/[^\w.-]+/g, '_') + '_memoria.docx' }); },
+    nube: function(){ if (typeof NUBE === 'undefined'){ alert('Módulo de biblioteca no cargado'); return; } NUBE.open({ get: function(){ return prj; }, set: function(p){ prj = ensure(p); sel = { kind: 'design' }; renderAll(); } }); },
     _prj: function(){ return prj; }, _res: function(){ return res; }
   };
+  if (typeof CALCEXT !== 'undefined') EXT = CALCEXT({ prj: function(){ return prj; }, res: function(){ return res; }, esc: esc, fmt: fmt, fx: fx, kv: kv, checksHtml: checksHtml, stepsHtml: stepsHtml,
+    isPlate: isPlate, isPipe: isPipe, isForge: isForge, isForgePlate: isForgePlate, isBolt: isBolt, M: M, V: V, optRes: function(){ return optRes; }, setOpt: function(o){ optRes = o; } });
   $('file').addEventListener('change', function(){
     var f = this.files[0]; if (!f) return;
     var rd = new FileReader();

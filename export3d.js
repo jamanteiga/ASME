@@ -29,7 +29,8 @@ var EXPORT3D = (function(){
     function P(s, rv, r){ return adds(sc(e, s), rv, r); }
     var VF = { o: [0, 0, 0], y: e, x: rad(0) }; VF.z = cross(VF.x, VF.y);
     function name(base){ cnt[base] = (cnt[base] || 0) + 1; return base + (cnt[base] > 1 ? ' ' + cnt[base] : ''); }
-    var used = {};
+    var used = {}, hostPart = {};
+    function loc(w){ return [dot(w, VF.x), dot(w, VF.y), dot(w, VF.z)]; }
     function part(nm, feats, xf, mat){ var b = safe(nm), u = b, k = 2; while (used[u.toLowerCase()]) u = b + ' (' + (k++) + ')'; used[u.toLowerCase()] = 1; parts.push({ name: u, feats: feats, xf: xf, mat: mat || '' }); }
     function matName(ref){ var m = ref && V.BYID[ref.id]; return m ? m.t : ''; }
     function headPts(c, p, outer){
@@ -65,7 +66,7 @@ var EXPORT3D = (function(){
         if (c.ftype !== 'ring' && c.ftype !== 'lap'){ var sA = p.side === 'start' ? p.s0 + c.t : t0, sB = p.side === 'start' ? sA + c.h : t0 - c.h;
           f.push({ k: 'rev', loops: [poly([[c.B / 2, sA], [c.B / 2 + c.g1, sA], [c.B / 2 + c.g0, sB], [c.B / 2, sB]])] }); }
       }
-      if (f.length) part(nm, f, VF, matName(c.mat));
+      if (f.length){ part(nm, f, VF, matName(c.mat)); hostPart[c.id] = parts[parts.length - 1]; }
     });
     // conexiones y manguitos
     prj.nozzles.forEach(function(n){
@@ -76,6 +77,12 @@ var EXPORT3D = (function(){
         ref = hz.r > 1 ? rv : (H ? [0, 0, 1] : [1, 0, 0]); if (n.hor === 'normal' && host.type !== 'flat') padAt = adds(o, a, (n.hin || 0) + host.tn);
       } else { var s = p.s0 + (n.a || 0), Ri = M.innerR(host, p, s) || host.D / 2; a = rv; o = P(s, rv, Ri - (n.hin || 0)); L0 = host.tn + (n.hin || 0) + n.proj; ref = e; padAt = P(s, rv, Ri + host.tn); }
       var od = n.od, id = Math.max(od - 2 * n.tn, 1), mk = (n.kind === 'cpl' ? 'Manguito ' : 'Conexion ') + n.mark, mn = matName(n.mat);
+      // taladro en la pieza anfitriona (coordenadas locales de la pieza): cilindro de radio D.E./2 a lo largo del eje de la conexión
+      if (hostPart[host.id] && /shell|cone|ellip|tori|hemi|flat/.test(host.type)){
+        var la = nrm(loc(a)), lu = perp(la, [0, 1, 0]), lw = cross(la, lu), cb = /ellip|tori|hemi/.test(host.type) ? Math.max(M.headNoz(host, p, n).cosb, 0.2) : 1, Ro0 = (host.D || host.d || 0) / 2 + host.tn;
+        var sag = host.type === 'shell' || host.type === 'cone' ? Ro0 - Math.sqrt(Math.max(Ro0 * Ro0 - od * od / 4, 0)) : od / 2 * Math.sqrt(Math.max(1 - cb * cb, 0)) / cb;
+        var hfeat = hostPart[host.id].feats[0]; (hfeat.holes = hfeat.holes || []).push({ c: loc(o), a: la, u: lu, w: lw, r: od / 2, tm: (n.hin || 0) + host.tn / cb / 2, D: host.tn / cb + 2 * sag + 10, L: L0 + 50, mark: n.mark });
+      }
       var fl = n.kind !== 'cpl' && n.fl && n.fl.type !== 'none' ? n.fl : null, dm = fl ? V.b165dims(fl.cls, n.nps) : null;
       var O = dm ? dm.O : od + 2 * Math.max(45, 0.35 * od), tf = dm ? dm.tf : Math.max(18, 0.12 * O), X = dm ? dm.X : od * 1.25, Ah = dm ? (dm.Ah || od) : od;
       var Yh = fl ? (fl.type === 'WN' ? (dm ? dm.Ywn : 2.2 * tf) : fl.type === 'SO' ? (dm ? dm.Ythr : 1.3 * tf) : tf) : 0;
@@ -109,10 +116,20 @@ var EXPORT3D = (function(){
       if (!H && L.skirt){ var zg = L.zg, Ds = L.skirt.Ds, tk = +sp.t || 10, tb = +sp.tb || 20;
         part('Faldon', [{ k: 'rev', loops: [ring(Ds / 2 - tk, Ds / 2, zg, L.sAtt)] }], VF, matName(sp.mat));
         part('Anillo base', [{ k: 'rev', loops: [ring(L.skirt.Dbi / 2, L.skirt.Dbo / 2, zg - tb, zg)] }], VF, matName(sp.bmat)); }
-      if (!H && L.legs){ var bl = sp.lsec === 'user' ? (+sp.lb || 100) : (+sp.lod || 168), ti = sp.lsec === 'user' ? 0 : bl / 2 - (+sp.lt || 7);
-        for (var j = 0; j < L.legs.n; j++){ var r2 = rad(360 * j / L.legs.n + 45); part(name('Pata'), [{ k: 'rev', loops: [ring(ti, bl / 2, 0, L.sAtt - L.zg + 300)] }], frameY(P(L.zg, r2, L.legs.Dl / 2), e, r2), matName(sp.lmat)); } }
-      if (!H && L.lugs){ var ng = Math.max(2, +sp.nlug || 4), sh = prj.comps.filter(function(c){ return c.type === 'shell'; })[0], Ro = sh ? sh.D / 2 + sh.tn : 800;
-        for (var q2 = 0; q2 < ng; q2++){ var r3 = rad(360 * q2 / ng + 45); part(name('Orejeta'), [{ k: 'ext', depth: 240, loops: [poly([[-110, -90], [110, -90], [110, 90], [-110, 90]])] }], { o: adds(P(L.sB + 120, r3, Ro + 110), rad(360 * q2 / ng + 135), 0), x: cross(e, r3), y: e, z: r3 }, ''); } }
+      if (!H && L.legs){ var LG = L.legs.LG || {}, bl = LG.b || (+sp.lod || 168), ti = sp.lsec === 'user' ? 0 : bl / 2 - (+sp.lt || 7), Hleg = (L.legs.top || L.sAtt + 300) - L.zg, pd = L.legs.pad, shl = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], Rsh = (shl.basis === 'od' ? shl.D / 2 : shl.D / 2 + shl.tn);
+        var lmn = sp.lstd === 'EN' ? 'EN 10025-2 ' + (sp.lgrade || 'S275JR') : matName(sp.lmat);
+        for (var j = 0; j < L.legs.n; j++){ var r2 = rad(360 * j / L.legs.n + (sp.th0 != null && sp.th0 !== "" ? +sp.th0 : 45)), tg = nrm(cross(r2, e));
+          if (LG.name){ var hh = LG.h / 2, bb = LG.bf / 2, tw2 = LG.tw / 2, tf = LG.tf; // perfil en I extruido según el eje del recipiente (local Z)
+            part(name('Pata ' + LG.name), [{ k: 'ext', depth: Hleg, loops: [poly([[-bb, -hh], [bb, -hh], [bb, -hh + tf], [tw2, -hh + tf], [tw2, hh - tf], [bb, hh - tf], [bb, hh], [-bb, hh], [-bb, hh - tf], [-tw2, hh - tf], [-tw2, -hh + tf], [-bb, -hh + tf]])] }], { o: P(L.zg, r2, L.legs.Dl / 2), x: tg, y: r2, z: e }, lmn); }
+          else part(name('Pata'), [{ k: 'rev', loops: [ring(ti, bl / 2, 0, Hleg)] }], frameY(P(L.zg, r2, L.legs.Dl / 2), e, r2), lmn);
+          if (pd) part(name('Chapa intermedia pata'), [{ k: 'ext', depth: pd.L, loops: [poly([[-pd.w / 2, 0], [pd.w / 2, 0], [pd.w / 2, pd.t], [-pd.w / 2, pd.t]])] }], { o: P(pd.z0 || L.sAtt, r2, Rsh + 0.5), x: tg, y: r2, z: e }, matName(pd.mat)); } }
+      if (!H && L.lugs){ var G = L.lugs.geo, shg = prj.comps.filter(function(c){ return c.type === 'shell'; })[0], Rg = shg ? (shg.basis === 'od' ? shg.D / 2 : shg.D / 2 + shg.tn) : 800, gmn = sp.gstd === 'EN' ? 'EN 10025-2 ' + (sp.ggrade || 'S275JR') : matName(sp.gmat);
+        function bx(nm2, w, d, h, o, xf, mn2){ part(name(nm2), [{ k: 'ext', depth: h, loops: [poly([[-w / 2, 0], [w / 2, 0], [w / 2, d], [-w / 2, d]])] }], { o: o, x: xf.x, y: xf.y, z: xf.z }, mn2); }
+        if (G) for (var q2 = 0; q2 < G.n; q2++){ var r3 = rad(360 * q2 / G.n + G.th0), tg3 = nrm(cross(r3, e)), xf = { x: tg3, y: r3, z: e }, R1 = Rg + G.pt;
+          bx('Chapa intermedia mensula', G.pw, G.pt, G.ph, P(L.sB - 50, r3, Rg + 0.5), xf, matName(G.padMat));
+          [-1, 1].forEach(function(sg){ bx('Cartela mensula', G.t, G.L, G.H, adds(P(L.sB, r3, R1), tg3, sg * (G.S / 2 + G.t / 2)), xf, gmn); });
+          bx('Placa apoyo mensula', G.S + 2 * G.t + 50, G.L, G.tb, P(L.sB, r3, R1), xf, gmn);
+          bx('Placa superior mensula', G.S + 2 * G.t + 50, G.L, G.tb, P(L.sB + G.H - G.tb, r3, R1), xf, gmn); } }
       if (H && sp.type === 'saddle' && L.saddle){
         var body = prj.comps.filter(function(c){ return !/ellip|tori|hemi|flat/.test(c.type); });
         if (body.length){
@@ -123,16 +140,30 @@ var EXPORT3D = (function(){
           var loopS = [{ t: 'L', p: [[-Lb / 2, -hAx], [Lb / 2, -hAx]] }, { t: 'L', p: [[Lb / 2, -hAx], [Lb / 2, -hAx + tbp]] }, { t: 'L', p: [[Lb / 2, -hAx + tbp], [xh + 10, yh]] }, { t: 'L', p: [[xh + 10, yh], arc[0]] },
             { t: 'S', p: arc }, { t: 'L', p: [arc[arc.length - 1], [-xh - 10, yh]] }, { t: 'L', p: [[-xh - 10, yh], [-Lb / 2, -hAx + tbp]] }, { t: 'L', p: [[-Lb / 2, -hAx + tbp], [-Lb / 2, -hAx]] }];
           var xS = H ? v(0, d.hdir === 'L' ? 1 : -1, 0) : v(1, 0, 0), yS = v(0, 0, 1);
-          var zS = cross(xS, yS); [sT0 + (+sp.A || 0), sT1 - (+sp.A || 0)].forEach(function(s0){ part(name('Cuna'), [{ k: 'ext', depth: bS, loops: [loopS] }], { o: adds(sc(e, s0), zS, -bS / 2), x: xS, y: yS, z: zS }, matName(sp.smat)); });
+          var zS = cross(xS, yS), smn = sp.sstd === 'EN' ? 'EN 10025-2 ' + (sp.sgrade || 'S275JR') : matName(sp.smat);
+          var twp = +sp.twp || 0, Rw = Ro2 - twp, b1 = sp.bwp > 0 ? +sp.bwp : bS + 1.56 * Math.sqrt(Rw * (body[0].tn || 10)), th1 = sp.thwp > 0 ? +sp.thwp : (+sp.theta || 120) + 12;
+          var xw = rad(270), Fw = { o: [0, 0, 0], x: xw, y: e }; Fw.z = cross(Fw.x, Fw.y);
+          [sT0 + (+sp.A || 0), sT1 - (+sp.A || 0)].forEach(function(s0){ part(name('Cuna'), [{ k: 'ext', depth: bS, loops: [loopS] }], { o: adds(sc(e, s0), zS, -bS / 2), x: xS, y: yS, z: zS }, smn);
+            if (twp > 0) part(name('Chapa de desgaste'), [{ k: 'revSym', ang: th1, loops: [ring(Rw, Rw + twp, s0 - b1 / 2, s0 + b1 / 2)] }], Fw, matName(body[0].mat)); });
         }
       }
     }
+    // camisa (Ap. 9) y cierres
+    var Fb = res.fab || {};
+    if (prj.jacket && prj.jacket.on && Fb.jacket && Fb.jacket.Rj){
+      var J = prj.jacket, hj = prj.comps.filter(function(c){ return c.id === J.host; })[0];
+      if (hj){ var pj = Lr.pos[hj.id], Lj = Fb.jacket.L || (pj.s1 - pj.s0), sm = (pj.s0 + pj.s1) / 2, js0 = sm - Lj / 2, js1 = sm + Lj / 2, Rj = J.Dj / 2, Rs = (hj.basis === 'od' ? hj.D / 2 : hj.D / 2 + hj.tn), tcj = +J.tc || 20;
+        part('Camisa', [{ k: 'rev', loops: [ring(Rj, Rj + (+J.tj || 8), js0 + tcj, js1 - tcj)] }], VF, matName(J.mat));
+        part('Cierre camisa', [{ k: 'rev', loops: [ring(Rs, Rj + (+J.tj || 8), js0, js0 + tcj)] }], VF, matName(J.mat));
+        part('Cierre camisa', [{ k: 'rev', loops: [ring(Rs, Rj + (+J.tj || 8), js1 - tcj, js1)] }], VF, matName(J.mat)); } }
     return parts;
   }
 
   // ---------- números ----------
   function f(x, k){ var y = x * k; return (Math.abs(y) < 1e-9 ? 0 : Math.round(y * 1e6) / 1e6).toString(); }
 
+  // taladros de una pieza para las macros: [P (centro de la pared), u, w (ejes del plano; u × w = eje), r, profundidad simétrica] en mm
+  function holesOf(p){ var out = []; (p.feats || []).forEach(function(ft){ (ft.holes || []).forEach(function(h){ var P = adds(h.c, h.a, h.tm); out.push(P.concat(h.u, h.w, [h.r, h.D])); }); }); return out; }
   // ---------- Inventor: regla iLogic (VB.NET) ----------
   function inventor(prj, res){
     var parts = build(prj, res), K = 0.1, nm = safe(prj.info.tag || prj.info.equipo || 'Recipiente'), L = [];
@@ -157,7 +188,7 @@ var EXPORT3D = (function(){
             return "New Object() {\"" + sg.t + "\", New Double() {" + sg.p.map(function(q){ return f(q[0], K) + ", " + f(q[1], K); }).join(", ") + "}}";
           }).join(", ") + "}";
         }).join(", ") + "}}";
-      }).join(", ") + "}))");
+      }).join(", ") + "}, New Double()() {" + holesOf(p).map(function(h){ return "New Double() {" + h.map(function(q, k){ return f(q, k < 3 || k >= 9 ? K : 1); }).join(", ") + "}"; }).join(", ") + "}))");
       var x = p.xf; L.push("  mats.Add(New Double() {" + [x.o[0] * K, x.o[1] * K, x.o[2] * K].concat(x.x, x.y, x.z || cross(x.x, x.y)).map(function(q){ return f(q, 1); }).join(", ") + "})");
     });
     L.push("  Dim asm As AssemblyDocument = app.Documents.Add(DocumentTypeEnum.kAssemblyDocumentObject, tplA, True)");
@@ -173,7 +204,7 @@ var EXPORT3D = (function(){
     L.push("  MessageBox.Show(\"Ensamblaje creado en \" & folder, \"ASME VIII-1\")");
     L.push("End Sub");
     L.push("");
-    L.push("Function MakePart(app As Inventor.Application, tpl As String, folder As String, name As String, matName As String, feats As Object()) As String");
+    L.push("Function MakePart(app As Inventor.Application, tpl As String, folder As String, name As String, matName As String, feats As Object(), holes As Double()()) As String");
     L.push("  Dim doc As PartDocument = app.Documents.Add(DocumentTypeEnum.kPartDocumentObject, tpl, False)");
     L.push("  Dim cd As PartComponentDefinition = doc.ComponentDefinition");
     L.push("  Dim tg As TransientGeometry = app.TransientGeometry");
@@ -217,6 +248,16 @@ var EXPORT3D = (function(){
     L.push("      cd.Features.ExtrudeFeatures.Add(ed)");
     L.push("    End If");
     L.push("    first = False");
+    L.push("  Next");
+    L.push("  ' taladros de las conexiones: plano fijo normal al eje de la conexión en el centro de la pared y corte simétrico");
+    L.push("  For Each h As Double() In holes");
+    L.push("    Dim wpH As WorkPlane = cd.WorkPlanes.AddFixed(tg.CreatePoint(h(0), h(1), h(2)), tg.CreateUnitVector(h(3), h(4), h(5)), tg.CreateUnitVector(h(6), h(7), h(8)))");
+    L.push("    wpH.Visible = False");
+    L.push("    Dim skH As PlanarSketch = cd.Sketches.Add(wpH)");
+    L.push("    skH.SketchCircles.AddByCenterRadius(skH.ModelToSketchSpace(tg.CreatePoint(h(0), h(1), h(2))), h(9))");
+    L.push("    Dim edH As ExtrudeDefinition = cd.Features.ExtrudeFeatures.CreateExtrudeDefinition(skH.Profiles.AddForSolid(), PartFeatureOperationEnum.kCutOperation)");
+    L.push("    edH.SetDistanceExtent(h(10), PartFeatureExtentDirectionEnum.kSymmetricExtentDirection)");
+    L.push("    cd.Features.ExtrudeFeatures.Add(edH)");
     L.push("  Next");
     L.push("  Try : doc.PropertySets.Item(\"Design Tracking Properties\").Item(\"Description\").Value = matName : Catch : End Try");
     L.push("  Dim path As String = System.IO.Path.Combine(folder, name & \".ipt\")");
@@ -296,6 +337,26 @@ var EXPORT3D = (function(){
     L.push("    fm.FeatureExtrusion2 True, False, False, 0, 0, depth, 0, False, False, False, False, 0, 0, False, False, False, False, Not first, True, True, 0, 0, False");
     L.push("  End If");
     L.push("End Sub");
+    L.push("Sub CutHole(doc As Object, px As Double, py As Double, pz As Double, ux As Double, uy As Double, uz As Double, wx As Double, wy As Double, wz As Double, r As Double, dep As Double)");
+    L.push("  ' plano por tres puntos (croquis 3D) normal al eje de la conexión, círculo y corte en plano medio (simétrico)");
+    L.push("  Dim sm As Object, p1 As Object, p2 As Object, p3 As Object, pl As Object, sk As Object, mu As Object, mp As Object, v As Variant");
+    L.push("  Set sm = doc.SketchManager");
+    L.push("  sm.Insert3DSketch True");
+    L.push("  Set p1 = sm.CreatePoint(px, py, pz): Set p2 = sm.CreatePoint(px + ux * 0.05, py + uy * 0.05, pz + uz * 0.05): Set p3 = sm.CreatePoint(px + wx * 0.05, py + wy * 0.05, pz + wz * 0.05)");
+    L.push("  sm.Insert3DSketch True");
+    L.push("  doc.ClearSelection2 True");
+    L.push("  p1.Select4 True, Nothing: p2.Select4 True, Nothing: p3.Select4 True, Nothing");
+    L.push("  Set pl = doc.FeatureManager.InsertRefPlane(4, 0, 4, 0, 4, 0)");
+    L.push("  If pl Is Nothing Then Exit Sub");
+    L.push("  doc.ClearSelection2 True: pl.Select2 False, 0");
+    L.push("  sm.InsertSketch True");
+    L.push("  Set sk = sm.ActiveSketch: Set mu = swApp.GetMathUtility");
+    L.push("  Set mp = mu.CreatePoint(Array(px, py, pz)): Set mp = mp.MultiplyTransform(sk.ModelToSketchTransform): v = mp.ArrayData");
+    L.push("  sm.CreateCircleByRadius v(0), v(1), 0, r");
+    L.push("  sm.InsertSketch True");
+    L.push("  doc.ClearSelection2 True: doc.FeatureByPositionReverse(0).Select2 False, 0");
+    L.push("  doc.FeatureManager.FeatureCut4 True, False, False, 6, 0, dep, 0, False, False, False, False, 0, 0, False, False, False, False, False, True, True, True, True, False, 0, 0, False, False");
+    L.push("End Sub");
     L.push("Sub SavePart(doc As Object, idx As Long, name As String, matName As String)");
     L.push("  Dim p As String: p = folder & name & \".SLDPRT\"");
     L.push("  On Error Resume Next");
@@ -323,6 +384,7 @@ var EXPORT3D = (function(){
         });
         L.push("  EndFeature doc, \"" + ft.k + "\", " + f(ft.ang || 0, 1) + ", " + f(ft.depth || 0, K) + ", " + (j === 0 ? 'True' : 'False'));
       });
+      holesOf(p).forEach(function(h){ L.push("  CutHole doc, " + h.map(function(q, k){ return f(q, k < 3 || k >= 9 ? K : 1); }).join(", ")); });
       var x = p.xf, z = x.z || cross(x.x, x.y);
       L.push("  pMat(" + i + ") = Array(" + x.x.concat(x.y, z).map(function(q){ return f(q, 1); }).join(", ") + ", " + [x.o[0] * K, x.o[1] * K, x.o[2] * K].map(function(q){ return f(q, 1); }).join(", ") + ", 1, 0, 0, 0)");
       L.push("  SavePart doc, " + i + ", \"" + p.name.replace(/"/g, "'") + "\", \"" + (p.mat || '').replace(/"/g, "'") + "\"");
@@ -391,15 +453,124 @@ var EXPORT3D = (function(){
     return loops.map(function(l, i){ var cw = signedArea(l) < 0; var want = i === iMax ? false : true; l = l.map(function(sg){ return sg.t === 'C' ? Object.assign({ cw: false }, sg) : sg; });
       if (l.length === 1 && l[0].t === 'C'){ l[0].cw = want; return l; } return cw === want ? l : revLoop(l); }).sort(function(a, b){ return Math.abs(signedArea(b)) - Math.abs(signedArea(a)); });
   }
+  // ---------- taladros de conexiones en sólidos de revolución ----------
+  function v3(a, b, k){ return [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k]; }
+  function bsEval(bs, u){
+    if (!bs.U){ bs.U = []; bs.knots.forEach(function(k, i){ for (var j = 0; j < bs.mults[i]; j++) bs.U.push(k); }); }
+    var U = bs.U, p = bs.p, n = bs.cp.length - 1, sp = p;
+    if (u >= U[n + 1]) sp = n; else while (sp < n && !(u >= U[sp] && u < U[sp + 1])) sp++;
+    var d = []; for (var j = 0; j <= p; j++) d.push(bs.cp[sp - p + j].slice());
+    for (var r = 1; r <= p; r++) for (var j2 = p; j2 >= r; j2--){ var i = sp - p + j2, den = U[i + p + 1 - r] - U[i], al = den ? (u - U[i]) / den : 0; for (var k = 0; k < d[j2].length; k++) d[j2][k] = (1 - al) * d[j2 - 1][k] + al * d[j2][k]; }
+    return d[p];
+  }
+  // función implícita de la superficie de revolución de un segmento del perfil: f = 0 sobre la superficie; ok = dentro del segmento
+  function segImplicit(sg){
+    if (sg.t === 'L'){ var a = sg.p[0], b = sg.p[1], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, Ln = Math.sqrt(L2);
+      if (Ln < 1e-9) return null;
+      return function(P){ var rho = Math.hypot(P[0], P[2]), y = P[1], t = ((rho - a[0]) * dx + (y - a[1]) * dy) / L2; return { f: ((rho - a[0]) * dy - (y - a[1]) * dx) / Ln, ok: t > 1e-3 && t < 1 - 1e-3 }; }; }
+    if (sg.t === 'S'){ var bs = sg.bs || (sg.bs = bsInterp(sg.p.map(function(q){ return [q[0], q[1], 0]; })));
+      var ys = []; for (var k = 0; k <= 200; k++) ys.push(bsEval(bs, k / 200)[1]);
+      var inc = ys[200] > ys[0]; for (var k2 = 1; k2 <= 200; k2++) if ((ys[k2] - ys[k2 - 1]) * (inc ? 1 : -1) <= 0) return null;
+      return function(P){ var rho = Math.hypot(P[0], P[2]), y = P[1], lo = 0, hi = 1;
+        if ((y - ys[0]) * (y - ys[200]) > 0) return { f: NaN, ok: false };
+        for (var it = 0; it < 60; it++){ var mid = (lo + hi) / 2, ym = bsEval(bs, mid)[1]; if ((ym < y) === inc) lo = mid; else hi = mid; }
+        var q = bsEval(bs, (lo + hi) / 2); return { f: rho - q[0], ok: (lo + hi) / 2 > 2e-3 && (lo + hi) / 2 < 1 - 2e-3 }; }; }
+    return null;
+  }
+  // intersecciones del cilindro del taladro con las caras del perfil; devuelve las dos caras atravesadas y las curvas
+  function holeCut(loop, h, N){
+    var fns = loop.map(segImplicit), ps = [], hits = loop.map(function(){ return []; });
+    for (var k = 0; k <= 2 * N; k++){ var ps0 = Math.PI * k / N, base = v3(v3(h.c, h.u, h.r * Math.cos(ps0)), h.w, h.r * Math.sin(ps0)); ps.push(ps0);
+      fns.forEach(function(F, i){ if (!F || !hits[i]) return; var t0 = -60, t1 = h.L, steps = 240, prev = null, found = null;
+        for (var j = 0; j <= steps && !found; j++){ var t = t0 + (t1 - t0) * j / steps, P = v3(base, h.a, t), fv = F(P); if (isNaN(fv.f)){ prev = null; continue; }
+          if (prev && prev.f * fv.f <= 0){ var lo = prev.t, hi = t, flo = prev.f; for (var it = 0; it < 60; it++){ var mid = (lo + hi) / 2, fm = F(v3(base, h.a, mid)).f; if (isNaN(fm)) break; if ((fm <= 0) === (flo <= 0)){ lo = mid; flo = fm; } else hi = mid; }
+            var tt = (lo + hi) / 2, PP = v3(base, h.a, tt), chk = F(PP); if (chk.ok && Math.abs(chk.f) < 1e-3) found = { t: tt, P: PP }; }
+          prev = { t: t, f: fv.f }; }
+        if (found) hits[i].push(found); else hits[i] = null; }); }
+    var segs = []; hits.forEach(function(hh, i){ if (hh && hh.length === 2 * N + 1) segs.push(i); });
+    if (segs.length !== 2) return null;
+    var mA = hits[segs[0]].reduce(function(s2, q){ return s2 + q.t; }, 0), mB = hits[segs[1]].reduce(function(s2, q){ return s2 + q.t; }, 0);
+    if (mA > mB) segs.reverse();
+    var A = hits[segs[0]], B = hits[segs[1]];
+    for (var q = 0; q <= 2 * N; q++) if (A[q].t >= B[q].t - 0.05) return null;
+    return { iA: segs[0], iB: segs[1], A: A.map(function(x){ return x.P; }), B: B.map(function(x){ return x.P; }), ps: ps };
+  }
+  // taladro coaxial con el eje de revolución (conexión en el polo de un fondo): se recorta el perfil en x = r
+  function clipLoopR(loop, rh){
+    var out = [];
+    loop.forEach(function(sg){
+      var pts = sg.t === 'L' ? sg.p : sg.p, kept = [], cur = [];
+      for (var k = 0; k < pts.length; k++){
+        var q = pts[k], inq = q[0] >= rh - 1e-9;
+        if (k > 0){ var pq = pts[k - 1], inp = pq[0] >= rh - 1e-9; if (inp !== inq){ var t = (rh - pq[0]) / (q[0] - pq[0]), X = [rh, pq[1] + t * (q[1] - pq[1])]; cur.push(X); if (!inq){ kept.push(cur); cur = []; } } }
+        if (inq) cur.push(q);
+      }
+      if (cur.length) kept.push(cur);
+      kept.forEach(function(c){ var cc = c.filter(function(x, i){ return i === 0 || Math.hypot(x[0] - c[i - 1][0], x[1] - c[i - 1][1]) > 1e-6; }); if (cc.length >= 2) out.push(sg.t === 'S' && cc.length > 2 ? { t: 'S', p: cc } : { t: 'L', p: [cc[0], cc[cc.length - 1]] }); });
+    });
+    var res = [];
+    out.forEach(function(sg, i){ res.push(sg); var nx = out[(i + 1) % out.length], e = sg.p[sg.p.length - 1], b = nx.p[0]; if (Math.hypot(e[0] - b[0], e[1] - b[1]) > 1e-6) res.push({ t: 'L', p: [e, b] }); });
+    return res;
+  }
+  function angOf(P){ var a = Math.atan2(-P[2], P[0]); return a < 0 ? a + 2 * Math.PI : a; }
   // sólido de revolución alrededor del eje Y local (perfil en XY con x = radio); a0..a1 en radianes (full si a1 − a0 = 2π)
-  function revolveSolid(S, loops, a0, a1){
-    var full = Math.abs(a1 - a0 - 2 * Math.PI) < 1e-9, faces = [];
+  function revolveSolid(S, loops, a0, a1, holes, warn){
+    var full = Math.abs(a1 - a0 - 2 * Math.PI) < 1e-9, faces = [], cuts = [], N = 16;
+    // taladros (solo revolución completa, en el lazo exterior)
+    if (full && holes && holes.length){
+      holes = holes.filter(function(h){ var coax = Math.hypot(h.a[0], h.a[2]) < 1e-6 && Math.hypot(h.c[0], h.c[2]) < 1e-6; if (coax) loops[0] = clipLoopR(loops[0], h.r); return !coax; });
+      holes.forEach(function(h){ var g = holeCut(loops[0], h, N); if (g){ g.h = h; cuts.push(g); } else if (warn) warn.push('Taladro ' + h.mark + ': no se pudo recortar (cruza el límite de una cara)'); });
+      // taladros solapados (conexiones superpuestas): se conserva el mayor
+      cuts.sort(function(x, y){ return y.h.r - x.h.r; });
+      cuts = cuts.filter(function(g, i){ var cg = g.A.reduce(function(c, q){ return v3(c, q, 1 / g.A.length); }, [0, 0, 0]);
+        for (var k = 0; k < i; k++){ var o = cuts[k], co = o.A.reduce(function(c, q){ return v3(c, q, 1 / o.A.length); }, [0, 0, 0]); if (Math.hypot(cg[0] - co[0], cg[1] - co[1], cg[2] - co[2]) < g.h.r + o.h.r + 1){ if (warn) warn.push('Taladro ' + g.h.mark + ' solapado con ' + o.h.mark + ': no se recorta'); return false; } }
+        return true; });
+      if (cuts.length){ // costura de la revolución fuera de los taladros
+        var occ = []; cuts.forEach(function(g){ var angs = g.A.concat(g.B).map(angOf).sort(function(x, y){ return x - y; }), gap = 0, gi = 0;
+          for (var k = 0; k < angs.length; k++){ var nx = k + 1 < angs.length ? angs[k + 1] : angs[0] + 2 * Math.PI; if (nx - angs[k] > gap){ gap = nx - angs[k]; gi = k; } }
+          occ.push([angs[(gi + 1) % angs.length], angs[gi]]); });
+        var cand = []; for (var k3 = 0; k3 < 360; k3++) cand.push(k3 * Math.PI / 180);
+        var best = 0, bd = -1; cand.forEach(function(c){ var dmin = Infinity; occ.forEach(function(o){ var lo = o[0], hi = o[1] < o[0] ? o[1] + 2 * Math.PI : o[1], cc = c < lo ? c + 2 * Math.PI : c; var inside = cc >= lo && cc <= hi; var d0 = inside ? -1 : Math.min(Math.abs(cc - hi), Math.abs(lo + 2 * Math.PI - cc)); dmin = Math.min(dmin, d0); }); if (dmin > bd){ bd = dmin; best = c; } });
+        a0 = best; a1 = best + 2 * Math.PI;
+      }
+    }
+    var holeBounds = {}, boreFaces = [];
+    function bsCurve(pts){ var bs = bsInterp(pts); return S.add("B_SPLINE_CURVE_WITH_KNOTS(''," + bs.p + ',(' + bs.cp.map(function(q){ return S.pt(q); }).join(',') + '),.UNSPECIFIED.,.F.,.F.,(' + bs.mults.join(',') + '),(' + bs.knots.map(S.R).join(',') + '),.UNSPECIFIED.)'); }
+    function lineC(P0, P1){ var dv = [P1[0] - P0[0], P1[1] - P0[1], P1[2] - P0[2]]; return S.add("LINE(''," + S.pt(P0) + ',' + S.add("VECTOR(''," + S.dir(dv) + ',' + S.R(Math.hypot(dv[0], dv[1], dv[2])) + ')') + ')'); }
+    function areaVec(pts){ var c = [0, 0, 0]; pts.forEach(function(q){ c = v3(c, q, 1 / pts.length); }); var A = [0, 0, 0]; for (var k = 0; k < pts.length; k++){ var p0 = v3(pts[k], c, -1), p1 = v3(pts[(k + 1) % pts.length], c, -1); A = v3(A, [p0[1] * p1[2] - p0[2] * p1[1], p0[2] * p1[0] - p0[0] * p1[2], p0[0] * p1[1] - p0[1] * p1[0]], 0.5); } return A; }
+    // lazo orientado: items [{ e, fwd, pts (en el sentido natural de la arista) }]; ccw = sentido antihorario respecto a nOut
+    function orientedLoop(items, nOut, ccw){
+      var pts = []; items.forEach(function(it){ var q = it.fwd ? it.pts : it.pts.slice().reverse(); pts = pts.concat(q.slice(0, -1)); });
+      var A = areaVec(pts), sg = A[0] * nOut[0] + A[1] * nOut[1] + A[2] * nOut[2];
+      if ((sg > 0) !== ccw) items = items.slice().reverse().map(function(it){ return { e: it.e, fwd: !it.fwd, pts: it.pts }; });
+      return S.add("EDGE_LOOP('',(" + items.map(function(it){ return S.add("ORIENTED_EDGE('',*,*," + it.e + ',' + (it.fwd ? '.T.' : '.F.') + ')'); }).join(',') + '))');
+    }
+    cuts.forEach(function(g){
+      var h = g.h, A = g.A, B = g.B, N2 = N;
+      var VA0 = S.add("VERTEX_POINT(''," + S.pt(A[0]) + ')'), VAp = S.add("VERTEX_POINT(''," + S.pt(A[N2]) + ')'), VB0 = S.add("VERTEX_POINT(''," + S.pt(B[0]) + ')'), VBp = S.add("VERTEX_POINT(''," + S.pt(B[N2]) + ')');
+      var A1 = A.slice(0, N2 + 1), A2 = A.slice(N2), B1 = B.slice(0, N2 + 1), B2 = B.slice(N2);
+      var eA1 = S.add("EDGE_CURVE(''," + VA0 + ',' + VAp + ',' + bsCurve(A1) + ',.T.)'), eA2 = S.add("EDGE_CURVE(''," + VAp + ',' + VA0 + ',' + bsCurve(A2) + ',.T.)');
+      var eB1 = S.add("EDGE_CURVE(''," + VB0 + ',' + VBp + ',' + bsCurve(B1) + ',.T.)'), eB2 = S.add("EDGE_CURVE(''," + VBp + ',' + VB0 + ',' + bsCurve(B2) + ',.T.)');
+      var g0 = S.add("EDGE_CURVE(''," + VA0 + ',' + VB0 + ',' + lineC(A[0], B[0]) + ',.T.)'), gp = S.add("EDGE_CURVE(''," + VAp + ',' + VBp + ',' + lineC(A[N2], B[N2]) + ',.T.)');
+      var cA = A.reduce(function(c, q){ return v3(c, q, 1 / A.length); }, [0, 0, 0]), cB = B.reduce(function(c, q){ return v3(c, q, 1 / B.length); }, [0, 0, 0]);
+      var nA = nrm3(v3(cA, cB, -1)), nB = nrm3(v3(cB, cA, -1));
+      // contornos del taladro en las caras atravesadas (sentido horario respecto a la normal exterior)
+      (holeBounds[g.iA] = holeBounds[g.iA] || []).push(orientedLoop([{ e: eA1, fwd: true, pts: A1 }, { e: eA2, fwd: true, pts: A2 }], nA, false));
+      (holeBounds[g.iB] = holeBounds[g.iB] || []).push(orientedLoop([{ e: eB1, fwd: true, pts: B1 }, { e: eB2, fwd: true, pts: B2 }], nB, false));
+      // pared del taladro: dos medias caras cilíndricas
+      var cyl = S.add("CYLINDRICAL_SURFACE(''," + S.ax3(h.c, h.a, h.u) + ',' + S.R(h.r) + ')');
+      [[eA1, A1, gp, eB1, B1, g0, Math.PI / 2], [eA2, A2, g0, eB2, B2, gp, 3 * Math.PI / 2]].forEach(function(q){
+        var nIn = v3([0, 0, 0], v3(v3([0, 0, 0], h.u, Math.cos(q[6])), h.w, Math.sin(q[6])), -1);
+        var lp = orientedLoop([{ e: q[0], fwd: true, pts: q[1] }, { e: q[2], fwd: true, pts: [q[1][q[1].length - 1], q[4][q[4].length - 1]] }, { e: q[3], fwd: false, pts: q[4] }, { e: q[5], fwd: false, pts: [q[1][0], q[4][0]] }], nIn, true);
+        boreFaces.push(S.add("ADVANCED_FACE('',(" + S.add("FACE_BOUND(''," + lp + ',.T.)') + '),' + cyl + ',.F.)'));
+      });
+    });
     function rot(p, a){ return [p[0] * Math.cos(a), p[1], -p[0] * Math.sin(a)]; }
     function rho(a){ return [Math.cos(a), 0, -Math.sin(a)]; }
     function nplane(a){ return [Math.sin(a), 0, Math.cos(a)]; }
     var axis1 = S.add("AXIS1_PLACEMENT(''," + S.pt([0, 0, 0]) + ',' + S.dir([0, 1, 0]) + ')');
     var capLoops0 = [], capLoops1 = [];
-    loops.forEach(function(loop){
+    loops.forEach(function(loop, li){
       // vértices del perfil
       var V = [], onAxis = [];
       loop.forEach(function(sg){ var p0 = sg.t === 'C' ? [sg.c[0] + sg.r, sg.c[1]] : sg.p[0]; V.push(p0); onAxis.push(Math.abs(p0[0]) < 1e-7); });
@@ -433,7 +604,8 @@ var EXPORT3D = (function(){
         oe.push("ORIENTED_EDGE('',*,*," + E0[i].e + ',.F.)');
         var lp = S.add("EDGE_LOOP('',(" + oe.map(function(o){ return S.add(o); }).join(',') + '))');
         var srf = S.add("SURFACE_OF_REVOLUTION(''," + E0[i].crv + ',' + axis1 + ')');
-        faces.push(S.add("ADVANCED_FACE('',(" + S.add("FACE_BOUND(''," + lp + ',.T.)') + '),' + srf + ',.F.)'));
+        var hb = li === 0 && holeBounds[i] ? holeBounds[i].map(function(l){ return S.add("FACE_BOUND(''," + l + ',.T.)'); }) : [];
+        faces.push(S.add("ADVANCED_FACE('',(" + [S.add("FACE_BOUND(''," + lp + ',.T.)')].concat(hb).join(',') + '),' + srf + ',.F.)'));
       });
       if (!full){
         capLoops0.push(S.add("EDGE_LOOP('',(" + E0.filter(Boolean).map(function(x){ return S.add("ORIENTED_EDGE('',*,*," + x.e + ',.T.)'); }).join(',') + '))'));
@@ -445,8 +617,10 @@ var EXPORT3D = (function(){
       faces.push(S.add("ADVANCED_FACE('',(" + capLoops0.map(function(l){ return S.add("FACE_BOUND(''," + l + ',.T.)'); }).join(',') + '),' + pl0 + ',.T.)'));
       faces.push(S.add("ADVANCED_FACE('',(" + capLoops1.map(function(l){ return S.add("FACE_BOUND(''," + l + ',.F.)'); }).join(',') + '),' + pl1 + ',.T.)'));
     }
+    faces = faces.concat(boreFaces);
     return S.add("MANIFOLD_SOLID_BREP(''," + S.add("CLOSED_SHELL('',(" + faces.join(',') + '))') + ')');
   }
+  function nrm3(a){ var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
   // sólido extruido según +Z local (perfil CCW en XY)
   function extrudeSolid(S, loop, depth){
     var V = loop.map(function(sg){ return sg.p[0]; }), n = V.length, faces = [];
@@ -471,7 +645,7 @@ var EXPORT3D = (function(){
     return S.add("MANIFOLD_SOLID_BREP(''," + S.add("CLOSED_SHELL('',(" + faces.join(',') + '))') + ')');
   }
   function stepFile(prj, res){
-    var parts = X.build(prj, res), S = Step(), nm = prj.info.tag || prj.info.equipo || 'Recipiente';
+    var parts = X.build(prj, res), S = Step(), nm = prj.info.tag || prj.info.equipo || 'Recipiente', warns = [];
     var appc = S.add("APPLICATION_CONTEXT('core data for automotive mechanical design processes')");
     S.add("APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000," + appc + ')');
     function ctx(){ var lu = S.add('( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) )'), au = S.add('( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) )'), su = S.add('( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() )');
@@ -492,7 +666,7 @@ var EXPORT3D = (function(){
       var pctx = ctx(), porg = S.ax3([0, 0, 0], [0, 0, 1], [1, 0, 0]), solids = [];
       p.feats.forEach(function(ft){
         if (ft.k === 'ext') solids.push(extrudeSolid(S, orientLoops(ft.loops)[0], ft.depth));
-        else { var a = ft.k === 'revSym' ? (+ft.ang || 90) * Math.PI / 180 : 2 * Math.PI; solids.push(revolveSolid(S, orientLoops(ft.loops), ft.k === 'revSym' ? -a / 2 : 0, ft.k === 'revSym' ? a / 2 : a)); }
+        else { var a = ft.k === 'revSym' ? (+ft.ang || 90) * Math.PI / 180 : 2 * Math.PI; solids.push(revolveSolid(S, orientLoops(ft.loops), ft.k === 'revSym' ? -a / 2 : 0, ft.k === 'revSym' ? a / 2 : a, ft.holes, warns)); }
       });
       var prep = S.add("ADVANCED_BREP_SHAPE_REPRESENTATION(" + S.str(p.name) + ',(' + [porg].concat(solids).join(',') + '),' + pctx + ')');
       var ppd = product(p.name, prep);
@@ -503,7 +677,7 @@ var EXPORT3D = (function(){
     });
     var now = new Date().toISOString().slice(0, 19);
     var head = ['ISO-10303-21;', 'HEADER;', "FILE_DESCRIPTION(('ASME VIII-1 vessel model'),'2;1');", 'FILE_NAME(' + S.str(nm + '.stp') + ",'" + now + "',(''),(''),'ASME VIII-1 Calculo de recipientes','ASME VIII-1 web','');", "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));", 'ENDSEC;', 'DATA;'];
-    return { text: head.concat(S.out(), ['ENDSEC;', 'END-ISO-10303-21;']).join('\n'), file: S.str(nm).slice(1, -1) + '.stp', parts: parts };
+    return { text: head.concat(S.out(), ['ENDSEC;', 'END-ISO-10303-21;']).join('\n'), file: S.str(nm).slice(1, -1) + '.stp', parts: parts, warn: warns };
   }
   // ---------- STL (binario) y DXF 3D a partir de las mallas del visor ----------
   function tris(meshes){ // meshes: [{ pos: Float32Array (x,y,z por vértice, ya en coordenadas mundo), idx: array|null, name }]
