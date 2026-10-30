@@ -20,7 +20,8 @@
     return p;
   }
   var EXT = null, optRes = null;
-  var prj = ensure(load()) || M.newProject('V');
+  var stored = load(), firstRun = !stored;
+  var prj = ensure(stored) || ensure(M.newProject('V'));
   var sel = { kind: 'design', id: null };
   var res = null;
 
@@ -473,7 +474,24 @@
 
   // ---------------- renderizado ----------------
   var $ = function(id){ return document.getElementById(id); };
-  function renderAll(){ renderTree(); renderEditor(); recompute(); }
+  var SUPS = { V: [['legs', 'Patas', '3 o 4 según Ø'], ['lugs', 'Ménsulas', 'sobre la virola'], ['skirt', 'Faldón', 'cilíndrico'], ['none', 'Sin soporte', '']], H: [['saddle', 'Cunas', 'dos cunas con chapa'], ['none', 'Sin soporte', '']] };
+  function renderSupSel(){ var e = $('supsel'); if (!e) return; var cur = (prj.support || {}).type;
+    e.innerHTML = [['legs', 'Patas'], ['lugs', 'Ménsulas'], ['skirt', 'Faldón'], ['saddle', 'Cunas (horizontal)'], ['none', 'Sin soporte']].map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === cur ? ' selected' : '') + '>' + x[1] + '</option>'; }).join(''); }
+  function openNuevo(ask){
+    var dlg = $('nuevoDlg'), or = prj && prj.design.orient === 'H' ? 'H' : 'V', sp = or === 'H' ? 'saddle' : 'legs';
+    function draw(){
+      [].forEach.call($('ndlg-or').children, function(b){ b.classList.toggle('on', b.getAttribute('data-o') === or); });
+      $('ndlg-sp').innerHTML = SUPS[or].map(function(x){ return '<button type="button" data-s="' + x[0] + '"' + (x[0] === sp ? ' class="on"' : '') + '>' + x[1] + (x[2] ? '<small>' + x[2] + '</small>' : '') + '</button>'; }).join('');
+    }
+    $('ndlg-or').onclick = function(e){ var b = e.target.closest('button'); if (!b) return; or = b.getAttribute('data-o'); sp = or === 'H' ? 'saddle' : 'legs'; draw(); };
+    $('ndlg-sp').onclick = function(e){ var b = e.target.closest('button'); if (!b) return; sp = b.getAttribute('data-s'); draw(); };
+    $('ndlg-sp').ondblclick = function(){ $('ndlg-ok').click(); };
+    $('ndlg-x').onclick = function(){ dlg.hidden = true; };
+    $('ndlg-ok').onclick = function(){ dlg.hidden = true; prj = ensure(M.newProject(or)); prj.support.type = sp; sel = { kind: 'design' }; renderAll(); };
+    dlg.onkeydown = function(e){ if (e.key === 'Escape') dlg.hidden = true; if (e.key === 'Enter') $('ndlg-ok').click(); };
+    draw(); dlg.hidden = false; setTimeout(function(){ $('ndlg-ok').focus(); }, 0);
+  }
+  function renderAll(){ renderTree(); renderEditor(); renderSupSel(); recompute(); }
   function recompute(){
     try { res = M.compute(prj); } catch (e) { res = null; console.error(e); $('summary').innerHTML = '<div class="bad">Error de cálculo: ' + esc(e.message) + '</div>'; }
     save();
@@ -948,7 +966,11 @@
     },
     addNoz: function(kind){ var n = M.newNozzle(prj, kind); prj.nozzles.push(n); sel = { kind: 'noz', id: n.id }; renderAll(); },
     delNoz: function(id){ prj.nozzles = prj.nozzles.filter(function(n){ return n.id !== id; }); sel = { kind: 'design' }; renderAll(); },
-    nuevo: function(){ if (!confirm('¿Crear un recipiente nuevo? Se perderán los datos no guardados.')) return; prj = M.newProject(prj.design.orient); sel = { kind: 'design' }; renderAll(); },
+    nuevo: function(){ openNuevo(true); },
+    setSupport: function(t){ if (!t) return; var H = prj.design.orient === 'H';
+      if (t === 'saddle' && !H){ prj.design.orient = 'H'; prj.support = VLOADS.defSupport('H'); prj.loads.asce7.R = 3; prj.design.level = null; }
+      else if (t !== 'saddle' && t !== 'none' && H){ prj.design.orient = 'V'; prj.support = VLOADS.defSupport('V'); prj.loads.asce7.R = 2; prj.design.level = null; }
+      prj.support.type = t; renderAll(); },
     guardar: function(){
       var blob = new Blob([JSON.stringify(prj, null, 1)], { type: 'application/json' });
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -1009,4 +1031,5 @@
   function smShow(name){ $('smst').textContent = 'Ratón 3D: ' + name; }
   if (has3D){ VISOR3D.smStatus(smShow); $('smsens').value = String(VISOR3D.getSens()); $('sminv').checked = VISOR3D.getInv(); }
   renderAll();
+  if (firstRun) openNuevo(false);
 })();
