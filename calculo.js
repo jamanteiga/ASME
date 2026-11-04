@@ -283,7 +283,8 @@
       if (sp.type === 'legs') f = f.concat([
         { t: 'sel', k: 'support.nl', l: 'Número de patas', o: [['auto', 'Automático según D.E. (ahora ' + VLOADS.legsN(prj, sp) + ')'], ['3', '3'], ['4', '4'], ['6', '6'], ['8', '8']], re: 1 }, { t: 'num', k: 'support.Hl', l: 'Longitud de las patas (base → línea de tangencia)', u: 'len' },
         { t: 'num', k: 'support.Dl', l: 'Diámetro del círculo de patas (vacío = D.E. + ancho de pata)', u: 'len', ph: 'auto' },
-        { t: 'sel', k: 'support.lsec', l: 'Sección', o: [['pipe', 'Tubo'], ['HEB', 'Perfil HEB'], ['HEA', 'Perfil HEA'], ['user', 'Perfil definido por el usuario']], re: 1 },
+        { t: 'sel', k: 'support.lsec', l: 'Sección', o: [['pipe', 'Tubo'], ['L', 'Angular de lados iguales (EN 10056-1)'], ['HEB', 'Perfil HEB'], ['HEA', 'Perfil HEA'], ['user', 'Perfil definido por el usuario']], re: 1 },
+        sp.lsec === 'L' ? { t: 'sel', k: 'support.lang', l: 'Tamaño del angular', o: Object.keys(VLOADS.PROF.L).map(function(k){ var q = k.split('x'); return [k, 'L ' + q[0] + ' × ' + q[0] + ' × ' + q[1]]; }) } : null,
         /^HE[AB]$/.test(sp.lsec) ? { t: 'sel', k: 'support.lprof', l: 'Tamaño del perfil', o: Object.keys(VLOADS.PROF[sp.lsec]).map(function(k){ return [k, sp.lsec + ' ' + k]; }) } : null,
         sp.lsec === 'pipe' ? { t: 'num', k: 'support.lod', l: 'D.E. del tubo', u: 'len' } : null, sp.lsec === 'pipe' ? { t: 'num', k: 'support.lt', l: 'Espesor del tubo', u: 'len' } : null,
         sp.lsec === 'user' ? { t: 'num', k: 'support.lA', l: 'Área A', u: 'a' } : null, sp.lsec === 'user' ? { t: 'num', k: 'support.lI', l: 'Inercia mínima I (mm⁴)' } : null,

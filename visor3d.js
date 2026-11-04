@@ -217,7 +217,8 @@ var VISOR3D = (function(){
       return zg - tb; }
     if (!F.H && L.legs){ var nl = L.legs.n, LG = L.legs.LG || {}, bl = LG.b || (+sp.lod || 168), pd = L.legs.pad, shl = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], Rsh = (shl.basis === 'od' ? shl.D / 2 : shl.D / 2 + shl.tn), Hleg = (L.legs.top || L.sAtt + 300) - L.zg;
       for (var j = 0; j < nl; j++){ var r2 = F.rad(360 * j / nl + (sp.th0 != null && sp.th0 !== '' ? +sp.th0 : 45)), tg = new T.Vector3().crossVectors(r2, F.e).normalize(), Mx = new T.Matrix4(); Mx.makeBasis(tg, r2, F.e);
-        if (LG.name){ [[LG.bf, LG.tf, (LG.h - LG.tf) / 2], [LG.bf, LG.tf, -(LG.h - LG.tf) / 2], [LG.tw, LG.h - 2 * LG.tf, 0]].forEach(function(q){ var bx = new T.Mesh(new T.BoxGeometry(q[0], q[1], Hleg), ms); bx.quaternion.setFromRotationMatrix(Mx); bx.position.copy(F.P(L.zg + Hleg / 2, r2, L.legs.Dl / 2 + q[2])); g.add(bx); }); }
+        if (LG.ang && LG.poly){ var shA = new T.Shape(LG.poly.map(function(q){ return new T.Vector2(q[0], q[1]); })), gA = new T.ExtrudeGeometry(shA, { depth: Hleg, bevelEnabled: false }), mA = new T.Mesh(gA, ms); mA.quaternion.setFromRotationMatrix(Mx); mA.position.copy(F.P(L.zg, r2, L.legs.Dl / 2)); g.add(mA); }
+        else if (LG.name){ [[LG.bf, LG.tf, (LG.h - LG.tf) / 2], [LG.bf, LG.tf, -(LG.h - LG.tf) / 2], [LG.tw, LG.h - 2 * LG.tf, 0]].forEach(function(q){ var bx = new T.Mesh(new T.BoxGeometry(q[0], q[1], Hleg), ms); bx.quaternion.setFromRotationMatrix(Mx); bx.position.copy(F.P(L.zg + Hleg / 2, r2, L.legs.Dl / 2 + q[2])); g.add(bx); }); }
         else g.add(tube(F.P(L.zg, r2, L.legs.Dl / 2), F.e, Hleg, bl / 2, sp.lsec === 'user' ? 0 : bl / 2 - (+sp.lt || 7), ms));
         if (pd){ var pb = new T.Mesh(new T.BoxGeometry(pd.w, pd.t, pd.L), mat(0x9fb4c8)); pb.quaternion.setFromRotationMatrix(Mx); pb.position.copy(F.P((pd.z0 || L.sAtt) + pd.L / 2, r2, Rsh + pd.t / 2)); g.add(pb); } }
       return L.zg; }

@@ -119,7 +119,8 @@ var EXPORT3D = (function(){
       if (!H && L.legs){ var LG = L.legs.LG || {}, bl = LG.b || (+sp.lod || 168), ti = sp.lsec === 'user' ? 0 : bl / 2 - (+sp.lt || 7), Hleg = (L.legs.top || L.sAtt + 300) - L.zg, pd = L.legs.pad, shl = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], Rsh = (shl.basis === 'od' ? shl.D / 2 : shl.D / 2 + shl.tn);
         var lmn = sp.lstd === 'EN' ? 'EN 10025-2 ' + (sp.lgrade || 'S275JR') : matName(sp.lmat);
         for (var j = 0; j < L.legs.n; j++){ var r2 = rad(360 * j / L.legs.n + (sp.th0 != null && sp.th0 !== "" ? +sp.th0 : 45)), tg = nrm(cross(r2, e));
-          if (LG.name){ var hh = LG.h / 2, bb = LG.bf / 2, tw2 = LG.tw / 2, tf = LG.tf; // perfil en I extruido según el eje del recipiente (local Z)
+          if (LG.ang && LG.poly) part(name('Pata ' + LG.name), [{ k: 'ext', depth: Hleg, loops: [poly(LG.poly)] }], { o: P(L.zg, r2, L.legs.Dl / 2), x: tg, y: r2, z: e }, lmn);
+          else if (LG.name){ var hh = LG.h / 2, bb = LG.bf / 2, tw2 = LG.tw / 2, tf = LG.tf; // perfil en I extruido según el eje del recipiente (local Z)
             part(name('Pata ' + LG.name), [{ k: 'ext', depth: Hleg, loops: [poly([[-bb, -hh], [bb, -hh], [bb, -hh + tf], [tw2, -hh + tf], [tw2, hh - tf], [bb, hh - tf], [bb, hh], [-bb, hh], [-bb, hh - tf], [-tw2, hh - tf], [-tw2, -hh + tf], [-bb, -hh + tf]])] }], { o: P(L.zg, r2, L.legs.Dl / 2), x: tg, y: r2, z: e }, lmn); }
           else part(name('Pata'), [{ k: 'rev', loops: [ring(ti, bl / 2, 0, Hleg)] }], frameY(P(L.zg, r2, L.legs.Dl / 2), e, r2), lmn);
           if (pd) part(name('Chapa intermedia pata'), [{ k: 'ext', depth: pd.L, loops: [poly([[-pd.w / 2, 0], [pd.w / 2, 0], [pd.w / 2, pd.t], [-pd.w / 2, pd.t]])] }], { o: P(pd.z0 || L.sAtt, r2, Rsh + 0.5), x: tg, y: r2, z: e }, matName(pd.mat)); } }

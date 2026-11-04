@@ -1872,8 +1872,29 @@ var VLOADS = (function(){
   // HEA / HEB (EN 10365): h, b, tw, tf, r
   var PROF = { HEA: { 100: [96, 100, 5, 8, 12], 120: [114, 120, 5, 8, 12], 140: [133, 140, 5.5, 8.5, 12], 160: [152, 160, 6, 9, 15], 180: [171, 180, 6, 9.5, 15], 200: [190, 200, 6.5, 10, 18], 220: [210, 220, 7, 11, 18], 240: [230, 240, 7.5, 12, 21], 260: [250, 260, 7.5, 12.5, 24], 280: [270, 280, 8, 13, 24], 300: [290, 300, 8.5, 14, 27] },
     HEB: { 100: [100, 100, 6, 10, 12], 120: [120, 120, 6.5, 11, 12], 140: [140, 140, 7, 12, 12], 160: [160, 160, 8, 13, 15], 180: [180, 180, 8.5, 14, 15], 200: [200, 200, 9, 15, 18], 220: [220, 220, 9.5, 16, 18], 240: [240, 240, 10, 17, 21], 260: [260, 260, 10, 17.5, 24], 280: [280, 280, 10.5, 18, 24], 300: [300, 300, 11, 19, 27] } };
+  // angulares de lados iguales (EN 10056-1): "b×t": radio de acuerdo r1
+  PROF.L = { '50x5': 7, '50x6': 7, '60x6': 8, '60x8': 8, '70x7': 9, '80x8': 10, '80x10': 10, '90x9': 11, '100x10': 12, '100x12': 12, '120x10': 13, '120x12': 13, '150x12': 16, '150x15': 16, '160x15': 17, '180x18': 18, '200x20': 18, '200x24': 18 };
+  // contorno del angular en ejes locales (x tangencial, y radial hacia fuera): talón hacia fuera, alas abrazando la chapa intermedia; centrado en y
+  function angPoly(b, t){ var s2 = Math.SQRT2, rd = (b + t) / s2, y0 = rd / 2;
+    return [[0, y0], [b / s2, y0 - b / s2], [(b - t) / s2, y0 - rd], [0, y0 - t * s2], [-(b - t) / s2, y0 - rd], [-b / s2, y0 - b / s2]]; }
+  // propiedades de un polígono: área, inercias principales y módulo resistente mínimo
+  function polyProps(P){ var A = 0, cx = 0, cy = 0, n = P.length, i, j;
+    for (i = 0; i < n; i++){ j = (i + 1) % n; var c = P[i][0] * P[j][1] - P[j][0] * P[i][1]; A += c; cx += (P[i][0] + P[j][0]) * c; cy += (P[i][1] + P[j][1]) * c; }
+    A /= 2; cx /= 6 * A; cy /= 6 * A; var Ix = 0, Iy = 0, Ixy = 0;
+    for (i = 0; i < n; i++){ j = (i + 1) % n; var x0 = P[i][0] - cx, y0 = P[i][1] - cy, x1 = P[j][0] - cx, y1 = P[j][1] - cy, c2 = x0 * y1 - x1 * y0;
+      Ix += (y0 * y0 + y0 * y1 + y1 * y1) * c2; Iy += (x0 * x0 + x0 * x1 + x1 * x1) * c2; Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * c2; }
+    Ix /= 12; Iy /= 12; Ixy /= 24; if (A < 0){ A = -A; Ix = -Ix; Iy = -Iy; Ixy = -Ixy; }
+    var m = (Ix + Iy) / 2, d = Math.sqrt((Ix - Iy) * (Ix - Iy) / 4 + Ixy * Ixy), Imin = m - d, Imax = m + d, th = 0.5 * Math.atan2(-2 * Ixy, Ix - Iy) + Math.PI / 2;
+    // eje de inercia mínima: dirección (cos th, sin th) que hace mínima la inercia; distancia máxima de los vértices a ese eje
+    var best = null; [th, th + Math.PI / 2].forEach(function(a){ var ux = Math.cos(a), uy = Math.sin(a), I = Ix * uy * uy + Iy * ux * ux - 2 * Ixy * ux * uy; if (!best || I < best.I) best = { I: I, ux: ux, uy: uy }; });
+    var dm = 0; P.forEach(function(q){ dm = Math.max(dm, Math.abs(-(q[0] - cx) * best.uy + (q[1] - cy) * best.ux)); });
+    return { A: A, cx: cx, cy: cy, Imin: Imin, Imax: Imax, Smin: Imin / dm }; }
   // propiedades respecto al eje débil (pandeo y flexión del lado conservador)
   function profProps(kind, size){
+    if (kind === 'L'){ var mm = /^(\d+)x(\d+)$/.exec(size); if (!mm || PROF.L[size] == null) return null;
+      var bL = +mm[1], tL = +mm[2], rL = PROF.L[size], pp = polyProps(angPoly(bL, tL)), Ar = (1 - Math.PI / 4) * rL * rL;
+      // A con el acuerdo interior; I mínima (eje v) del contorno reducida un 3 % por los redondeos de las puntas (queda ≤ EN 10056-1); Z = 1,5·Sv (AISC 360-16 F10-1)
+      return { A: pp.A + Ar, I: 0.97 * pp.Imin, Iy: pp.Imax, Z: 1.5 * 0.97 * pp.Smin, b: bL * Math.SQRT2, rd: (bL + tL) / Math.SQRT2, bl: bL, t: tL, tf: tL, ang: true, poly: angPoly(bL, tL), name: 'L ' + bL + '×' + bL + '×' + tL }; }
     var g = (PROF[kind] || {})[size]; if (!g) return null;
     var h = g[0], b = g[1], tw = g[2], tf = g[3], r = g[4], hw = h - 2 * tf, af = (1 - Math.PI / 4) * r * r, yf = tw / 2 + r - 0.2234 * r;
     var A = 2 * b * tf + hw * tw + 4 * af, Iz = 2 * tf * b * b * b / 12 + hw * tw * tw * tw / 12 + 4 * af * yf * yf, Wz = 2 * tf * b * b / 4 + hw * tw * tw / 4 + 4 * af * yf;
@@ -2149,6 +2170,7 @@ var VLOADS = (function(){
     if (legs){
       var nl = legsN(prj, sp), lm = V.mat(sp.lmat, 40);
       if (sp.lsec === 'HEB' || sp.lsec === 'HEA') LG = profProps(sp.lsec, String(sp.lprof || '160')) || profProps('HEB', '160');
+      else if (sp.lsec === 'L') LG = profProps('L', String(sp.lang || '100x10')) || profProps('L', '100x10');
       else if (sp.lsec === 'user') LG = { A: num(sp.lA, 0), I: num(sp.lI, 0), Z: num(sp.lZ, 0), b: num(sp.lb, 100) };
       else { var lo = num(sp.lod, 168.3), li = lo - 2 * num(sp.lt, 7.11); LG = { A: Math.PI / 4 * (lo * lo - li * li), I: Math.PI / 64 * (Math.pow(lo, 4) - Math.pow(li, 4)), Z: (Math.pow(lo, 3) - Math.pow(li, 3)) / 6, b: lo }; }
       LG.r = Math.sqrt(LG.I / Math.max(LG.A, 1e-9)); LG.n = nl; LG.m = lm; LG.st = steelOf(sp, 'l', LG.t || num(sp.lt, 7.11));
@@ -2333,8 +2355,8 @@ var VLOADS = (function(){
     var shOD = shellAtt.D + (shellAtt.basis === 'od' ? 0 : 2 * shellAtt.tn);
     if (legs){
       var shp = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], lpt0 = num(sp.lpt, 0) > 0 ? +sp.lpt : Math.max(6, shp.tn);
-      var lg = R(), nl2 = LG.n, Dl = sp.Dl > 0 ? +sp.Dl : shOD + LG.b + 2 * lpt0, Fy = LG.st.Fy, Es = 2e5, Kf = num(sp.K, 2.0);
-      st(lg, 'Sección de pata', sp.lsec === 'user' ? 'definida por el usuario' : LG.name ? LG.name + ' (eje débil)' : 'tubo ' + num(sp.lod, 0) + ' × ' + num(sp.lt, 0) + ' mm', LG.A, 'a');
+      var lg = R(), nl2 = LG.n, Dl = sp.Dl > 0 ? +sp.Dl : shOD + (LG.rd || LG.b) + 2 * lpt0, Fy = LG.st.Fy, Es = 2e5, Kf = num(sp.K, 2.0);
+      st(lg, 'Sección de pata', sp.lsec === 'user' ? 'definida por el usuario' : LG.name ? LG.name + (LG.ang ? ' (eje principal mínimo v)' : ' (eje débil)') : 'tubo ' + num(sp.lod, 0) + ' × ' + num(sp.lt, 0) + ' mm', LG.A, 'a');
       st(lg, 'r', '√(I/A)', LG.r, 'len'); st(lg, 'Fy', LG.st.en ? LG.st.name + ' (ReH según espesor)' : 'límite elástico a temperatura ambiente (II-D Tabla Y-1)', Fy, 's');
       // chapa intermedia (pad) entre pata y envolvente, del mismo material que la virola
       var sh0 = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], lpt = num(sp.lpt, 0) > 0 ? +sp.lpt : Math.max(6, sh0.tn), lpw = num(sp.lpw, 0) > 0 ? +sp.lpw : LG.b + 100, lpl = num(sp.lpl, 0) > 0 ? +sp.lpl : 400;
@@ -2348,7 +2370,8 @@ var VLOADS = (function(){
       var Fe = Math.PI * Math.PI * Es / (KLr * KLr), Fcr = KLr <= 4.71 * Math.sqrt(Es / Fy) ? Math.pow(0.658, Fy / Fe) * Fy : 0.877 * Fe;
       st(lg, 'Fcr', KLr <= 4.71 * Math.sqrt(Es / Fy) ? '0,658^(Fy/Fe)·Fy' : '0,877·Fe', Fcr, 's', 'AISC 360-16 (E3-2)/(E3-3)');
       var Pc = st(lg, 'Pc', 'Fcr·A/1,67 (ASD)', Fcr * LG.A / 1.67, 'f', 'AISC 360-16 E1');
-      var Mc = st(lg, 'Mc', sp.lsec === 'user' ? 'Fy·Z/1,67 (Z plástico)' : 'Fy·Z/1,67, Z = (Do³ − Di³)/6 (sección compacta)', Fy * LG.Z / 1.67, 'm', 'AISC 360-16 F8');
+      var Mc = st(lg, 'Mc', sp.lsec === 'user' ? 'Fy·Z/1,67 (Z plástico)' : LG.ang ? 'Fy·1,5·Sv/1,67 (angular, fluencia)' : LG.name ? 'Fy·Z/1,67 (eje débil)' : 'Fy·Z/1,67, Z = (Do³ − Di³)/6 (sección compacta)', Fy * LG.Z / 1.67, 'm', LG.ang ? 'AISC 360-16 F10-1' : 'AISC 360-16 F8');
+      if (LG.ang){ var lt = LG.bl / LG.t; ck(lg, 'Angular: esbeltez del ala b/t = ' + lt.toFixed(1) + ' ≤ 0,45·√(E/Fy) = ' + (0.45 * Math.sqrt(Es / Fy)).toFixed(1) + ' (sin abolladura local)', lt <= 0.45 * Math.sqrt(Es / Fy) + 1e-9, true, 'AISC 360-16 Tabla B4.1a'); note(lg, 'Angular: pandeo por flexión respecto al eje principal mínimo v; pandeo por flexotorsión no evaluado (las alas quedan arriostradas por la soldadura a la chapa intermedia en la zona de unión).'); }
       var gov = null, worst = -1, upl = 0;
       supCombos().forEach(function(c){
         var Pr = c.W / nl2 + 4 * c.M / (nl2 * Dl), Vr = c.V / nl2, Mr = Vr * Hl, q = Pr / Pc >= 0.2 ? Pr / Pc + 8 / 9 * Mr / Mc : Pr / (2 * Pc) + Mr / Mc;
@@ -2490,7 +2513,7 @@ var VLOADS = (function(){
     return out;
   }
 
-  return { legsN: legsN, steelOf: steelOf, profProps: profProps, PROF: PROF, EN_GR: EN_GR, run: run, defaults: defaults, defSupport: defSupport, FAM: FAM, zick: zick, secStress: secStress, qpEN: qpEN, cfEN: cfEN, qzASCE: qzASCE, cfASCE: cfASCE, sdEN: sdEN, csASCE: csASCE, Bcomp: Bcomp, parseExtra: parseExtra };
+  return { angPoly: angPoly, polyProps: polyProps, legsN: legsN, steelOf: steelOf, profProps: profProps, PROF: PROF, EN_GR: EN_GR, run: run, defaults: defaults, defSupport: defSupport, FAM: FAM, zick: zick, secStress: secStress, qpEN: qpEN, cfEN: cfEN, qzASCE: qzASCE, cfASCE: cfASCE, sdEN: sdEN, csASCE: csASCE, Bcomp: Bcomp, parseExtra: parseExtra };
 })();
 
 /* ===================================================================
@@ -3119,9 +3142,9 @@ var FABDOC = (function(){
         add({ grp: 'Soportes', ref: 'Anillo base', desc: 'Anillo base Ø ' + f0(L.skirt.Dbo) + ' / ' + f0(L.skirt.Dbi) + ' × ' + f1(+sp.tb || 0), mat: matT(sp.bmat), form: 'Chapa', t: +sp.tb || 0, mass: Math.PI / 4 * (L.skirt.Dbo * L.skirt.Dbo - L.skirt.Dbi * L.skirt.Dbi) * (+sp.tb || 0) * 7.85e-6, cert: certNP, press: false });
         add({ grp: 'Soportes', ref: 'Anclajes', desc: 'Perno de anclaje ' + (sp.bsize || '') + ' con tuercas y arandelas', qty: +sp.nb || 0, mat: matT(sp.amat), form: 'Perno', t: 0, mass: 0, cert: certNP, press: false }); }
       if (L.legs){ var LG = L.legs.LG || {}, stl = supSteel(sp, 'l', LG.t || +sp.lt), Ll = L.legs.top ? L.legs.top - L.zg : (+sp.Hl || 0) + 300, pd = L.legs.pad;
-        add({ grp: 'Soportes', ref: 'Patas', desc: 'Pata ' + (LG.name ? LG.name : sp.lsec === 'user' ? 'perfil definido por el usuario' : 'tubo Ø ' + f1(+sp.lod) + ' × ' + f1(+sp.lt)) + ' × L ' + f0(Ll), qty: L.legs.n, mat: stl.name, form: LG.name ? 'Perfil' : 'Tubo', t: LG.t || +sp.lt || 0, mass: (LG.A || 0) * Ll * 7.85e-6, cert: certNP, press: false });
+        add({ grp: 'Soportes', ref: 'Patas', desc: 'Pata ' + (LG.name ? LG.name : sp.lsec === 'user' ? 'perfil definido por el usuario' : 'tubo Ø ' + f1(+sp.lod) + ' × ' + f1(+sp.lt)) + ' × L ' + f0(Ll), qty: L.legs.n, mat: stl.name, form: LG.ang ? 'Angular' : LG.name ? 'Perfil' : 'Tubo', t: LG.t || +sp.lt || 0, mass: (LG.A || 0) * Ll * 7.85e-6, cert: certNP, press: false });
         if (pd) add({ grp: 'Soportes', ref: 'Chapas intermedias', desc: 'Chapa intermedia pata-virola ' + f0(pd.L) + ' × ' + f0(pd.w) + ' × ' + f1(pd.t) + ' curvada al radio de la virola, con taladro de venteo', qty: L.legs.n, mat: matT(pd.mat), form: 'Chapa', t: pd.t, mass: pd.L * pd.w * pd.t * 7.85e-6, cert: '3.1', press: false });
-        var bp = legPlate(sp, L); add({ grp: 'Soportes', ref: 'Placas base', desc: 'Placa base de pata ' + f0(bp) + ' × ' + f0(bp) + ' × 20 con ' + (+sp.nbl || 1) + ' taladros', qty: L.legs.n, mat: stl.name, form: 'Chapa', t: 20, mass: bp * bp * 20 * 7.85e-6, cert: certNP, press: false });
+        var bp = LG.ang ? LG.b + 120 : legPlate(sp, L); add({ grp: 'Soportes', ref: 'Placas base', desc: 'Placa base de pata ' + f0(bp) + ' × ' + f0(bp) + ' × 20 con ' + (+sp.nbl || 1) + ' taladros', qty: L.legs.n, mat: stl.name, form: 'Chapa', t: 20, mass: bp * bp * 20 * 7.85e-6, cert: certNP, press: false });
         add({ grp: 'Soportes', ref: 'Anclajes', desc: 'Perno de anclaje ' + (sp.lbsize || '') + ' con tuercas y arandelas', qty: L.legs.n * (+sp.nbl || 1), mat: matT(sp.amat), form: 'Perno', t: 0, mass: 0, cert: certNP, press: false }); }
       if (L.lugs && L.lugs.geo){ var Gm = L.lugs.geo;
         add({ grp: 'Soportes', ref: 'Ménsulas', desc: 'Cartela de ménsula ' + f0(Gm.H) + ' × ' + f0(Gm.L) + ' × ' + f1(Gm.t), qty: 2 * Gm.n, mat: Gm.st.name, form: 'Chapa', t: Gm.t, mass: Gm.H * Gm.L * Gm.t * 7.85e-6, cert: certNP, press: false });
@@ -3214,11 +3237,11 @@ var FABDOC = (function(){
     if (L && !L.err){
       if (L.skirt){ W({ id: 'S' + (++sc), cat: '—', desc: 'Faldón a fondo inferior', joint: 'fillet', leg: +sp.leg || +sp.t || 10, t1: +sp.t || 10, t2: prj.comps[0].tn, p1: pno(sp.mat), p2: pno(prj.comps[0].mat), L: Math.PI * L.skirt.Ds });
         W({ id: 'S' + (++sc), cat: '—', desc: 'Faldón a anillo base (2 filetes)', joint: 'fillet', leg: Math.min(+sp.t || 10, 12), t1: +sp.t || 10, t2: +sp.tb || 20, p1: pno(sp.mat), p2: pno(sp.bmat), L: 2 * Math.PI * L.skirt.Ds }); }
-      if (L.legs){ var lb0 = legW(sp, L), shL = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], stl2 = supSteel(sp, 'l', +sp.lt), pdl = L.legs.pad || { t: shL.tn, w: lb0 + 100, L: 400 }, tl = (L.legs.LG && L.legs.LG.t) || +sp.lt || 8;
+      if (L.legs){ var lb0 = legW(sp, L), shL = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0], stl2 = supSteel(sp, 'l', (L.legs.LG && L.legs.LG.t) || +sp.lt), pdl = L.legs.pad || { t: shL.tn, w: lb0 + 100, L: 400 }, tl = (L.legs.LG && L.legs.LG.t) || +sp.lt || 8;
         for (var q2 = 0; q2 < L.legs.n; q2++){
           W({ id: 'S' + (++sc), cat: '—', desc: 'Chapa intermedia pata ' + (q2 + 1) + ' a virola (perimetral)', joint: 'fillet', leg: Math.min(pdl.t, shL.tn), t1: pdl.t, t2: shL.tn, p1: pno(pdl.mat), p2: pno(shL.mat), L: 2 * (pdl.L + pdl.w) });
           W({ id: 'S' + (++sc), cat: '—', desc: 'Pata ' + (q2 + 1) + ' (' + stl2.name + ') a chapa intermedia', joint: 'fillet', leg: Math.min(tl, pdl.t), t1: tl, t2: pdl.t, p1: stl2.pno, p2: pno(pdl.mat), L: 2 * (pdl.L - 100) + lb0 });
-          W({ id: 'S' + (++sc), cat: '—', desc: 'Pata ' + (q2 + 1) + ' a placa base (perimetral)', joint: 'fillet', leg: Math.min(tl, 10), t1: tl, t2: 20, p1: stl2.pno, p2: stl2.pno, L: (L.legs.LG && L.legs.LG.name ? 2 * (L.legs.LG.h + 2 * L.legs.LG.bf) : Math.PI * lb0) }); } }
+          W({ id: 'S' + (++sc), cat: '—', desc: 'Pata ' + (q2 + 1) + ' a placa base (perimetral)', joint: 'fillet', leg: Math.min(tl, 10), t1: tl, t2: 20, p1: stl2.pno, p2: stl2.pno, L: (L.legs.LG && L.legs.LG.ang ? 4 * L.legs.LG.bl : L.legs.LG && L.legs.LG.name ? 2 * (L.legs.LG.h + 2 * L.legs.LG.bf) : Math.PI * lb0) }); } }
       if (L.lugs && L.lugs.geo){ var Gw = L.lugs.geo, shM = prj.comps.filter(function(c){ return c.type === 'shell'; })[0] || prj.comps[0];
         for (var qg = 0; qg < Gw.n; qg++){ W({ id: 'S' + (++sc), cat: '—', desc: 'Chapa intermedia ménsula ' + (qg + 1) + ' a virola (perimetral)', joint: 'fillet', leg: Math.min(Gw.pt, shM.tn), t1: Gw.pt, t2: shM.tn, p1: pno(Gw.padMat), p2: pno(shM.mat), L: 2 * (Gw.pw + Gw.ph) });
           W({ id: 'S' + (++sc), cat: '—', desc: 'Cartelas y placas de ménsula ' + (qg + 1) + ' (' + Gw.st.name + ') a chapa intermedia', joint: 'fillet', leg: Math.min(Gw.t, Gw.pt), t1: Gw.t, t2: Gw.pt, p1: Gw.st.pno, p2: pno(Gw.padMat), L: 2 * 2 * Gw.H + 2 * (Gw.S + 2 * Gw.t + 50) });
